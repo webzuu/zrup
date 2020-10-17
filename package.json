@@ -1,0 +1,31 @@
+{
+  "name": "zrup",
+  "version": "0.1.0",
+  "description": "Build system experiment",
+  "main": "index.js",
+  "repository": "git@github.com:/rulatir/zrup.git",
+  "author": "Szczepan Hołyszewski <rulatir@wp.pl>",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "module-alias": "^2.2.2",
+    "rimraf": "^3.0.2",
+    "rmfr": "^2.0.0",
+    "simple-async-sleep": "^1.0.0",
+    "sqlite": "^4.0.15",
+    "sqlite3": "^5.0.0"
+  },
+  "_moduleAliases": {
+    "@zrup": "src",
+    "@test": "test/lib"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-asserttype": "^1.0.5",
+    "mocha": "^8.1.3"
+  },
+  "scripts": {
+    "test": "mocha"
+  }
+}
