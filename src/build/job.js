@@ -22,8 +22,8 @@ class Job {
     }
 
     async start() {
-        const dependencyJobs = await Promise.all(this.target.dependencies.map(dep => build.getJobFor(dep).run()));
-        if(await this.build.anyChanged(this.target.dependencies)) {
+        const dependencyJobs = await Promise.all(this.rule.dependencies.map(dep => this.build.getJobFor(dep).run()));
+        if(await this.build.anyChanged(this.rule.dependencies)) {
             await this.rule.recipe.executeFor(this.rule);
         }
         return this;

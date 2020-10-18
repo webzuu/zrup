@@ -9,6 +9,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "md5": "^2.3.0",
     "module-alias": "^2.2.2",
     "rimraf": "^3.0.2",
     "rmfr": "^2.0.0",
