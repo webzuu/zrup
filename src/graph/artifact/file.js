@@ -40,6 +40,7 @@ export default class FileArtifact extends Artifact {
         return this.#path;
     }
 
+
     get contents()
     {
         return (async () => await fsp.readFile(this.#resolvedPath))();

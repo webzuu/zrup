@@ -40,19 +40,9 @@ export default class Artifact {
     get identity() {
         throw new Error(`Unimplemented abstract ${this.constructor.name}::get identity()`);
     }
-}
 
-/**
- *
- * @type {Artifact.File}
- * @property {string} path
- */
-Artifact.File = class File extends Artifact {
-
-    constructor(path) {
-        super();
-        this.path = path;
+    get label()
+    {
+        return `${this.type} ${this.identity}`;
     }
-
-    get type() { return "file"; }
 }

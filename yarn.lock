@@ -730,6 +730,11 @@ inspect-with-kind@^1.0.4:
   dependencies:
     kind-of "^6.0.2"
 
+inspect@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/inspect/-/inspect-0.0.2.tgz#f073838b546f9c0b96a3a7744f247f887c226f8b"
+  integrity sha1-8HODi1RvnAuWo6d0TyR/iHwib4s=
+
 is-arguments@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/is-arguments/-/is-arguments-1.0.4.tgz#3faf966c7cba0ff437fb31f6250082fcf0448cf3"
@@ -1028,6 +1033,11 @@ ms@2.1.2, ms@^2.1.1:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
+
+multimap@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/multimap/-/multimap-1.1.0.tgz#5263febc085a1791c33b59bb3afc6a76a2a10ca8"
+  integrity sha512-0ZIR9PasPxGXmRsEF8jsDzndzHDj7tIav+JUmvIFB/WHswliFnquxECT/De7GR4yg99ky/NlRKJT82G1y271bw==
 
 needle@^2.2.1:
   version "2.5.2"

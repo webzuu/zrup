@@ -18,7 +18,7 @@ class Job {
 
     async run() {
         if (this.finished) return this;
-        return await this.running || (this.running=this.start());
+        return await (this.running || (this.running=this.start()));
     }
 
     async start() {
