@@ -20,8 +20,8 @@
     "sqlite3": "^5.0.0"
   },
   "_moduleAliases": {
-    "@zrup": "./src",
-    "@test": "./test/lib"
+    "@zrup": "src",
+    "@test": "test/lib"
   },
   "devDependencies": {
     "chai": "^4.2.0",

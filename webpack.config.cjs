@@ -2,11 +2,12 @@
 // This file only exists to help JetBrains IDEs recognize module aliases.
 
 const path = require('path');
+const fs = require('fs');
 
-const moduleAliases = require('./package.json')._moduleAliases;
+const moduleAliases = JSON.parse(fs.readFileSync('./package.json','utf-8'))._moduleAliases;
 const alias = {};
 
-for (const key in Object.getOwnPropertyNames(moduleAliases)) {
+for (const key of Object.getOwnPropertyNames(moduleAliases)) {
     alias[key] = path.resolve(__dirname, moduleAliases[key]);
 }
 
