@@ -1,27 +1,26 @@
 import Artifact from "@zrup/artifact";
 
-function delayedPromise(getter, minDelay, maxDelay)
-{
-    minDelay = minDelay || 0;
-    maxDelay = Math.max(minDelay, maxDelay || minDelay);
-    const delay = Math.round(Math.random() * (maxDelay - minDelay) + minDelay);
-    return new Promise((resolve)=>{ setTimeout(() => resolve(getter()), delay); });
-}
-
 export default class MockArtifact extends Artifact
 {
+    /**
+     * @type {PromiseKeeper}
+     */
+    #pk;
     #type;
     #key;
     #version;
-    constructor(type, key, version)
+    #existsDelay;
+    #versionDelay;
+    constructor(pk, type, key, version)
     {
         super();
+        this.#pk=type;
         this.#type=type;
         this.#key=key;
         this.#version = version || null;
 
-        this.existsDelay = [0,0];
-        this.versionDelay = [0,0];
+        this.#existsDelay = [0,0];
+        this.#versionDelay = [0,0];
     }
 
     get type()
@@ -31,12 +30,12 @@ export default class MockArtifact extends Artifact
 
     get exists()
     {
-        return delayedPromise(() => !!this.#version, ...this.existsDelay);
+        return this.#pk.about(this.#key,"exists").promise;
     }
 
     get version()
     {
-        return delayedPromise(() => this.#version, ...this.versionDelay);
+        return this.#pk.about(this.#key,"version").promise;
     }
 
     get identity()

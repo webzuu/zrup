@@ -11,5 +11,7 @@ for (const key in Object.getOwnPropertyNames(moduleAliases)) {
 }
 
 module.exports = {
-    resolve: { alias },
+    resolve: {
+        alias
+    },
 };

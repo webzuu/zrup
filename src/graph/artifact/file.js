@@ -32,14 +32,13 @@ export default class FileArtifact extends Artifact {
 
     get version()
     {
-        return (async () => md5(fsp.readFile(this.#resolvedPath)))();
+        return (async () => md5(await fsp.readFile(this.#resolvedPath)))();
     }
 
     get identity()
     {
         return this.#path;
     }
-
 
     get contents()
     {
