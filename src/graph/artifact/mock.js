@@ -1,4 +1,4 @@
-import Artifact from "@zrup/artifact";
+import Artifact from "@zrup/graph/artifact";
 
 export default class MockArtifact extends Artifact
 {
@@ -8,19 +8,12 @@ export default class MockArtifact extends Artifact
     #pk;
     #type;
     #key;
-    #version;
-    #existsDelay;
-    #versionDelay;
-    constructor(pk, type, key, version)
+    constructor(pk, type, key)
     {
         super();
-        this.#pk=type;
+        this.#pk=pk;
         this.#type=type;
         this.#key=key;
-        this.#version = version || null;
-
-        this.#existsDelay = [0,0];
-        this.#versionDelay = [0,0];
     }
 
     get type()
@@ -30,16 +23,21 @@ export default class MockArtifact extends Artifact
 
     get exists()
     {
-        return this.#pk.about(this.#key,"exists").promise;
+        return this.#pk.about(this.key,"exists").promise;
     }
 
     get version()
     {
-        return this.#pk.about(this.#key,"version").promise;
+        return this.#pk.about(this.key,"version").promise;
     }
 
     get identity()
     {
         return this.#key;
+    }
+
+    get contents()
+    {
+        return this.#pk.about(this.key,"contents").promise;
     }
 }

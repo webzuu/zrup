@@ -14,10 +14,10 @@ export default class Artifact {
      * @return {string}
      */
     get key() {
-        return md5(JSON.stringify({
-            type: this.type,
-            identity: this.identity
-        }))
+        return md5(JSON.stringify([
+            ["type", this.type],
+            ["identity", this.identity]
+        ]))
     }
 
     /**

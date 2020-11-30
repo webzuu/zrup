@@ -7,6 +7,14 @@ export default class PromiseKeeper {
         return this.#retrieve(key, topic) || this.#make(key, topic);
     }
 
+    forget(key, topic)
+    {
+        if (!(key in this.#descriptors)) return this;
+        if (!(topic in this.#descriptors[key])) return this;
+        delete this.#descriptors[key][topic];
+        return this;
+    }
+
     #retrieve(key, topic)
     {
         if(!(key in this.#descriptors)) return null;

@@ -10,6 +10,9 @@ export class DbTesting
 {
     #tmpDir;
     #dbFile
+    /**
+     * @type Db
+     */
     #db;
     constructor(tmpDir)
     {
@@ -52,4 +55,9 @@ export class DbTesting
 
     get db() { return this.#db; }
     get dbFile() { return this.#dbFile; }
-};
+}
+
+export function wait(time)
+{
+    return new Promise((resolve) => { setTimeout(resolve, time); });
+}
