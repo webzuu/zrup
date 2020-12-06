@@ -22,6 +22,7 @@ import md5 from "md5";
 import Rule, {SourceRule} from "@zrup/graph/rule";
 import Build from "@zrup/build/build";
 import BuildError from "@zrup/build/error";
+import Dependency from "@zrup/graph/dependency";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 
@@ -34,10 +35,10 @@ class MakeItExistRecipe extends Recipe
         this.#pk = pk;
     }
 
-    async executeFor(rule) {
-        const onlyTarget = rule.outputs[0];
+    async executeFor(job) {
+        const onlyTarget = job.outputs[0];
         const sourceVersions = await Promise.all(
-            rule.dependencies.map(
+            job.dependencies.map(
                 dep => (async () => ({
                     /**
                      * @type {string}
@@ -68,12 +69,13 @@ function simple()
     const target = new MockArtifact(pk,"file","w.nginx");
     const source = new MockArtifact(pk,"file","obey/w.nginx.php");
     const makeTarget = new MakeItExistRecipe(pk);
+    const dep = new Dependency(source);
     const rule = new Rule(g, makeTarget, me => {
         me.outputs.push(target);
-        me.dependencies.push(source);
+        me.dependencies.push(dep);
     });
     const build = new Build(g, t.db);
-    return {pk,g,target,source,makeTarget,rule,build};
+    return {pk,g,target,dep,source,makeTarget,rule,build};
 }
 
 const nil = {}
@@ -145,7 +147,7 @@ describe("Build", () => {
 
     it("gets build job for target", async () => {
         const {pk,g,target,source,makeTarget,rule,build} = simple();
-        const job = build.getJobFor(target);
+        const job = build.getJobForGoal(target);
         expect(job).to.be.object();
         expect(job.build).to.equal(build);
         expect(job.rule).to.equal(rule);
@@ -157,7 +159,7 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobFor(target);
+        const job = build.getJobForGoal(target);
         await job.run();
         expect(await target.exists).to.be.true;
         expect(await target.version).to.not.be.null;
@@ -169,11 +171,13 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobFor(target);
+        const job = build.getJobForGoal(target);
         await job.run();
         expect(job.finished).to.be.true;
         expect(job.recipeInvoked).to.be.true;
-        expect(await build.isUpToDate(rule)).to.be.true;
+        const build2 = new Build(g, build.db);
+        const isUpToDate = await build2.isUpToDate(rule)
+        expect(isUpToDate).to.be.true;
     });
 
     it("does not rebuild an up-to-date target", async () => {
@@ -182,12 +186,12 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobFor(target);
+        const job = build.getJobForGoal(target);
         await job.run();
         expect(job.finished).to.be.true;
         expect(await build.isUpToDate(rule)).to.be.true;
         build = new Build(g,build.db);
-        const job2 = build.getJobFor(target);
+        const job2 = build.getJobForGoal(target);
         await job2.run();
         expect(job2.finished).to.be.true;
         expect(job2.recipeInvoked).to.be.false;
@@ -199,7 +203,7 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobFor(target);
+        const job = build.getJobForGoal(target);
         await job.run();
         expect(job.finished).to.be.true;
         expect(await build.isUpToDate(rule)).to.be.true;
@@ -207,7 +211,7 @@ describe("Build", () => {
         answers(pk,{[source.key]: [nil,"123456"]});
         expect(await build.isUpToDate(rule)).to.be.false;
         build = new Build(g,build.db);
-        const job2 = build.getJobFor(target);
+        const job2 = build.getJobForGoal(target);
         await job2.run();
         expect(job2.finished).to.be.true;
         expect(job2.recipeInvoked).to.be.true;
@@ -224,23 +228,23 @@ describe("Build", () => {
     })
 
     it("finds nonexistent source outdated", async ()=> {
-        let {pk,g,target,source,makeTarget,rule,build} = simple();
+        let {pk,g,target,dep,source,makeTarget,rule,build} = simple();
         answers(pk,{
             [target.key]: [false,nil],
             [source.key]: [false,nil]
         });
-        const job = build.getJobFor(source);
+        const job = build.getJobFor(dep);
         expect(job.rule).to.be.instanceof(SourceRule);
         expect(await build.isUpToDate(job.rule)).to.be.false;
     });
 
     it("finds existent source outdated (to trigger existence check as a recipe)", async ()=> {
-        let {pk,g,target,source,makeTarget,rule,build} = simple();
+        let {pk,g,target,dep,source,makeTarget,rule,build} = simple();
         answers(pk,{
             [target.key]: [false,nil],
             [source.key]: [true,"123456"]
         });
-        const job = build.getJobFor(source);
+        const job = build.getJobFor(dep);
         expect(job.rule).to.be.instanceof(SourceRule);
         expect(await build.isUpToDate(job.rule)).to.be.false;
     });
@@ -261,7 +265,7 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [false,nil]
         })
-        const job = build.getJobFor(target);
+        const job = build.getJobForGoal(target);
         let err = null;
         try {
             await job.run();
@@ -281,4 +285,6 @@ describe("Build", () => {
             "because source(s) not found:\n" +
             "\tfile obey/w.nginx.php");
     });
+
+    
 });

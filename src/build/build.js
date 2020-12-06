@@ -24,11 +24,25 @@ export default class Build {
         this.#sourceRecipe =  new SourceRecipe();
     }
 
-    getJobFor(artifact)
+    /**
+     * @param {Dependency} dependency
+     * @return {Job}
+     */
+    getJobFor(dependency)
     {
         const ruleKey =
-            this.graph.index.output.rule.get(artifact.key)
-            || (new SourceRule(this.graph, this.#sourceRecipe, artifact)).key;
+            this.graph.index.output.rule.get(dependency.artifact.key)
+            || (new SourceRule(this.graph, this.#sourceRecipe, dependency.artifact)).key;
+        return this.getJobForRule(ruleKey);
+    }
+
+    /**
+     * @param {Artifact} artifact
+     * @return {Job}
+     */
+    getJobForGoal(artifact)
+    {
+        const ruleKey = this.graph.index.output.rule.get(artifact.key);
         return this.getJobForRule(ruleKey);
     }
 
@@ -72,15 +86,15 @@ export default class Build {
 
     /**
      *
-     * @param {Rule} rule
+     * @param {Job} job
      * @return {Promise<void>}
      */
-    async recordVersionInfo(rule)
+    async recordVersionInfo(job)
     {
-        await Promise.all(rule.outputs.map(target => (async () => {
+        await Promise.all(job.outputs.map(target => (async () => {
             await this.db.retractTarget(target.key);
-            await Promise.all(rule.dependencies.map(dep => (async () => {
-                await this.db.record(target.key, await target.version, dep.key, await dep.version);
+            await Promise.all(job.dependencies.map(dep => (async () => {
+                await this.db.record(target.key, await target.version, dep.artifact.key, await dep.artifact.version);
             })()));
         })()));
     }
@@ -96,7 +110,8 @@ export default class Build {
         await Promise.all(
             rule.dependencies.map(
                 dependency => (async () => {
-                    actualSourceVersions[dependency.key] = (await dependency.exists) ? (await dependency.version) : null;
+                    actualSourceVersions[dependency.artifact.key] =
+                        (await dependency.artifact.exists) ? (await dependency.artifact.version) : null;
                 })()
             )
         );

@@ -8,22 +8,19 @@ export default class Rule {
     /**
      * @param {Graph} graph
      * @param {Recipe | null} recipe
-     * @param builder
+     * @param builderCallback
      */
-    constructor(graph, recipe,builder) {
-        /**
-         *
-         * @type {Artifact[]}
-         */
-        this.dependencies = [];
-        /**
-         *
-         * @type {Artifact[]}
-         */
+    constructor(graph, recipe,builderCallback)
+    {
+        /** @type {Artifact[]} */
         this.outputs = [];
+        /** @type {Dependency[]} */
+        this.dependencies = [];
+        /** @type {Recipe} */
         this.recipe = recipe;
+        /** @type {string|null} */
         this.key = null;
-        builder(this,graph,recipe);
+        builderCallback(this, graph, recipe);
         graph.addRule(this);
     }
 }
@@ -31,7 +28,6 @@ export default class Rule {
 export class SourceRule extends Rule
 {
     /**
-     *
      * @param {Graph} graph
      * @param {SourceRecipe} sourceRecipe
      * @param {Artifact} sourceArtifact
