@@ -81,4 +81,43 @@ describe('Db', () => {
         expect(await t.db.has('A')).to.be.false;
         expect(await t.db.has('B')).to.be.true;
     });
+
+    it("does not throw if artifact not found", async () => {
+        const result = await t.db.getArtifact("foo");
+        expect(result).to.be.null;
+    });
+
+    it("records artifacts", async () => {
+        await t.db.recordArtifact("foo","file","foo.c");
+        const result = await t.db.getArtifact("foo");
+        expect(result.key).to.equal("foo");
+        expect(result.type).to.equal("file");
+        expect(result.identity).to.equal("foo.c");
+    });
+
+    it("does not record artifacts conflicting with already recorded ones", async() => {
+        await t.db.recordArtifact("foo","file","foo.c");
+        await t.db.recordArtifact("wrong","file","foo.c");
+        const foo = await t.db.getArtifact("foo");
+        expect(foo.key).to.equal("foo");
+        expect(foo.type).to.equal("file");
+        expect(foo.identity).to.equal("foo.c");
+        const wrong = await t.db.getArtifact("wrong");
+        expect(wrong).to.be.null;
+        await t.db.recordArtifact("foo","whatever","nope.c");
+        const whatever = await t.db.getArtifact("foo");
+        expect(whatever.type).to.equal("file");
+        expect(whatever.identity).to.equal("foo.c");
+    });
+
+    it("considers enough characters from the identity field", async () => {
+        const fooName = "a".repeat(1000)+"_foo";
+        const barName = "a".repeat(1000)+"_bar";
+        await t.db.recordArtifact("foo","file",fooName);
+        await t.db.recordArtifact("bar","file",barName);
+        const foo = await t.db.getArtifact("foo");
+        expect(foo.identity).to.equal(fooName);
+        const bar = await t.db.getArtifact("bar");
+        expect(bar.identity).to.equal(barName);
+    });
 });

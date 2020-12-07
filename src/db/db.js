@@ -26,7 +26,15 @@ async function ensureSchema(db)
             source_version CHAR(32)
         )`
     );
-    await db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS influx ON states(target, target_version, source)`);
+    await db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS target_version_source ON states(target, target_version, source)`);
+    await db.exec(
+        `CREATE TABLE IF NOT EXISTS artifacts (
+            key CHAR(32) PRIMARY KEY,
+            artifact_type VARCHAR(96),
+            identity VARCHAR(1024)
+        )`
+    );
+    await db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS artifact_type_identity ON artifacts(artifact_type, identity)`);
 }
 
 /**
@@ -53,7 +61,12 @@ async function prepareStatements(db)
         retract:
             'DELETE FROM states WHERE target = @target AND target_version = @version',
         retractTarget:
-            'DELETE FROM states WHERE target = @target'
+            'DELETE FROM states WHERE target = @target',
+        recordArtifact:
+            'INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)'
+            + ' VALUES (@key, @type, @identity)',
+        getArtifact:
+            'SELECT key, artifact_type AS type, identity FROM artifacts WHERE key = @key'
     };
     await Promise.all(Object.getOwnPropertyNames(statements).map(async stmt => {
          statements[stmt] = await db.prepare(statements[stmt]);
@@ -149,6 +162,20 @@ export default class Db {
         return (await (await this.stmt).retractTarget.run({
             '@target': targetId
         }));
+    }
+    async recordArtifact(key, type, identity)
+    {
+        return (await (await this.stmt).recordArtifact.run({
+            '@key': key,
+            '@type': type,
+            '@identity': identity
+        }));
+    }
+    async getArtifact(key)
+    {
+        return (await (await this.stmt).getArtifact.get({
+            '@key': key
+        })) || null;
     }
     async close() {
         if (!this.#db) return;
