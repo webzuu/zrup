@@ -120,4 +120,18 @@ describe('Db', () => {
         const bar = await t.db.getArtifact("bar");
         expect(bar.identity).to.equal(barName);
     });
+
+    it("prunes unreferenced artifacts", async () => {
+        await t.db.record("foo","0","bar","0");
+        await t.db.record("foo","0","baz","1");
+        await t.db.recordArtifact("foo","file","foo.o");
+        await t.db.recordArtifact("bar","file","bar.c");
+        await t.db.recordArtifact("baz","file","baz.h");
+        await t.db.recordArtifact("gee","file","gee.js");
+        await t.db.getArtifact("gee");
+        expect(await t.db.getArtifact("gee")).to.be.object;
+        await t.db.pruneArtifacts();
+        expect(await t.db.getArtifact("gee")).to.be.null;
+        expect(await t.db.getArtifact("foo")).to.be.object;
+    });
 });

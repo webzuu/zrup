@@ -66,7 +66,12 @@ async function prepareStatements(db)
             'INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)'
             + ' VALUES (@key, @type, @identity)',
         getArtifact:
-            'SELECT key, artifact_type AS type, identity FROM artifacts WHERE key = @key'
+            'SELECT key, artifact_type AS type, identity FROM artifacts WHERE key = @key',
+        pruneArtifacts:
+            'DELETE FROM artifacts'
+            +' WHERE NOT EXISTS ('
+            +'    SELECT 1 FROM states WHERE states.source = artifacts.key OR states.target = artifacts.key'
+            +' )'
     };
     await Promise.all(Object.getOwnPropertyNames(statements).map(async stmt => {
          statements[stmt] = await db.prepare(statements[stmt]);
@@ -176,6 +181,10 @@ export default class Db {
         return (await (await this.stmt).getArtifact.get({
             '@key': key
         })) || null;
+    }
+
+    async pruneArtifacts() {
+        await (await this.stmt).pruneArtifacts.run();
     }
     async close() {
         if (!this.#db) return;

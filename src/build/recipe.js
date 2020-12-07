@@ -5,8 +5,9 @@ export default class Recipe
     /**
      * @param {Job} job
      */
-    async executeFor(job) {
-        throw `Unimplemented abstract method executeFor()`;
+    async executeFor(job)
+    {
+        throw `Unimplemented abstract ${this.constructor.name}::executeFor()`;
     }
 }
 
