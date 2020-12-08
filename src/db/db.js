@@ -22,11 +22,13 @@ async function ensureSchema(db)
         `CREATE TABLE IF NOT EXISTS states (
             target CHAR(32),
             target_version CHAR(32),
+            rule CHAR(32),
             source CHAR(32),
             source_version CHAR(32)
         )`
     );
     await db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS target_version_source ON states(target, target_version, source)`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS rule ON states(rule)`);
     await db.exec(
         `CREATE TABLE IF NOT EXISTS artifacts (
             key CHAR(32) PRIMARY KEY,
@@ -54,8 +56,8 @@ async function prepareStatements(db)
         listVersionSources:
             'SELECT source, source_version AS version FROM states WHERE target = @target AND target_version = @version',
         record:
-            'INSERT INTO states (target, target_version, source, source_version)'
-            + ' VALUES (@target, @targetVersion, @source, @sourceVersion)'
+            'INSERT INTO states (target, target_version, rule, source, source_version)'
+            + ' VALUES (@target, @targetVersion, @rule, @source, @sourceVersion)'
             + ' ON CONFLICT(target,target_version,source) DO'
             + ' UPDATE SET source_version = @sourceVersion',
         retract:
@@ -145,12 +147,22 @@ export default class Db {
             '@version': version
         });
     }
-    async record(targetId, targetVersion, sourceId, sourceVersion)
+
+    /**
+     *
+     * @param {string} targetId
+     * @param {string} targetVersion
+     * @param {string} ruleKey
+     * @param {string} sourceId
+     * @param {string} sourceVersion
+     * @return {Promise<*>}
+     */
+    async record(targetId, targetVersion, ruleKey, sourceId, sourceVersion)
     {
-        const stmt = await this.stmt;
-        return (await stmt.record.run({
+        return (await (await this.stmt).record.run({
             '@target': targetId,
             '@targetVersion': targetVersion,
+            '@rule': ruleKey,
             '@source': sourceId,
             '@sourceVersion': sourceVersion
         }));

@@ -52,9 +52,10 @@ describe('Db', () => {
     });
 
     it('lists version sources', async() => {
-        await t.db.record('A','B','U','V');
-        await t.db.record('A','B','X','Y');
-        await t.db.record('A','C','X','Z');
+        const ruleKey='whatever';
+        await t.db.record('A','B',ruleKey,'U','V');
+        await t.db.record('A','B',ruleKey,'X','Y');
+        await t.db.record('A','C',ruleKey,'X','Z');
         let answer = await t.db.listVersionSources('A','B');
         expect(answer).to.be.array();
         expect(answer.sort((l,r) => l.source.localeCompare(r.source)).map(_ => _.version)).to.deep.equal(['V','Y']);
@@ -64,8 +65,9 @@ describe('Db', () => {
     });
 
     it('retracts versions', async() => {
-        await t.db.record('A','B','C','D');
-        await t.db.record('A','E','F','G');
+        const ruleKey='whatever';
+        await t.db.record('A','B',ruleKey,'C','D');
+        await t.db.record('A','E',ruleKey,'F','G');
         expect(await t.db.hasVersion('A','B')).to.be.true;
         await t.db.retract('A','B');
         expect(await t.db.hasVersion('A','B')).to.be.false;
@@ -73,9 +75,10 @@ describe('Db', () => {
     });
 
     it('retracts targets', async() => {
-        await t.db.record('A','B','C','D');
-        await t.db.record('A','E','F','G');
-        await t.db.record('B','X','Y','Z');
+        const ruleKey = 'whatever';
+        await t.db.record('A','B',ruleKey,'C','D');
+        await t.db.record('A','E',ruleKey,'F','G');
+        await t.db.record('B','X',ruleKey,'Y','Z');
         expect(await t.db.has('A')).to.be.true;
         await t.db.retractTarget('A');
         expect(await t.db.has('A')).to.be.false;
@@ -122,8 +125,9 @@ describe('Db', () => {
     });
 
     it("prunes unreferenced artifacts", async () => {
-        await t.db.record("foo","0","bar","0");
-        await t.db.record("foo","0","baz","1");
+        const ruleKey='whatever';
+        await t.db.record("foo","0",ruleKey,"bar","0");
+        await t.db.record("foo","0",ruleKey,"baz","1");
         await t.db.recordArtifact("foo","file","foo.o");
         await t.db.recordArtifact("bar","file","bar.c");
         await t.db.recordArtifact("baz","file","baz.h");

@@ -94,7 +94,7 @@ export default class Build {
         await Promise.all(job.outputs.map(target => (async () => {
             await this.db.retractTarget(target.key);
             await Promise.all(job.dependencies.map(dep => (async () => {
-                await this.db.record(target.key, await target.version, dep.artifact.key, await dep.artifact.version);
+                await this.db.record(target.key, await target.version, job.rule.key, dep.artifact.key, await dep.artifact.version);
             })()));
         })()));
     }

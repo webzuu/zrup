@@ -127,7 +127,7 @@ describe("Build", () => {
             [source.key]: [true,"142857"],
             [target.key]: [true,"857142"]
         });
-        await t.db.record(target.key, await target.version, source.key, await source.version);
+        await t.db.record(target.key, await target.version, rule.key, source.key, await source.version);
         const versionInfo = await build.getRecordedVersionInfo(target);
         expect(versionInfo).to.be.object();
         expect(versionInfo.version).to.equal("857142");
