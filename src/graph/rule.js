@@ -3,6 +3,8 @@
  * @property {Artifact[]} outputs
  * @property {Recipe} recipe
  */
+import md5 from "md5";
+
 export default class Rule {
 
     /**
@@ -34,6 +36,9 @@ export class SourceRule extends Rule
      */
     constructor(graph, sourceRecipe, sourceArtifact)
     {
-        super(graph, sourceRecipe, me => { me.outputs.push(sourceArtifact); });
+        super(graph, sourceRecipe, me => {
+            me.outputs.push(sourceArtifact);
+            me.key = md5(`source rule for ${sourceArtifact.key}`);
+        });
     }
 }
