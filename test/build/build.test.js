@@ -176,7 +176,7 @@ describe("Build", () => {
         expect(job.finished).to.be.true;
         expect(job.recipeInvoked).to.be.true;
         const build2 = new Build(g, build.db);
-        const isUpToDate = await build2.isUpToDate(rule)
+        const isUpToDate = await build2.isUpToDate(job)
         expect(isUpToDate).to.be.true;
     });
 
@@ -189,7 +189,7 @@ describe("Build", () => {
         const job = build.getJobForGoal(target);
         await job.run();
         expect(job.finished).to.be.true;
-        expect(await build.isUpToDate(rule)).to.be.true;
+        expect(await build.isUpToDate(job)).to.be.true;
         build = new Build(g,build.db);
         const job2 = build.getJobForGoal(target);
         await job2.run();
@@ -206,10 +206,10 @@ describe("Build", () => {
         const job = build.getJobForGoal(target);
         await job.run();
         expect(job.finished).to.be.true;
-        expect(await build.isUpToDate(rule)).to.be.true;
+        expect(await build.isUpToDate(job)).to.be.true;
         pk.forget(source.key,"version");
         answers(pk,{[source.key]: [nil,"123456"]});
-        expect(await build.isUpToDate(rule)).to.be.false;
+        expect(await build.isUpToDate(job)).to.be.false;
         build = new Build(g,build.db);
         const job2 = build.getJobForGoal(target);
         await job2.run();
@@ -235,7 +235,7 @@ describe("Build", () => {
         });
         const job = build.getJobFor(dep);
         expect(job.rule).to.be.instanceof(SourceRule);
-        expect(await build.isUpToDate(job.rule)).to.be.false;
+        expect(await build.isUpToDate(job)).to.be.false;
     });
 
     it("finds existent source outdated (to trigger existence check as a recipe)", async ()=> {
@@ -246,17 +246,18 @@ describe("Build", () => {
         });
         const job = build.getJobFor(dep);
         expect(job.rule).to.be.instanceof(SourceRule);
-        expect(await build.isUpToDate(job.rule)).to.be.false;
+        expect(await build.isUpToDate(job)).to.be.false;
     });
 
 
     it("nonexistent target from nonexistent source is not up to date", async ()=> {
-        let {pk,g,target,source,makeTarget,rule,build} = simple();
+        let {pk,g,target,dep,source,makeTarget,rule,build} = simple();
         answers(pk,{
             [target.key]: [false,nil],
             [source.key]: [false,nil]
         });
-        expect(await build.isUpToDate(rule)).to.be.false;
+        const targetDep = new Dependency(target);
+        expect(await build.isUpToDate(build.getJobFor(targetDep))).to.be.false;
     });
 
     it("fails with minimally useful error message if source not found", async()=> {

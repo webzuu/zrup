@@ -32,7 +32,7 @@ export default class Job {
     async start() {
         try {
             await Promise.all(this.rule.dependencies.map(dep => this.build.getJobFor(dep).run()));
-            if(!(await this.build.isUpToDate(this.rule))) {
+            if(!(await this.build.isUpToDate(this))) {
                 this.recipeInvoked=true;
                 await this.rule.recipe.executeFor(this);
                 await this.build.recordVersionInfo(this);

@@ -120,12 +120,17 @@ export default class Build {
 
     /**
      *
-     * @param {Rule} rule
+     * @param {Job} job
      * @return {Promise<boolean>}
      */
-    async isUpToDate(rule)
+    async isUpToDate(job)
     {
+        const rule = job.rule;
         if (rule instanceof SourceRule) return false;
+        const allOutputsExist =
+            (await Promise.all(rule.outputs.map(artifact => (async () => await artifact.exists)())))
+                .reduce((previous, current) => previous && current, true);
+        if (!allOutputsExist) return false;
         const [recordedSourceVersionsByOutput, actualSourceVersions] =
             await Promise.all([
                 Promise.all(rule.outputs.map(this.getRecordedVersionInfo.bind(this))),
