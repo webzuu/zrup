@@ -85,6 +85,23 @@ describe('Db', () => {
         expect(await t.db.has('B')).to.be.true;
     });
 
+    it('retracts rules', async() => {
+        const ruleKey1 = 'whatever';
+        const ruleKey2 = 'cool';
+        await t.db.record('A','B',ruleKey1,'C','D');
+        await t.db.record('E','F',ruleKey1,'C','D');
+        await t.db.record('A','B',ruleKey1,'G','H');
+        await t.db.record('E','F',ruleKey1,'G','G');
+        await t.db.record('U','V',ruleKey2,'X','Y');
+        expect(await t.db.has('A')).to.be.true;
+        expect(await t.db.has('E')).to.be.true;
+        expect(await t.db.has('U')).to.be.true;
+        await t.db.retractRule(ruleKey1);
+        expect(await t.db.has('A')).to.be.false;
+        expect(await t.db.has('E')).to.be.false;
+        expect(await t.db.has('U')).to.be.true;
+    });
+
     it("does not throw if artifact not found", async () => {
         const result = await t.db.getArtifact("foo");
         expect(result).to.be.null;

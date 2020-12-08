@@ -64,6 +64,8 @@ async function prepareStatements(db)
             'DELETE FROM states WHERE target = @target AND target_version = @version',
         retractTarget:
             'DELETE FROM states WHERE target = @target',
+        retractRule:
+            'DELETE FROM states WHERE rule = @rule',
         recordArtifact:
             'INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)'
             + ' VALUES (@key, @type, @identity)',
@@ -178,6 +180,12 @@ export default class Db {
     {
         return (await (await this.stmt).retractTarget.run({
             '@target': targetId
+        }));
+    }
+    async retractRule(ruleKey)
+    {
+        return (await (await this.stmt).retractRule.run({
+            '@rule': ruleKey
         }));
     }
     async recordArtifact(key, type, identity)
