@@ -21,9 +21,14 @@ export default class Rule {
         /** @type {Recipe} */
         this.recipe = recipe;
         /** @type {string|null} */
-        this.key = null;
+        this.identity = null;
         builderCallback(this, graph, recipe);
         graph.addRule(this);
+    }
+
+    get key()
+    {
+        return null===this.identity ? null : md5(JSON.stringify(`rule ${this.identity}`));
     }
 }
 
@@ -38,7 +43,7 @@ export class SourceRule extends Rule
     {
         super(graph, sourceRecipe, me => {
             me.outputs.push(sourceArtifact);
-            me.key = md5(`source rule for ${sourceArtifact.key}`);
+            me.identity = `source(${sourceArtifact.key})`;
         });
     }
 }

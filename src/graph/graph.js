@@ -23,8 +23,8 @@ export default class Graph
      */
     addRule(rule)
     {
+        if (!rule.identity) rule.identity = `${this.rule_seq++}`;
         if (rule.key in this.index.rule.key) return;
-        if (!rule.key) rule.key = md5(`rule ${this.rule_seq++}`);
         uniqueAdd(this.index.rule.key, rule.key, rule);
         this.indexRule(rule);
     }
