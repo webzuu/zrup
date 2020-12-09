@@ -1,7 +1,7 @@
 import chai from "chai";
 import asserttype from 'chai-asserttype';
-import MockArtifact from "@zrup/graph/artifact/mock";
-import PromiseKeeper from "@zrup/util/promise-keeper";
+import {MockArtifact} from "@zrup/graph/artifact/mock";
+import {PromiseKeeper} from "@zrup/util/promise-keeper";
 import path from "path";
 chai.use(asserttype);
 const expect = chai.expect;

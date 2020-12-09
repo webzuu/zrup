@@ -20,7 +20,7 @@
     "sqlite3": "^5.0.0"
   },
   "_moduleAliases": {
-    "@zrup": "src",
+    "@zrup": "lib",
     "@test": "test/lib"
   },
   "devDependencies": {
@@ -32,5 +32,8 @@
   },
   "scripts": {
     "test": "mocha"
+  },
+  "exports": {
+    "./build": "./lib/submo"
   }
 }

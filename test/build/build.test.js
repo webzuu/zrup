@@ -7,7 +7,7 @@ const expect = chai.expect;
 
 import path from "path";
 
-import MockArtifact from "@zrup/graph/artifact/mock";
+import {MockArtifact} from "@zrup/graph/artifact/mock";
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -15,14 +15,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 import { DbTesting } from "@zrup/util/testing";
-import Graph from "@zrup/graph/graph";
-import PromiseKeeper from "@zrup/util/promise-keeper";
-import Recipe from "@zrup/build/recipe";
+import {Graph} from "@zrup/graph";
+import {PromiseKeeper} from "@zrup/util/promise-keeper";
+import {Recipe} from "@zrup/build/recipe";
 import md5 from "md5";
-import Rule, {SourceRule} from "@zrup/graph/rule";
-import Build from "@zrup/build/build";
-import BuildError from "@zrup/build/error";
-import Dependency from "@zrup/graph/dependency";
+import {Rule, SourceRule} from "@zrup/graph/rule";
+import {Build} from "@zrup/build";
+import {BuildError} from "@zrup/build/error";
+import {Dependency} from "@zrup/graph/dependency";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 

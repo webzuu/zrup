@@ -10,9 +10,8 @@ const alias = {};
 for (const key of Object.getOwnPropertyNames(moduleAliases)) {
     alias[key] = path.resolve(__dirname, moduleAliases[key]);
 }
-
 module.exports = {
     resolve: {
         alias
-    },
+    }
 };

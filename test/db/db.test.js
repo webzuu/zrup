@@ -4,7 +4,7 @@ import chai from "chai";
 import asserttype from 'chai-asserttype';
 chai.use(asserttype);
 const expect = chai.expect;
-import Db from "@zrup/db/db";
+import {Db} from "@zrup/db";
 import path from "path";
 
 import { fileURLToPath } from 'url';
@@ -32,20 +32,23 @@ describe('Db', () => {
     t.setup();
 
     it('records dependencies', async() => {
+        const ruleKey='whatever';
         expect(await t.db.has('A')).to.be.false;
-        await t.db.record('A','B','C','D');
+        await t.db.record('A','B',ruleKey,'C','D');
         expect(await t.db.has('A')).to.be.true;
     });
 
     it('persists dependencies', async() => {
-        await t.db.record('A','B','C','D');
+        const ruleKey='whatever';
+        await t.db.record('A','B',ruleKey,'C','D');
         await t.closeDb(); await t.openDb();
         expect(await t.db.has('A')).to.be.true;
     });
 
     it('lists versions', async() => {
-        await t.db.record('A','B','X','Y');
-        await t.db.record('A','C','X','Z');
+        const ruleKey='whatever';
+        await t.db.record('A','B',ruleKey,'X','Y');
+        await t.db.record('A','C',ruleKey,'X','Z');
         const answer = await t.db.listVersions('A');
         expect(answer).to.be.array();
         expect(answer.map(_ => _.version).sort()).to.deep.equal(['B','C']);
