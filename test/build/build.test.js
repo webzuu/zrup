@@ -147,7 +147,7 @@ describe("Build", () => {
 
     it("gets build job for target", async () => {
         const {pk,g,target,source,makeTarget,rule,build} = simple();
-        const job = build.getJobForGoal(target);
+        const job = build.getJobForArtifact(target);
         expect(job).to.be.object();
         expect(job.build).to.equal(build);
         expect(job.rule).to.equal(rule);
@@ -159,7 +159,7 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobForGoal(target);
+        const job = build.getJobForArtifact(target);
         await job.run();
         expect(await target.exists).to.be.true;
         expect(await target.version).to.not.be.null;
@@ -171,7 +171,7 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobForGoal(target);
+        const job = build.getJobForArtifact(target);
         await job.run();
         expect(job.finished).to.be.true;
         expect(job.recipeInvoked).to.be.true;
@@ -186,12 +186,12 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobForGoal(target);
+        const job = build.getJobForArtifact(target);
         await job.run();
         expect(job.finished).to.be.true;
         expect(await build.isUpToDate(job)).to.be.true;
         build = new Build(g,build.db);
-        const job2 = build.getJobForGoal(target);
+        const job2 = build.getJobForArtifact(target);
         await job2.run();
         expect(job2.finished).to.be.true;
         expect(job2.recipeInvoked).to.be.false;
@@ -203,7 +203,7 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobForGoal(target);
+        const job = build.getJobForArtifact(target);
         await job.run();
         expect(job.finished).to.be.true;
         expect(await build.isUpToDate(job)).to.be.true;
@@ -211,7 +211,7 @@ describe("Build", () => {
         answers(pk,{[source.key]: [nil,"123456"]});
         expect(await build.isUpToDate(job)).to.be.false;
         build = new Build(g,build.db);
-        const job2 = build.getJobForGoal(target);
+        const job2 = build.getJobForArtifact(target);
         await job2.run();
         expect(job2.finished).to.be.true;
         expect(job2.recipeInvoked).to.be.true;
@@ -266,7 +266,7 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [false,nil]
         })
-        const job = build.getJobForGoal(target);
+        const job = build.getJobForArtifact(target);
         let err = null;
         try {
             await job.run();
@@ -286,6 +286,22 @@ describe("Build", () => {
             "because source(s) not found:\n" +
             "\tfile obey/w.nginx.php");
     });
-
     
+    it("records version info along with artifacts", async () => {
+        let {pk,g,target,source,makeTarget,rule,build} = simple();
+        answers(pk,{
+            [target.key]: [false,nil],
+            [source.key]: [true,"123456"]
+        });
+        const job = build.getJobForArtifact(target);
+        await job.run();
+        let targetInfo = await build.db.getArtifact(target.key);
+        expect(targetInfo.key).to.equal(target.key);
+        expect(targetInfo.type).to.equal(target.type);
+        expect(targetInfo.identity).to.equal(target.identity);
+        let sourceInfo = await build.db.getArtifact(source.key);
+        expect(sourceInfo.key).to.equal(source.key);
+        expect(sourceInfo.type).to.equal(source.type);
+        expect(sourceInfo.identity).to.equal(source.identity);
+    });
 });

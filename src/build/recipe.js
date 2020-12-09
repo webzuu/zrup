@@ -15,7 +15,8 @@ export class SourceRecipe extends Recipe
 {
     async executeFor(job)
     {
-        const existences = await Promise.all(job.rule.outputs.map(_ => _.exists));
+        const existencePromises = job.rule.outputs.map(_ => _.exists);
+        const existences = await Promise.all(existencePromises);
         let notFound = [];
         for(let i=0; i<existences.length; ++i) if (!existences[i]) notFound.push(job.rule.outputs[i].label);
         if (notFound.length) {

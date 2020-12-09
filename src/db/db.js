@@ -196,6 +196,11 @@ export default class Db {
             '@identity': identity
         }));
     }
+
+    /**
+     * @param key
+     * @return {Promise<object|null>}
+     */
     async getArtifact(key)
     {
         return (await (await this.stmt).getArtifact.get({

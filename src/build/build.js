@@ -40,7 +40,7 @@ export default class Build {
      * @param {Artifact} artifact
      * @return {Job}
      */
-    getJobForGoal(artifact)
+    getJobForArtifact(artifact)
     {
         const ruleKey = this.graph.index.output.rule.get(artifact.key);
         return this.getJobForRule(ruleKey);
@@ -93,8 +93,11 @@ export default class Build {
     {
         await Promise.all(job.outputs.map(target => (async () => {
             await this.db.retractTarget(target.key);
+            await this.db.recordArtifact(target.key, target.type, target.identity);
+            const targetVersion = await target.version;
             await Promise.all(job.dependencies.map(dep => (async () => {
-                await this.db.record(target.key, await target.version, job.rule.key, dep.artifact.key, await dep.artifact.version);
+                await this.db.recordArtifact(dep.artifact.key, dep.artifact.type, dep.artifact.identity);
+                await this.db.record(target.key, targetVersion, job.rule.key, dep.artifact.key, await dep.artifact.version);
             })()));
         })()));
     }

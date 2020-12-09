@@ -115,7 +115,7 @@ describe('Db', () => {
         expect(result.identity).to.equal("foo.c");
     });
 
-    it("does not record artifacts conflicting with already recorded ones", async() => {
+    it("does not overwrite recorded artifacts", async() => {
         await t.db.recordArtifact("foo","file","foo.c");
         await t.db.recordArtifact("wrong","file","foo.c");
         const foo = await t.db.getArtifact("foo");
