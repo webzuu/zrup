@@ -34,6 +34,6 @@
     "test": "mocha"
   },
   "exports": {
-    "./build": "./lib/submo"
+    "./*": "./lib/*.js"
   }
 }
