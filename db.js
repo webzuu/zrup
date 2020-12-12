@@ -82,6 +82,7 @@ async function prepareStatements(db)
     }));
     return statements;
 }
+
 export class Db {
     #db;
     #stmt;
