@@ -1,4 +1,4 @@
-import {BuildError} from "./error.js";
+import {BuildError} from "./error";
 
 export class Recipe
 {
@@ -22,5 +22,13 @@ export class SourceRecipe extends Recipe
         if (notFound.length) {
             throw new BuildError(`source(s) not found:\n\t${notFound.join("\n\t")}`);
         }
+    }
+}
+
+export class NopRecipe extends Recipe
+{
+    async executeFor(job)
+    {
+        //well, this is a NOP
     }
 }

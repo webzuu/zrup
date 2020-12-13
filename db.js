@@ -28,6 +28,8 @@ async function ensureSchema(db)
         )`
     );
     await db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS target_version_source ON states(target, target_version, source)`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS source ON states(source)`)
+    await db.exec(`CREATE INDEX IF NOT EXISTS target ON states(target)`)
     await db.exec(`CREATE INDEX IF NOT EXISTS rule ON states(rule)`);
     await db.exec(
         `CREATE TABLE IF NOT EXISTS artifacts (
@@ -37,6 +39,17 @@ async function ensureSchema(db)
         )`
     );
     await db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS artifact_type_identity ON artifacts(artifact_type, identity)`);
+    await db.exec(
+        'CREATE TRIGGER IF NOT EXISTS multiple_generating_rules_check ' +
+        'BEFORE INSERT ON states ' +
+        'BEGIN\n' +
+        '    SELECT RAISE(FAIL, "only one rule can create a particular version of a target")\n' +
+        '    FROM states\n' +
+        '    WHERE target = NEW.target\n' +
+        '        AND target_version = NEW.target_version\n' +
+        '        AND rule != NEW.rule;\n' +
+        'END\n'
+    );
 }
 
 /**
@@ -66,6 +79,20 @@ async function prepareStatements(db)
             'DELETE FROM states WHERE target = @target',
         retractRule:
             'DELETE FROM states WHERE rule = @rule',
+        listRuleSources:
+            'SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity' +
+            ' FROM states' +
+            ' INNER JOIN artifacts' +
+            ' ON artifacts.key = states.source' +
+            ' WHERE states.rule = @rule',
+        listRuleTargets:
+            'SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity' +
+            ' FROM states' +
+            ' INNER JOIN artifacts' +
+            ' ON artifacts.key = states.target' +
+            ' WHERE states.rule = @rule',
+        getProducingRule:
+            `SELECT DISTINCT rule FROM states WHERE target=@target AND target_version=@version`,
         recordArtifact:
             'INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)'
             + ' VALUES (@key, @type, @identity)',
@@ -188,6 +215,47 @@ export class Db {
             '@rule': ruleKey
         }));
     }
+
+    /**
+     * @param {string} ruleKey
+     * @return {Promise<object[]>}
+     */
+    async listRuleSources(ruleKey)
+    {
+        return (await (await this.stmt).listRuleSources.all({
+            '@rule': ruleKey
+        }));
+    }
+
+    /**
+     * @param {string} ruleKey
+     * @return {Promise<object[]>}
+     */
+    async listRuleTargets(ruleKey)
+    {
+        return (await (await this.stmt).listRuleTargets.all({
+            '@rule': ruleKey
+        }));
+    }
+
+    /**
+     *
+     * @param {string} target
+     * @param {string} version
+     * @return {Promise<string|null>}
+     */
+    async getProducingRule(target, version)
+    {
+        /**
+         * @type {object|null}
+         */
+        const result = (await (await this.stmt).getProducingRule.get({
+            '@target': target,
+            '@version': version
+        }));
+        return result && result.rule;
+    }
+
     async recordArtifact(key, type, identity)
     {
         return (await (await this.stmt).recordArtifact.run({
@@ -199,7 +267,7 @@ export class Db {
 
     /**
      * @param key
-     * @return {Promise<object|null>}
+     * @return {Promise<Db~ArtifactRecord|null>}
      */
     async getArtifact(key)
     {
@@ -236,3 +304,10 @@ export class Db {
         this.#db = null;
     }
 }
+
+/**
+ * @typedef {Object} Db~ArtifactRecord
+ * @property {string} key
+ * @property {string} type
+ * @property {string} identity
+ */

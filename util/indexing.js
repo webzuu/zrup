@@ -1,3 +1,5 @@
+import inspect from "inspect";
+
 /**
  *
  * @param {Map} map

@@ -1,7 +1,7 @@
 import chai from "chai";
 import asserttype from 'chai-asserttype';
-import {MockArtifact} from "@zrup/graph/artifact/mock";
-import {PromiseKeeper} from "@zrup/util/promise-keeper";
+import {MockArtifact} from "../../../graph/artifact/mock";
+import {PromiseKeeper} from "../../../util/promise-keeper";
 import path from "path";
 chai.use(asserttype);
 const expect = chai.expect;
@@ -12,7 +12,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import {DbTesting} from "@zrup/util/testing";
+import {DbTesting} from "../../../util/testing";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 
@@ -32,7 +32,7 @@ describe("Mock artifact", () => {
         const o = new MockArtifact(pk, "file", "foo");
         (pk.about("foo","exists").resolve)(true);
         setTimeout(() => { (pk.about(o.key,"contents").resolve)("XOO"); },200);
-        const X = await o.contents;
+        const X = await o.getContents();
         expect(X).to.equal("XOO");
     });
 });

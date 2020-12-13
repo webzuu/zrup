@@ -3,8 +3,9 @@ const fsp = fs.promises;
 import chai from "chai";
 import asserttype from 'chai-asserttype';
 chai.use(asserttype);
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
 const expect = chai.expect;
-import {Db} from "@zrup/db";
 import path from "path";
 
 import { fileURLToPath } from 'url';
@@ -12,10 +13,9 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import { DbTesting } from "@zrup/util/testing";
+import {DbTesting, TempDir} from "../../util/testing";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
-
 
 describe('Db async accessors', () => {
 
@@ -158,4 +158,63 @@ describe('Db', () => {
         expect(await t.db.getArtifact("gee")).to.be.null;
         expect(await t.db.getArtifact("foo")).to.be.object;
     });
+
+    it("lists rule sources", async() => {
+        const ruleKey = 'whatever';
+        await t.db.record("O","0",ruleKey,"FOO","1");
+        await t.db.record("O","0",ruleKey,"BAR","2");
+        await t.db.record("I","3",ruleKey,"FOO","1");
+        await t.db.record("I","3",ruleKey,"BAR","2");
+        await t.db.recordArtifact("O","file","module.o");
+        await t.db.recordArtifact("I","file","module.i");
+        await t.db.recordArtifact("FOO","file","foo.c");
+        await t.db.recordArtifact("BAR","file","bar.c");
+        /** @type {object[]} */
+        const sources = await t.db.listRuleSources(ruleKey);
+        expect(sources).to.be.array();
+        expect(sources.length).to.equal(2);
+        sources.sort((a, b) => a.key.localeCompare(b.key));
+        expect(sources[0].key).to.equal("BAR");
+        expect(sources[1].key).to.equal("FOO");
+    });
+
+    it("lists rule targets", async() => {
+        const ruleKey = 'whatever';
+        await t.db.record("O","0",ruleKey,"FOO","1");
+        await t.db.record("O","0",ruleKey,"BAR","2");
+        await t.db.record("I","3",ruleKey,"FOO","1");
+        await t.db.record("I","3",ruleKey,"BAR","2");
+        await t.db.recordArtifact("O","file","module.o");
+        await t.db.recordArtifact("I","file","module.i");
+        await t.db.recordArtifact("FOO","file","foo.c");
+        await t.db.recordArtifact("BAR","file","bar.c");
+        /** @type {object[]} */
+        const targets = await t.db.listRuleTargets(ruleKey);
+        expect(targets).to.be.array();
+        expect(targets.length).to.equal(2);
+        targets.sort((a, b) => a.key.localeCompare(b.key));
+        expect(targets[0].key).to.equal("I");
+        expect(targets[1].key).to.equal("O");
+    });
+
+    it("gets target's producing rule", async() => {
+        const ruleKey = 'whatever';
+        await t.db.record("T","0",ruleKey,"FOO","1");
+        expect(await t.db.getProducingRule("T","0")).to.equal("whatever");
+    });
+
+    it("allows different producing rules for different target versions", async () =>{
+        await t.db.record("T","0","zeroth","FOO","1");
+        await t.db.record("T","0","zeroth","BAR","2");
+        await t.db.record("T","1","first","FOO","1");
+        await t.db.record("T","1","first","BAR","3");
+        expect(await t.db.getProducingRule("T","0")).to.equal("zeroth");
+        expect(await t.db.getProducingRule("T","1")).to.equal("first");
+    });
+
+    it("disallows different producing rules for same target version", async () => {
+        await t.db.record("T","0","zeroth","FOO","1");
+        await expect(t.db.record("T","0","first","BAR","2")).to.be.rejectedWith(Error);
+    });
+
 });

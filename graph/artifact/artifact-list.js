@@ -1,4 +1,4 @@
-import {Artifact} from "@zrup/graph/artifact";
+import {Artifact} from "../artifact";
 import md5 from "md5";
 
 export class ArtifactList extends Artifact

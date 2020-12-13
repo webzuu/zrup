@@ -1,7 +1,23 @@
+/**
+ * @typedef {Object} PromiseKeeper~Descriptor
+ * @property {string} key
+ * @property {string} topic
+ * @property {Function} resolve
+ * @property {Function} reject
+ * @property {Promise<*>} promise
+ * @property {boolean} done
+ * @property {Error|null} error
+ */
+
 export class PromiseKeeper {
 
     #descriptors = {};
 
+    /**
+     * @param key
+     * @param topic
+     * @return {PromiseKeeper~Descriptor}
+     */
     about(key, topic)
     {
         return this.#retrieve(key, topic) || this.#make(key, topic);
@@ -15,6 +31,20 @@ export class PromiseKeeper {
         return this;
     }
 
+    init(key, topic, value)
+    {
+        const descriptor = this.about(key, topic);
+        if (!descriptor.done) {
+            descriptor[value instanceof Error ? 'reject' : 'resolve'].call(null,value);
+        }
+    }
+
+    set(key, topic, value)
+    {
+        this.forget(key, topic);
+        this.init(key, topic, value);
+    }
+
     #retrieve(key, topic)
     {
         if(!(key in this.#descriptors)) return null;
@@ -22,6 +52,11 @@ export class PromiseKeeper {
         return this.#descriptors[key][topic];
     }
 
+    /**
+     * @param {string} key
+     * @param {string} topic
+     * @return {PromiseKeeper~Descriptor}
+     */
     #make(key, topic) {
         const descriptor = {
             key,
@@ -29,11 +64,20 @@ export class PromiseKeeper {
             resolve: null,
             reject: null,
             promise: null,
+            done: false,
+            error: null
         };
-        descriptor.promise = new Promise((resolve, reject) => {
-            descriptor.resolve = resolve;
-            descriptor.reject = reject;
-        });
+        descriptor.promise = new Promise(
+            /**
+             * @param {Function} resolve
+             * @param {Function} reject
+             */
+            (resolve, reject) => {
+                descriptor.resolve = resolve;
+                descriptor.reject = reject;
+            }
+        );
+        descriptor.promise.then(v => { descriptor.done = true; return v; }).catch(e => { descriptor.error=e; throw e; });
         this.#store(descriptor);
         return descriptor;
     }

@@ -7,24 +7,27 @@ const expect = chai.expect;
 
 import path from "path";
 
-import {MockArtifact} from "@zrup/graph/artifact/mock";
+import {MockFileFactory} from "../../graph/artifact/mock";
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import { DbTesting } from "@zrup/util/testing";
-import {Graph} from "@zrup/graph";
-import {PromiseKeeper} from "@zrup/util/promise-keeper";
-import {Recipe} from "@zrup/build/recipe";
+import { DbTesting } from "../../util/testing";
+import { Graph } from "../../graph";
+import { PromiseKeeper } from "../../util/promise-keeper";
+import { Recipe } from "../../build/recipe";
 import md5 from "md5";
-import {Rule, SourceRule} from "@zrup/graph/rule";
-import {Build} from "@zrup/build";
-import {BuildError} from "@zrup/build/error";
-import {Dependency} from "@zrup/graph/dependency";
+import {Rule} from "../../graph/rule";
+import { Build } from "../../build";
+import { BuildError } from "../../build/error";
+import { Dependency } from "../../graph/dependency";
+import {Project} from "../../project";
+import {Artifact, ArtifactManager} from "../../graph/artifact";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
+
 
 class MakeItExistRecipe extends Recipe
 {
@@ -37,28 +40,19 @@ class MakeItExistRecipe extends Recipe
 
     async executeFor(job) {
         const onlyTarget = job.outputs[0];
+        const key = onlyTarget.key;
         const sourceVersions = await Promise.all(
             job.dependencies.map(
-                dep => (async () => ({
-                    /**
-                     * @type {string}
-                     */
-                    key: dep.key,
-                    /**
-                     * @type {string}
-                     */
-                    version: await dep.version
-                }))()
+                dep => (async () => [
+                    ["key", dep.key],
+                    ["version", await dep.version]
+                ])()
             )
         );
-        sourceVersions.sort(
-            (lhs,rhs) => lhs.key.localeCompare(rhs.key)
-        );
+        sourceVersions.sort((lhs,rhs) => lhs[0][1].localeCompare(rhs[0][1]));
         const hash = md5(JSON.stringify(sourceVersions));
-        this.#pk.forget(onlyTarget.key,"exists");
-        (this.#pk.about(onlyTarget.key,"exists").resolve)(true);
-        this.#pk.forget(onlyTarget.key,"version");
-        (this.#pk.about(onlyTarget.key,"version").resolve)(hash);
+        this.#pk.set(key, "exists",  true);
+        this.#pk.set(key, "version", hash);
     }
 }
 
@@ -66,29 +60,37 @@ function simple()
 {
     const pk = new PromiseKeeper();
     const g = new Graph();
-    const target = new MockArtifact(pk,"file","w.nginx");
-    const source = new MockArtifact(pk,"file","obey/w.nginx.php");
     const makeTarget = new MakeItExistRecipe(pk);
-    const dep = new Dependency(source);
-    const rule = new Rule(g, makeTarget, me => {
-        me.outputs.push(target);
-        me.dependencies.push(dep);
-    });
-    const build = new Build(g, t.db);
-    return {pk,g,target,dep,source,makeTarget,rule,build};
+    const prj = new Project(t.tmpDir.toString());
+    const manager = new ArtifactManager();
+    new MockFileFactory(manager, prj, pk);
+    const target = manager.get('file:w.nginx');
+    const source = manager.get('file:obey/w.nginx.php');
+    const rule = new Rule(prj.rootModule, "w.nginx");
+    rule.addDependency(source);
+    rule.addOutput(target);
+    rule.recipe = makeTarget;
+    g.addRule(rule);
+    const build = new Build(g, t.db, manager);
+    return {pk,g,target,source,makeTarget,rule,build,prj,manager};
 }
 
 const nil = {}
 /**
  *
  * @param {PromiseKeeper} pk
- * @param {object} answers
+ * @param {Object.<string, *>} answers
  */
 function answers(pk, answers)
 {
-    for(let answer in answers) {
-        if(nil !== answers[answer][0]) (pk.about(answer,"exists").resolve)(answers[answer][0]);
-        if(nil !== answers[answer][1]) (pk.about(answer,"version").resolve)(answers[answer][1]);
+    for(let key of Object.keys(answers)) {
+        if(nil !== answers[key][0]) pk.set(key,"exists",answers[key][0]);
+        if (false === answers[key][0]) {
+            pk.set(key,"version",Artifact.NONEXISTENT_VERSION)
+        }
+        else if(nil !== answers[key][1]) {
+            pk.set(key, "version", answers[key][1]);
+        }
     }
 }
 
@@ -96,11 +98,9 @@ describe("Build", () => {
 
     t.setup();
 
-    it("gets empty recorded version info artifact doesn't exist", async () => {
+    it("gets empty recorded version info if artifact doesn't exist", async () => {
+        // noinspection JSUnusedLocalSymbols
         const {pk,g,target,source,makeTarget,rule,build} = simple();
-        answers(pk,{
-            [target.key]: [false,nil]
-        });
         (pk.about(target.key,"exists").resolve)(false);
         const versionInfo = await build.getRecordedVersionInfo(target);
         expect(versionInfo).to.be.object();
@@ -110,6 +110,7 @@ describe("Build", () => {
     });
 
     it("gets empty recorded version if artifact was never built", async () => {
+        // noinspection JSUnusedLocalSymbols
         const {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
             [target.key]: [true,"142857"]
@@ -122,6 +123,7 @@ describe("Build", () => {
     });
 
     it("gets recorded version after it was explicitly stored", async () => {
+        // noinspection JSUnusedLocalSymbols
         const {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
             [source.key]: [true,"142857"],
@@ -136,6 +138,7 @@ describe("Build", () => {
     });
 
     it("gets actual version info when all involved artifacts exist", async() => {
+        // noinspection JSUnusedLocalSymbols
         const {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
             [source.key]: [true,"142857"],
@@ -146,129 +149,117 @@ describe("Build", () => {
     });
 
     it("gets build job for target", async () => {
+        // noinspection JSUnusedLocalSymbols
         const {pk,g,target,source,makeTarget,rule,build} = simple();
-        const job = build.getJobForArtifact(target);
+        const job = await build.getJobForArtifact(target);
         expect(job).to.be.object();
         expect(job.build).to.equal(build);
         expect(job.rule).to.equal(rule);
     });
 
     it("builds a simple target", async () => {
+        // noinspection JSUnusedLocalSymbols
         const {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
-            [target.key]: [false,nil],
+            [target.key]: [false],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobForArtifact(target);
+        const job = await build.getJobForArtifact(target);
         await job.run();
         expect(await target.exists).to.be.true;
         expect(await target.version).to.not.be.null;
     });
 
     it("reports freshly built target as up to date", async () => {
+        // noinspection JSUnusedLocalSymbols
         const {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
-            [target.key]: [false,nil],
+            [target.key]: [false],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobForArtifact(target);
+        const job = await build.getJobForArtifact(target);
         await job.run();
         expect(job.finished).to.be.true;
         expect(job.recipeInvoked).to.be.true;
-        const build2 = new Build(g, build.db);
-        const isUpToDate = await build2.isUpToDate(job)
+        const build2 = new Build(g, build.db,build.artifactManager);
+        const job2 = await build2.getJobForArtifact(target);
+        const isUpToDate = await build2.isUpToDate(job2)
         expect(isUpToDate).to.be.true;
     });
 
     it("does not rebuild an up-to-date target", async () => {
+        // noinspection JSUnusedLocalSymbols
         let {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
-            [target.key]: [false,nil],
+            [target.key]: [false],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobForArtifact(target);
+        const job = await build.getJobForArtifact(target);
         await job.run();
         expect(job.finished).to.be.true;
         expect(await build.isUpToDate(job)).to.be.true;
-        build = new Build(g,build.db);
-        const job2 = build.getJobForArtifact(target);
+        build = new Build(g,build.db,build.artifactManager);
+        const job2 = await build.getJobForArtifact(target);
         await job2.run();
         expect(job2.finished).to.be.true;
         expect(job2.recipeInvoked).to.be.false;
     });
 
     it("rebuilds target if a dependency changes", async () => {
+        // noinspection JSUnusedLocalSymbols
         let {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
-            [target.key]: [false,nil],
+            [target.key]: [false],
             [source.key]: [true,"857142"]
         })
-        const job = build.getJobForArtifact(target);
+        const job = await build.getJobForArtifact(target);
         await job.run();
         expect(job.finished).to.be.true;
         expect(await build.isUpToDate(job)).to.be.true;
         pk.forget(source.key,"version");
         answers(pk,{[source.key]: [nil,"123456"]});
         expect(await build.isUpToDate(job)).to.be.false;
-        build = new Build(g,build.db);
-        const job2 = build.getJobForArtifact(target);
+        build = new Build(g,build.db,build.artifactManager);
+        const job2 = await build.getJobForArtifact(target);
         await job2.run();
         expect(job2.finished).to.be.true;
         expect(job2.recipeInvoked).to.be.true;
     });
 
     it("gets actual version info for target with nonexistent source", async() => {
+        // noinspection JSUnusedLocalSymbols
         let {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
-            [target.key]: [false,nil],
-            [source.key]: [false,nil]
+            [target.key]: [false],
+            [source.key]: [false]
         });
         const versionInfo = await build.getActualVersionInfo(rule);
         expect(versionInfo).to.be.object();
     })
 
-    it("finds nonexistent source outdated", async ()=> {
+
+    it("reports nonexistent target from nonexistent source as not up to date", async ()=> {
+        // noinspection JSUnusedLocalSymbols
         let {pk,g,target,dep,source,makeTarget,rule,build} = simple();
         answers(pk,{
-            [target.key]: [false,nil],
-            [source.key]: [false,nil]
-        });
-        const job = build.getJobFor(dep);
-        expect(job.rule).to.be.instanceof(SourceRule);
-        expect(await build.isUpToDate(job)).to.be.false;
-    });
-
-    it("finds existent source outdated (to trigger existence check as a recipe)", async ()=> {
-        let {pk,g,target,dep,source,makeTarget,rule,build} = simple();
-        answers(pk,{
-            [target.key]: [false,nil],
-            [source.key]: [true,"123456"]
-        });
-        const job = build.getJobFor(dep);
-        expect(job.rule).to.be.instanceof(SourceRule);
-        expect(await build.isUpToDate(job)).to.be.false;
-    });
-
-
-    it("nonexistent target from nonexistent source is not up to date", async ()=> {
-        let {pk,g,target,dep,source,makeTarget,rule,build} = simple();
-        answers(pk,{
-            [target.key]: [false,nil],
-            [source.key]: [false,nil]
+            [target.key]: [false],
+            [source.key]: [false]
         });
         const targetDep = new Dependency(target);
-        expect(await build.isUpToDate(build.getJobFor(targetDep))).to.be.false;
+        const job = await build.getJobFor(targetDep);
+        expect(await build.isUpToDate(job)).to.be.false;
     });
 
     it("fails with minimally useful error message if source not found", async()=> {
+        // noinspection JSUnusedLocalSymbols
         let {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
-            [target.key]: [false,nil],
-            [source.key]: [false,nil]
+            [target.key]: [false],
+            [source.key]: [false]
         })
-        const job = build.getJobForArtifact(target);
         let err = null;
         try {
+            const job = await build.getJobForArtifact(target);
             await job.run();
         }
         catch(e) {
@@ -281,24 +272,25 @@ describe("Build", () => {
          */
         const buildErr = err;
         const why = buildErr.getBuildTraceAsString();
-        expect(why).to.equal("file w.nginx failed to build\n" +
-            "because file obey/w.nginx.php failed to build\n" +
-            "because source(s) not found:\n" +
-            "\tfile obey/w.nginx.php");
+        expect(why).to.equal("Rule w.nginx failed to build\n"+
+            "because No rule to build required file:obey/w.nginx.php");
     });
     
     it("records version info along with artifacts", async () => {
+        // noinspection JSUnusedLocalSymbols
         let {pk,g,target,source,makeTarget,rule,build} = simple();
         answers(pk,{
             [target.key]: [false,nil],
             [source.key]: [true,"123456"]
         });
-        const job = build.getJobForArtifact(target);
+        const job = await build.getJobForArtifact(target);
         await job.run();
+        /** @type {Db~ArtifactRecord|null} */
         let targetInfo = await build.db.getArtifact(target.key);
         expect(targetInfo.key).to.equal(target.key);
         expect(targetInfo.type).to.equal(target.type);
         expect(targetInfo.identity).to.equal(target.identity);
+        /** @type {Db~ArtifactRecord|null} */
         let sourceInfo = await build.db.getArtifact(source.key);
         expect(sourceInfo.key).to.equal(source.key);
         expect(sourceInfo.type).to.equal(source.type);

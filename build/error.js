@@ -15,13 +15,41 @@ export class BuildError extends Error
 
     /**
      * @param {Rule} rule
+     * @param {Error} e
      */
-    static formatRuleFailure(rule)
+    static formatRuleFailure(rule, e)
     {
-        const firstTarget = rule.outputs[0];
-        let msg = `${firstTarget.label}`;
-        if (rule.outputs.length > 1) msg = msg + " (and more)";
-        msg = msg + " failed to build";
-        return msg;
+        return (
+            `Rule ${rule.label} failed to build`
+        )
+    }
+}
+
+export class TargetCollision extends Error
+{
+    artifact;
+    previousRule;
+    previousVersion;
+    offendingRule;
+    offendingVersion;
+    /**
+     *
+     * @param {Artifact} artifact
+     * @param {Rule} previousRule
+     * @param {string} previousVersion
+     * @param {Rule} offendingRule
+     * @param {string} offendingVersion
+     */
+    constructor(artifact, previousRule, previousVersion, offendingRule, offendingVersion)
+    {
+        super(
+            `Rule collision: ${offendingRule.label} produced ${artifact.label}` +
+            ` after it was already produced by ${previousRule.label}`
+        );
+        this.artifact = artifact;
+        this.previousRule = previousRule;
+        this.previousVersion = previousVersion;
+        this.offendingRule = offendingRule;
+        this.offendingVersion = offendingVersion;
     }
 }
