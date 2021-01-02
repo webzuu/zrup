@@ -6,6 +6,7 @@ const fsp = fs.promises;
 
 import {Db} from "../db";
 import {Project} from "../project";
+import {Module} from "../module";
 
 export class TempDir
 {
@@ -109,6 +110,7 @@ export class ModuleTesting
 
         beforeEach(async()=>{
             this.#project = new Project(path.join(this.tmpDir.toString(), '.zrup'));
+            Module.createRoot(this.#project,"root");
         });
         afterEach(async()=>{
             this.#project = null;

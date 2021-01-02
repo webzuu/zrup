@@ -18,6 +18,7 @@
 
 import {Module} from "../module";
 import {promises as fsp} from "fs";
+import * as path from "path";
 
 /**
  * @callback ModuleBuilder~includeNominator
@@ -53,14 +54,19 @@ export class ModuleBuilder
     }
 
     /**
-     * @param {Module} parentModule
+     * @param {Module|null} parentModule
      * @param {string} path
      * @param {string} name
      * @param {ModuleBuilder~definer} definer
      */
     async define(parentModule, path, name, definer)
     {
-        definer(this.#bindDefinerArgs(this.#project.addModule(new Module(parentModule, path, name))));
+        const moduleToBeDefined = (
+            parentModule
+                ? this.#project.addModule(new Module(parentModule, path, name))
+                : Module.createRoot(this.#project, name)
+        );
+        definer(this.#bindDefinerArgs(moduleToBeDefined));
     }
 
     /**
@@ -94,8 +100,14 @@ export class ModuleBuilder
      */
     async loadModule(parentModule, subpath)
     {
-        const definer = ModuleBuilder.#normalizeDefiner(await ModuleBuilder.#import(parentModule, subpath));
+        const definer = ModuleBuilder.#normalizeDefiner(await this.#import(this.#resolveModuleBase(parentModule, subpath)));
         await this.define(parentModule, definer.name, subpath, definer.definer);
+    }
+
+    async loadRootModule()
+    {
+        const definer = ModuleBuilder.#normalizeDefiner(await this.#import(this.#project.path));
+        await this.define(null, definer.name, this.#project.path, definer.definer);
     }
 
     /**
@@ -104,7 +116,11 @@ export class ModuleBuilder
      */
     static #normalizeDefiner(definerOrDescriptor)
     {
-        return "function"===typeof definerOrDescriptor ? ModuleBuilder.#describeDefiner(definerOrDescriptor) : definerOrDescriptor;
+        return (
+            "function"===typeof definerOrDescriptor
+                ? ModuleBuilder.#describeDefiner(definerOrDescriptor)
+                : definerOrDescriptor
+        );
     }
 
     /**
@@ -120,18 +136,22 @@ export class ModuleBuilder
     }
 
     /**
-     *
-     * @param {Module} parentModule
-     * @param subpath
+     * @param {string} containingDir
      * @return {Promise<ModuleBuilder~definer|ModuleBuilder~Descriptor>}
      */
-    static async #import(parentModule, subpath)
+    async #import(containingDir)
     {
-        const base = parentModule.resolve(subpath)+"/.zrup";
+        const base = path.join(containingDir, this.#getSpecFileBasename());
         for(let ext of ["mjs","cjs","js"]) {
             const candidate = `${base}.${ext}`;
             if (await fsp.exists(candidate)) return (await import(candidate)).default;
         }
-        throw new Error(`No zrup module definition file found in ${base}`);
+        throw new Error(`No zrup module definition file found in ${containingDir}`);
+    }
+
+    // noinspection JSMethodCanBeStatic
+    #getSpecFileBasename()
+    {
+        return ".zrup"; //TODO: make configurable
     }
 }

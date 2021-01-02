@@ -20,12 +20,14 @@ export class Project
     /** @type {Graph} */
     #graph;
 
+    /** @type {Module|null} */
+    #rootModule;
+
     /** @param {string} rootDirectory */
     constructor(rootDirectory)
     {
         this.#rootDirectory=rootDirectory;
         this.#graph = new Graph();
-        this.addModule(Module.createRoot(this));
     }
 
     get graph()
@@ -41,6 +43,7 @@ export class Project
         this.#index.module.name[module.name]
             = this.#index.module.path[fsPath.relative(this.path, module.resolve(""))]
             = module;
+        if (!this.#rootModule && !module.parent) this.#rootModule = module;
         return module;
     }
 
@@ -63,10 +66,10 @@ export class Project
         return this.#index.module.path[path] || null;
     }
 
-    /** @return {Module} */
+    /** @return {Module|null} */
     get rootModule()
     {
-        return this.getModuleByName("__ROOT__");
+        return this.#rootModule;
     }
 
     /** @return {string} */

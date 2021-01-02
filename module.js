@@ -64,11 +64,12 @@ export class Module
     /**
      *
      * @param {Project} project
+     * @param {string} name
      * @return {Module}
      */
-    static createRoot(project)
+    static createRoot(project, name)
     {
-        const rootModule = new Module(null, project.path, "__ROOT__");
+        const rootModule = new Module(null, project.path, name);
         rootModule.#project = project;
         project.addModule(rootModule);
         return rootModule;

@@ -35,7 +35,7 @@ describe("Module", () => {
         "path with type":               ["file:bar/baz.js", "%FOO%/bar/baz.js"],
         "path with module":             ["foo-module+bar/baz.js", "%FOO%/bar/baz.js"],
         "path with type and module":    ["file:foo-module+bar/baz.js", "%FOO%/bar/baz.js"],
-        "path with root module":        ["file:__ROOT__+foo/bar/baz.js","%FOO%/bar/baz.js"]
+        "path with root module":        ["file:root+foo/bar/baz.js","%FOO%/bar/baz.js"]
     }
 
     for(let caption in resolveCases) {

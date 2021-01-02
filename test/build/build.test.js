@@ -25,6 +25,7 @@ import { BuildError } from "../../build/error";
 import { Dependency } from "../../graph/dependency";
 import {Project} from "../../project";
 import {Artifact, ArtifactManager} from "../../graph/artifact";
+import {Module} from "../../module";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 
@@ -62,6 +63,7 @@ function simple()
     const g = new Graph();
     const makeTarget = new MakeItExistRecipe(pk);
     const prj = new Project(t.tmpDir.toString());
+    Module.createRoot(prj, "test");
     const manager = new ArtifactManager();
     new MockFileFactory(manager, prj, pk);
     const target = manager.get('file:w.nginx');
@@ -216,7 +218,6 @@ describe("Build", () => {
         await job.run();
         expect(job.finished).to.be.true;
         expect(await build.isUpToDate(job)).to.be.true;
-        pk.forget(source.key,"version");
         answers(pk,{[source.key]: [nil,"123456"]});
         expect(await build.isUpToDate(job)).to.be.false;
         build = new Build(g,build.db,build.artifactManager);
@@ -236,7 +237,6 @@ describe("Build", () => {
         const versionInfo = await build.getActualVersionInfo(rule);
         expect(versionInfo).to.be.object();
     })
-
 
     it("reports nonexistent target from nonexistent source as not up to date", async ()=> {
         // noinspection JSUnusedLocalSymbols

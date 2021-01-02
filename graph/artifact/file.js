@@ -78,8 +78,15 @@ export class FileArtifactFactory extends ArtifactFactory
             ? project.getModuleByName(aid.module)
             : project.rootModule
 
-        if (null===statedModule) {
-            throw new Error(`Undefined module "${aid.module || "__ROOT__"}"`);
+        if (!statedModule) {
+            if (aid.module) {
+                throw new Error(`Undefined module specified in AID "${aid}"`);
+            }
+            else {
+                throw new Error(
+                    `Cannot resolve module-less AID "${aid}" because no root module is defined for the project`
+                )
+            }
         }
         const path = statedModule.resolve(aid.ref);
         const closestModule = project.findClosestModule(path);

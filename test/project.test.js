@@ -29,18 +29,25 @@ describe("Project", () => {
         const rootDirectory = path.join(tmpDir.toString(), ".zrup");
         const prj = new Project(rootDirectory);
         expect(prj.path).to.equal(rootDirectory);
+    });
+
+    it("accepts root module", async () => {
+        const rootDirectory = path.join(tmpDir.toString(), ".zrup");
+        const prj = new Project(rootDirectory);
+        Module.createRoot(prj, "test");
         expect(prj.rootModule).to.be.instanceOf(Module);
-        expect(prj.rootModule.name).to.equal("__ROOT__");
+        expect(prj.rootModule.name).to.equal("test");
 
         const fooDir = path.join(rootDirectory,"foo");
         await mkdir(fooDir);
         const foo = new Module(prj.rootModule,"foo","foo");
         expect (foo.absolutePath).to.equal(fooDir);
-    });
+    })
 
     it("finds closest module", async() => {
         const root = path.join(tmpDir.toString(), ".zrup");
         const prj = new Project(root);
+        Module.createRoot(prj, "test")
         const foo = new Module(prj.rootModule, "foo", "foo-module");
         const bar = new Module(foo, "bar/baz", "bar-module");
         expect(prj.findClosestModule(path.join(root,"foo/bar/baz/deep/whatever.js"))).to.equal(bar);

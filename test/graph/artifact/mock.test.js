@@ -20,8 +20,8 @@ describe("Mock artifact", () => {
 
     it("returns version", async () => {
         const pk = new PromiseKeeper();
-        const o = new MockArtifact(pk, "file", "foo");
-        (pk.about("foo","exists").resolve)(true);
+        const o = new MockArtifact("file:foo", "file", pk);
+        pk.set(o.key,"exists",true);
         setTimeout(() => { (pk.about(o.key,"version").resolve)("X"); },200);
         const X = await o.version;
         expect(X).to.equal("X");
@@ -29,7 +29,8 @@ describe("Mock artifact", () => {
 
     it("returns content", async () => {
         const pk = new PromiseKeeper();
-        const o = new MockArtifact(pk, "file", "foo");
+        const o = new MockArtifact("file:foo", "file", pk);
+        pk.set(o.key,"exists",true);
         (pk.about("foo","exists").resolve)(true);
         setTimeout(() => { (pk.about(o.key,"contents").resolve)("XOO"); },200);
         const X = await o.getContents();
