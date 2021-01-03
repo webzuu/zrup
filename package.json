@@ -9,11 +9,11 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "inspect": "^0.0.2",
     "md5": "^2.3.0",
     "md5-file": "^5.0.0",
     "module-alias": "^2.2.2",
     "multimap": "^1.1.0",
+    "object-inspect": "^1.9.0",
     "rimraf": "^3.0.2",
     "rmfr": "^2.0.0",
     "simple-async-sleep": "^1.0.0",

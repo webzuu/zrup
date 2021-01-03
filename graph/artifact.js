@@ -81,6 +81,15 @@ export class ArtifactManager
         }
     };
 
+    /** @type {string} */
+    #defaultType = "file";
+
+    /** @param {string|undefined} [defaultType] */
+    constructor(defaultType)
+    {
+        this.#defaultType = defaultType || "file";
+    }
+
     /** @param {ArtifactFactory} factory */
     addFactory(factory)
     {
@@ -91,13 +100,13 @@ export class ArtifactManager
     }
 
     /**
-     * @param {string} type
+     * @param {string|null} type
      * @param {boolean|undefined} [require]
      * @return {ArtifactFactory|null}
      */
     getFactoryForType(type, require)
     {
-        const result = this.#index.factory.type[type] || null;
+        const result = this.#index.factory.type[type || this.#defaultType] || null;
         if (!result && true===require) {
             throw new Error(`No factory was registered for artifact type "${type}"`);
         }
@@ -199,7 +208,7 @@ export class ArtifactFactory
      */
     normalize(aid)
     {
-        return aid;
+        return aid.withType(this.type);
     }
 
     /**
@@ -220,14 +229,15 @@ export class ArtifactFactory
     makeFromNormalized(aid, ...extra)
     {
         const ctor = this.artifactConstructor;
-        return new ctor(aid, ...this.prependRequiredConstructorArgs(extra));
+        return new ctor(aid, ...this.prependRequiredConstructorArgs(aid, extra));
     }
 
     /**
+     * @param {Artifact~reference} ref
      * @param {*[] | undefined} extraArgs
      * @return {*[]}
      */
-    prependRequiredConstructorArgs(extraArgs)
+    prependRequiredConstructorArgs(ref, extraArgs)
     {
         return extraArgs || [];
     }
@@ -324,8 +334,9 @@ export class AID
     {
         const matches = (''+aid).match(/^(?:(?<type>[-a-z]+):)?(?:(?<module>[A-Za-z_][-0-9A-Za-z_]*)\+)?(?<ref>[/-_.0-9A-Za-z]*)$/);
         if (!matches) return false;
-        const undefined = (_=>_)();
-        return Object.assign({ type: undefined, module: undefined, ref: undefined }, matches.groups);
+        const result = {};
+        for(let key of ['type','module','ref']) if (undefined !== matches.groups[key]) result[key] = matches.groups[key];
+        return result;
     }
 }
 
@@ -335,8 +346,8 @@ export class AID
 
 /**
  * @typedef {Object} Artifact~descriptor
- * @property {string|undefined} type
- * @property {string|undefined} module
- * @property {string|undefined} ref
+ * @property {string|undefined} [type]
+ * @property {string|undefined} [module]
+ * @property {string|undefined} [ref]
  */
 

@@ -4,6 +4,7 @@ export class Recipe
 {
     /**
      * @param {Job} job
+     * @abstract
      */
     async executeFor(job)
     {

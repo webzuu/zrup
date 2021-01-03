@@ -10,7 +10,8 @@
  */
 
 /**
- * @typedef {Object} RuleBuilder~DefinerParams
+ * @typedef {Object.<string,*>} RuleBuilder~DefinerParams
+ * @property {Rule} rule
  * @property {RuleBuilder~artifactNominator} depends
  * @property {RuleBuilder~artifactNominator} produces
  * @property {RuleBuilder~ruleNominator} after
@@ -129,6 +130,7 @@ export class RuleBuilder
     #bindDefinerArgs(module, rule)
     {
         return {
+            rule,
             depends: this.depends.bind(this, module, rule),
             produces: this.produces.bind(this, module, rule),
             after: this.after.bind(this, module, rule)
@@ -144,7 +146,9 @@ export class RuleBuilder
     depends(module, rule, ...artifactRefs)
     {
         for (let ref of artifactRefs) {
-            rule.addDependency(this.#artifactManager.get(ref), Dependency.ABSENT_VIOLATION);
+            const artifact = this.#artifactManager.get(ref);
+            const whenAbsent = Dependency.ABSENT_VIOLATION;
+            rule.addDependency(artifact, whenAbsent);
         }
     }
 
@@ -181,7 +185,7 @@ export class RuleBuilder
             this.project.graph.indexRule(rule);
         }
         for(let ruleKey in this.#afterEdges) {
-            const dependentRule = this.project.graph.index.rule.key[ruleKey];
+            const dependentRule = this.project.graph.index.rule.key.get(ruleKey);
             if (!dependentRule) {
                 //TODO: throw something meaningful instead of ignoring silently, this shouldn't happen!
                 continue;
@@ -189,7 +193,6 @@ export class RuleBuilder
             for(let prerequisiteRuleRef of this.#afterEdges[ruleKey]) {
                 this.addPrerequisiteRule(dependentRule, prerequisiteRuleRef)
             }
-            dependentRule.after = dependentRule.after.unique().sort();
         }
     }
 
@@ -212,12 +215,13 @@ export class RuleBuilder
         );
         const resolvedRefString = AID.descriptorToString(parsedResolvedRef);
         const prerequisiteRuleKey = Rule.computeKey(resolvedRefString);
-        const prerequisiteRule = this.project.graph.index.rule.key[prerequisiteRuleKey];
+        const prerequisiteRule = this.project.graph.index.rule.key.get(prerequisiteRuleKey);
         if (!prerequisiteRule) {
             throw new Error(
                 `${resolvedRefString} required as prerequisite for ${dependentRule.identity} was not found in the graph`
             );
         }
-        dependentRule.after.push(prerequisiteRuleKey);
+        dependentRule.after[prerequisiteRuleKey]=prerequisiteRule;
     }
+
 }

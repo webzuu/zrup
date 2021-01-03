@@ -1,4 +1,4 @@
-import inspect from "inspect";
+import inspect from "object-inspect";
 
 /**
  *

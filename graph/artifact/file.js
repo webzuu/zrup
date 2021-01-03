@@ -1,7 +1,8 @@
-import {Artifact, ArtifactFactory} from "../artifact";
+import {AID, Artifact, ArtifactFactory} from "../artifact";
 import md5File from "md5-file";
 import fs from "fs";
 const fsp = fs.promises;
+import {Module} from "../../module";
 
 export class FileArtifact extends Artifact {
     #resolvedPath;
@@ -63,6 +64,10 @@ export class FileArtifactFactory extends ArtifactFactory
     /** @type {Project} */
     #project;
 
+    /**
+     * @param {ArtifactManager} manager
+     * @param {Project} project
+     */
     constructor(manager, project) {
         super(manager, FileArtifact);
         this.#project = project;
@@ -74,6 +79,24 @@ export class FileArtifactFactory extends ArtifactFactory
      * @return {AID}
      */
     static normalizeUsingProject(aid, project) {
+        const {statedModule, closestModule} = FileArtifactFactory.resolveModuleUsingProject(aid, project);
+        if (!closestModule) {
+            throw new Error(`Could not find module responsible for "${aid}"`);
+        }
+        if (closestModule !== statedModule) {
+            //TODO: warn about incorrect path
+            return aid.withModule(closestModule.name).withRef(closestModule.resolve(path));
+        }
+        return aid.withModule(closestModule.name);
+    }
+
+    /**
+     * @param {AID} aid
+     * @param {Project} project
+     * @return {{statedModule: Module, closestModule: (Module|null)}}
+     */
+    static resolveModuleUsingProject(aid, project)
+    {
         const statedModule = aid.module
             ? project.getModuleByName(aid.module)
             : project.rootModule
@@ -89,19 +112,25 @@ export class FileArtifactFactory extends ArtifactFactory
             }
         }
         const path = statedModule.resolve(aid.ref);
-        const closestModule = project.findClosestModule(path);
-        if (!closestModule) {
-            throw new Error(`Path "${path}" appears to be outside project root`);
-        }
-        if (closestModule !== statedModule) {
-            //TODO: warn about incorrect path
-            return aid.withModule(closestModule.name).withRef(closestModule.resolve(path));
-        }
-        return aid;
+        return {statedModule, closestModule: project.findClosestModule(path)};
     }
 
     normalize(aid)
     {
-        return FileArtifactFactory.normalizeUsingProject(aid, this.#project);
+        return FileArtifactFactory.normalizeUsingProject(super.normalize(aid), this.#project);
+    }
+
+
+    prependRequiredConstructorArgs(ref, extraArgs)
+    {
+        const {closestModule} = FileArtifactFactory.resolveModuleUsingProject(new AID(ref), this.#project);
+        return [
+            closestModule.resolve(new AID(ref).withModule(closestModule.name)),
+            ...extraArgs
+        ]
     }
 }
+
+/**
+ * @typedef {(Module|null)} FileArtifactFactory~ModuleOpt
+ */

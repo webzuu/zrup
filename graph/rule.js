@@ -72,6 +72,9 @@ export class Rule {
     /** @param {Recipe|null} recipe */
     set recipe(recipe)
     {
+        if (this.#recipe) {
+            throw new Error(`Attempt to ${recipe ? "reassign" : "unset"} the recipe of ${this.label}`);
+        }
         this.#recipe = recipe;
     }
 
