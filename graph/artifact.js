@@ -145,6 +145,14 @@ export class ArtifactManager
     }
 
     /**
+     * @return {string[]}
+     */
+    get allReferences()
+    {
+        return Object.keys(this.#index.artifact.identity);
+    }
+
+    /**
      * @param {ArtifactFactory} factory
      * @param {AID} aid
      * @return {Artifact}
@@ -295,7 +303,28 @@ export class AID
         return new AID(AID.descriptorToString(Object.assign(this.descriptor,{ref})));
     }
 
-    /** @return {{ref: string, module: (string|undefined), type: (string|undefined)}} */
+    /**
+     * @param {Object} descriptor
+     */
+    withDefaults(descriptor)
+    {
+        const result = AID.parse(this.toString());
+        let defaultsUsed = false;
+        for(let key of ["type","module","ref"])
+        {
+            if ((key in descriptor) && !result[key]) {
+                defaultsUsed = true;
+                result[key] = descriptor[key];
+            }
+        }
+        return (
+            defaultsUsed
+                ? new AID(AID.descriptorToString(result))
+                : this
+        );
+    }
+
+    /** @return {Artifact~descriptor} */
     get descriptor()
     {
         return {

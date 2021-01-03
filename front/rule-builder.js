@@ -146,7 +146,7 @@ export class RuleBuilder
     depends(module, rule, ...artifactRefs)
     {
         for (let ref of artifactRefs) {
-            const artifact = this.#artifactManager.get(ref);
+            const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }));
             const whenAbsent = Dependency.ABSENT_VIOLATION;
             rule.addDependency(artifact, whenAbsent);
         }
@@ -161,7 +161,7 @@ export class RuleBuilder
     produces(module, rule, ...artifactRefs)
     {
         for(let ref of artifactRefs) {
-            rule.addOutput(this.#artifactManager.get(ref));
+            rule.addOutput(this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name })));
         }
     }
 
