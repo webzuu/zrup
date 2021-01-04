@@ -154,4 +154,14 @@ export class ModuleBuilder
     {
         return ".zrup"; //TODO: make configurable
     }
+
+    /**
+     * @param {Module} parentModule
+     * @param {string} subpathSegments
+     * @return {string}
+     */
+    #resolveModuleBase(parentModule,...subpathSegments)
+    {
+        return module.resolve(path.join(...subpathSegments, this.#getSpecFileBasename()));
+    }
 }
