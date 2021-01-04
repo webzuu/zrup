@@ -9,63 +9,15 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-import path from "path"
 
 import {RuleBuilder} from "../../front/rule-builder";
-import {TempDir} from "../../util/testing";
-import {Project} from "../../project";
-import {AID, ArtifactManager} from "../../graph/artifact";
+import {DummyRecipe, ProjectTesting} from "../../util/testing";
+import {AID} from "../../graph/artifact";
 import {Module} from "../../module";
-import {Recipe} from "../../build/recipe";
 import {Rule} from "../../graph/rule";
-import {FileArtifactFactory} from "../../graph/artifact/file";
+import path from "path";
 
-class RuleBuilderDependencies
-{
-    /** @type {TempDir} */
-    tmpDir;
-
-    /** @type {Project|null} */
-    project = null;
-
-    /** @type {ArtifactManager} */
-    artifactManager = null;
-
-    constructor()
-    {
-        this.tmpDir = new TempDir(path.join(__dirname, "tmp"));
-    }
-
-    up()
-    {
-        this.project = new Project(this.tmpDir.toString()); //assumes setup mechanism has already upped this.tmpDir
-        this.artifactManager = new ArtifactManager();
-        new FileArtifactFactory(this.artifactManager,this.project);
-        this.project.addModule(Module.createRoot(this.project,"test"));
-    }
-
-    down()
-    {
-        this.artifactManager = null;
-        this.project = null;
-    }
-
-    setup()
-    {
-        this.tmpDir.setup();
-        beforeEach(this.up.bind(this));
-        afterEach(this.down.bind(this));
-    }
-}
-
-class DummyRecipe extends Recipe
-{
-    async executeFor(job) {
-        return undefined;
-    }
-}
-
-const d = new RuleBuilderDependencies();
+const d = new ProjectTesting(path.join(__dirname,"tmp"));
 
 describe("RuleBuilder", () => {
 

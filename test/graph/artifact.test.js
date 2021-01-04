@@ -8,12 +8,12 @@ const undefined = (_ => _)();
 
 describe("AID.parse", () => {
     const parseData = {
-        "":                             { type: undefined, module: undefined, ref: ""               },
-        "file:":                        { type: "file", module: undefined, ref: ""                  },
-        "module+":                      { type: undefined, module: "module", ref: ""                },
-        "foo.js":                       { type: undefined, module: undefined, ref: "foo.js"         },
-        "file:foo/bar.js":              { type: "file", module: undefined, ref: "foo/bar.js"        },
-        "module+foo/bar.js":            { type: undefined, module: "module", ref: "foo/bar.js"      },
+        "":                             { ref: ""                                                   },
+        "file:":                        { type: "file", ref: ""                                     },
+        "module+":                      { module: "module", ref: ""                                 },
+        "foo.js":                       { ref: "foo.js"                                             },
+        "file:foo/bar.js":              { type: "file", ref: "foo/bar.js"                           },
+        "module+foo/bar.js":            { module: "module", ref: "foo/bar.js"                       },
         "internal:module+foo/bar.js":   { type: "internal", module: "module", ref: "foo/bar.js"     },
         "file:__ROOT__+foo/bar.js":     { type: "file", module: "__ROOT__", ref: "foo/bar.js"       }
     }

@@ -273,7 +273,7 @@ describe("Build", () => {
         const buildErr = err;
         const why = buildErr.getBuildTraceAsString();
         expect(why).to.equal("Rule w.nginx failed to build\n"+
-            "because No rule to build required file:obey/w.nginx.php");
+            "because No rule to build required file:test+obey/w.nginx.php");
     });
     
     it("records version info along with artifacts", async () => {

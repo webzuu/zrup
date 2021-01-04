@@ -7,6 +7,9 @@ const fsp = fs.promises;
 import {Db} from "../db";
 import {Project} from "../project";
 import {Module} from "../module";
+import {ArtifactManager} from "../graph/artifact";
+import {FileArtifactFactory} from "../graph/artifact/file";
+import {Recipe} from "../build/recipe";
 
 export class TempDir
 {
@@ -129,6 +132,52 @@ export class ModuleTesting
         return this.#project;
     }
 }
+
+export class ProjectTesting
+{
+    /** @type {TempDir} */
+    tmpDir;
+
+    /** @type {Project|null} */
+    project = null;
+
+    /** @type {ArtifactManager} */
+    artifactManager = null;
+
+    constructor(dir)
+    {
+        this.tmpDir = new TempDir(dir);
+    }
+
+    up()
+    {
+        this.project = new Project(this.tmpDir.toString()); //assumes setup mechanism has already upped this.tmpDir
+        this.artifactManager = new ArtifactManager();
+        new FileArtifactFactory(this.artifactManager,this.project);
+        this.project.addModule(Module.createRoot(this.project,"test"));
+    }
+
+    down()
+    {
+        this.artifactManager = null;
+        this.project = null;
+    }
+
+    setup()
+    {
+        this.tmpDir.setup();
+        beforeEach(this.up.bind(this));
+        afterEach(this.down.bind(this));
+    }
+}
+
+export class DummyRecipe extends Recipe
+{
+    async executeFor(job) {
+        return undefined;
+    }
+}
+
 
 export function wait(time)
 {
