@@ -10,14 +10,14 @@
  */
 
 /**
- * @typedef {Object} ModuleBuilder~DefinerParams
+ * @typedef {Object.<string,*>} ModuleBuilder~DefinerParams
  * @property {Module} module
  * @property {ModuleBuilder~includeNominator} include
  * @property {RuleBuilder~definerAcceptor} rule
  */
 
 import {Module} from "../module";
-import {promises as fsp} from "fs";
+import fs, {promises as fsp} from "fs";
 import * as path from "path";
 
 /**
@@ -107,7 +107,7 @@ export class ModuleBuilder
     async loadRootModule()
     {
         const definer = ModuleBuilder.#normalizeDefiner(await this.#import(this.#project.path));
-        await this.define(null, definer.name, this.#project.path, definer.definer);
+        await this.define(null, this.#project.path, definer.name, definer.definer);
     }
 
     /**
@@ -143,8 +143,10 @@ export class ModuleBuilder
     {
         const base = path.join(containingDir, this.#getSpecFileBasename());
         for(let ext of ["mjs","cjs","js"]) {
-            const candidate = `${base}.${ext}`;
-            if (await fsp.exists(candidate)) return (await import(candidate)).default;
+            try {
+                return (await import(`${base}.${ext}`)).default;
+            }
+            catch(e) {}
         }
         throw new Error(`No zrup module definition file found in ${containingDir}`);
     }

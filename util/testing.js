@@ -133,6 +133,11 @@ export class ModuleTesting
     }
 }
 
+/**
+ * @typedef {Object.<string,*>} ProjectTesting~Options
+ * @property {boolean} [createRootModule]
+ */
+
 export class ProjectTesting
 {
     /** @type {TempDir} */
@@ -144,8 +149,14 @@ export class ProjectTesting
     /** @type {ArtifactManager} */
     artifactManager = null;
 
-    constructor(dir)
+    /**
+     *
+     * @param {string} dir
+     * @param {(ProjectTesting~Options|undefined)} [options]
+     */
+    constructor(dir, options)
     {
+        this.options = Object.assign({},ProjectTesting.#defaults,options || {});
         this.tmpDir = new TempDir(dir);
     }
 
@@ -154,7 +165,7 @@ export class ProjectTesting
         this.project = new Project(this.tmpDir.toString()); //assumes setup mechanism has already upped this.tmpDir
         this.artifactManager = new ArtifactManager();
         new FileArtifactFactory(this.artifactManager,this.project);
-        this.project.addModule(Module.createRoot(this.project,"test"));
+        if (this.options.createRootModule) this.project.addModule(Module.createRoot(this.project,"test"));
     }
 
     down()
@@ -169,6 +180,10 @@ export class ProjectTesting
         beforeEach(this.up.bind(this));
         afterEach(this.down.bind(this));
     }
+
+    static #defaults = {
+        createRootModule: true
+    };
 }
 
 export class DummyRecipe extends Recipe

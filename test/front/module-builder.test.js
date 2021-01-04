@@ -11,22 +11,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 import {RuleBuilder} from "../../front/rule-builder";
-import {DummyRecipe, ProjectTesting} from "../../util/testing";
-import {AID} from "../../graph/artifact";
-import {Module} from "../../module";
+import {ProjectTesting} from "../../util/testing";
 import {Rule} from "../../graph/rule";
 import path from "path";
 import {ModuleBuilder} from "../../front/module-builder";
+import copy from "recursive-copy";
 
-const d = new ProjectTesting(path.join(__dirname,"tmp"));
+const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
 
 /** @type {RuleBuilder|null} */
 let ruleBuilder = null;
 function setup()
 {
     d.setup();
-    beforeEach(() => {
+    beforeEach(async () => {
         ruleBuilder = new RuleBuilder(d.project, d.artifactManager);
+        await copy(path.join(__dirname,"files"), d.project.path, {dot: true});
     });
     afterEach(() => {
         ruleBuilder = null;
@@ -36,16 +36,15 @@ function setup()
 describe("ModuleBuilder", () => {
 
     setup();
-
     it("accepts and executes definers", async() => {
         const o = new ModuleBuilder(d.project, ruleBuilder);
 
-        let theRule;
+        let theRule = null;
         await o.define(
             null,
             "",
             "root",
-            ({module,include,rule})=>{
+            ({rule})=>{
                 rule(function mainRule({rule,depends,produces}){
                     theRule = rule;
                     depends("index.ts");
@@ -59,4 +58,12 @@ describe("ModuleBuilder", () => {
         expect(d.project.graph.index.rule.key.get(theRule.key)).to.equal(theRule);
     });
 
+    it("loads module files", async() => {
+        const o = new ModuleBuilder(d.project, ruleBuilder);
+        await o.loadRootModule();
+        const rootModule = d.project.getModuleByName("root", true);
+        expect(d.project.getModuleByPath("")).to.equal(rootModule);
+        const subModule = d.project.getModuleByName("submodule", true);
+        expect(d.project.getModuleByPath("submodule")).to.equal(subModule);
+    })
 });
