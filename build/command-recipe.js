@@ -34,6 +34,16 @@
  */
 
 /**
+ * @typedef {Object} CommandRecipe~Config
+ * @property {string} cmd
+ * @property {string[]} args
+ * @property {string|undefined} cwd
+ * @property {CommandRecipe~outputListener[]} out
+ * @property {CommandRecipe~outputListener[]} err
+ * @property {CommandRecipe~outputListener[]} combined
+ */
+
+/**
  * @callback CommandRecipe~builder
  * @param {CommandRecipe~BuilderParams} params
  */
@@ -44,6 +54,7 @@ import fs from "fs";
 import * as path from "path";
 import {FileArtifact} from "../graph/artifact/file";
 import {AID} from "../graph/artifact";
+import {Readable} from "stream";
 
 export class CommandError extends Error
 {
@@ -86,9 +97,9 @@ export class CommandRecipe extends Recipe
 
     /**
      * @param {Job} job
-     * @return {Promise<void>}
+     * @return {CommandRecipe~Config}
      */
-    executeFor(job)
+    configureFor(job)
     {
         let cmd = "";
         const args = [];
@@ -97,20 +108,6 @@ export class CommandRecipe extends Recipe
         const err = [];
         const combined = [];
 
-        function makeOutputSink(sink)
-        {
-            if ('function'===typeof sink) {
-                return sink;
-            }
-            if (('string'===typeof sink) || (sink instanceof AID)) {
-                sink = job.build.artifactManager.get(sink);
-            }
-            if (sink instanceof FileArtifact) {
-                return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity));
-            }
-            throw new Error("Output sink must be an artifact reference or a callback");
-        }
-
         const builderParams = {
             cmd: (cmdString, ...argStrings) => {
                 cmd = cmdString;
@@ -118,44 +115,61 @@ export class CommandRecipe extends Recipe
             },
             args: (...argStrings) => { args.push(...argStrings); },
             cwd: cwdValue => { cwd = cwdValue; },
-            out: sink => { out.push(makeOutputSink(sink)); },
-            err: sink => { err.push(makeOutputSink(sink)); },
-            combined: sink => { combined.push(makeOutputSink(sink)); },
+            out: sink => { out.push(makeOutputSink(job, sink)); },
+            err: sink => { err.push(makeOutputSink(job, sink)); },
+            combined: sink => { combined.push(makeOutputSink(job, sink)); },
         }
 
         this.#commandBuilder(builderParams);
+
+        return {cmd, args, cwd, out, err, combined};
+    }
+
+    createChildProcess(job, config)
+    /**
+     * @param {Job} job
+     * @param {CommandRecipe~Config} config
+     * @return {ChildProcessWithoutNullStreams}
+     */
+    {
+        let {cmd, args, cwd, out, err, combined} = config;
         if ('undefined' === typeof cwd) {
             cwd = job.rule.module.absolutePath;
         }
-
         const options = {};
         if (cwd) options.cwd = path.resolve(job.rule.module.absolutePath, cwd);
 
         const child = spawn(cmd, args, options);
-        for(let listener of out) {
-            child.stdout.on('data',listener);
-            child.on('exit', _ => { listener(''); });
-        }
-        for(let listener of err) {
-            child.stderr.on('data',listener);
-            child.on('exit', _ => { listener(''); });
-        }
-        for(let listener of combined) {
-            child.stdout.on('data',listener);
-            child.stderr.on('data',listener);
-            child.on('exit', _ => { listener(''); });
-        }
 
+        for(let listener of out) addDataListenerToStreams(listener, child, child.stdout);
+        for(let listener of err) addDataListenerToStreams(listener, child, child.stderr);
+        for(let listener of combined) addDataListenerToStreams(listener, child, child.stdout, child.stderr);
+        return child;
+    }
+
+    createCompletionPromise(child, job, config)
+    {
         return new Promise((resolve, reject) => {
-            child.on("close", (code, signal) => {
+            child.on('exit', (code, signal) => {
                 if (code !== 0 || signal) {
-                    reject(new CommandError(job, cmd, code, signal));
+                    reject(new CommandError(job, config.cmd, code, signal));
                 }
                 else {
                     resolve();
                 }
             });
         });
+    }
+
+    /**
+     * @param {Job} job
+     * @return {Promise<void>}
+     */
+    async executeFor(job)
+    {
+        const config = this.configureFor(job);
+        const child = this.createChildProcess(job, config);
+        await this.createCompletionPromise(child, job, config);
     }
 }
 
@@ -171,4 +185,30 @@ export function captureTo(outputFilePath)
             fs.appendFileSync(outputFilePath, chunk);
         }
     }
+}
+
+function makeOutputSink(job, sink) {
+    if ('function'===typeof sink) {
+        return sink;
+    }
+    if (('string'===typeof sink) || (sink instanceof AID)) {
+        sink = job.build.artifactManager.get(sink);
+    }
+    if (sink instanceof FileArtifact) {
+        return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity));
+    }
+    throw new Error("Output sink must be an artifact reference or a callback");
+}
+
+/**
+ * @param {CommandRecipe~outputListener} listener
+ * @param {ChildProcessWithoutNullStreams} child
+ * @param {...Readable} streams
+ */
+function addDataListenerToStreams(listener, child, ...streams)
+{
+    for(let stream of streams) {
+        stream.on('data', listener);
+    }
+    child.on('exit', () => { listener(''); });
 }
