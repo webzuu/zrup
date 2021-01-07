@@ -10,7 +10,6 @@ export class FileArtifact extends Artifact {
     #resolvedPath;
 
     /**
-     *
      * @param {Artifact~Reference} ref
      * @param {string} resolvedPath
      */
@@ -24,9 +23,6 @@ export class FileArtifact extends Artifact {
         return Promise.resolve(fs.existsSync(this.#resolvedPath));
     }
 
-    /**
-     * @return {Promise<string>}
-     */
     get version()
     {
         return (async () => {
@@ -40,16 +36,35 @@ export class FileArtifact extends Artifact {
         })();
     }
 
+    /** @return {Promise<string|null>} */
     get contents() { return this.getContents(); }
 
+    /** @return {Promise<string|null>} */
     async getContents()
     {
-        return await fsp.readFile(this.#resolvedPath);
+        return await fsp.readFile(this.#resolvedPath,'utf-8');
     }
 
+    async rm()
+    {
+        try {
+            await fsp.unlink(this.#resolvedPath);
+        }
+        catch(e) {
+            if (e.code !== 'ENOENT') { throw e; }
+        }
+    }
+
+    /** @return {Promise<void>} */
     async putContents(contents)
     {
+        await fsp.mkdir(pathUtils.dirname(this.#resolvedPath), {mode: 0o755, recursive: true});
         await fsp.writeFile(this.#resolvedPath, contents);
+    }
+
+    get caps()
+    {
+        return Object.assign({}, super.caps, {canRemove: true});
     }
 
     static get type() { return "file"; }

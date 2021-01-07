@@ -1,6 +1,6 @@
 import pathUtils from "path";
 import {Project} from "../../../project";
-import {FileArtifactFactory} from "../../../graph/artifact/file";
+import {FileArtifact, FileArtifactFactory} from "../../../graph/artifact/file";
 import {ArtifactManager} from "../../../graph/artifact";
 import {Module} from "../../../module";
 import {TempDir} from "../../../util/testing";
@@ -14,6 +14,26 @@ const tmpDir=new TempDir(pathUtils.join(__dirname,"tmp"));
 
 import chai from "chai";
 const expect = chai.expect;
+
+describe('FileArtifact', () => {
+
+    tmpDir.setup();
+    it('can create physical artifact', async() => {
+
+        const path="foo/bar/index.js";
+        const o = new FileArtifact(`file:test+${path}`,`${tmpDir}/${path}`);
+        expect(await o.exists).to.be.false;
+        await o.putContents('import path from "path";\n');
+        expect(await o.exists).to.be.true;
+        const finalContents = 'import foo from "foo";\n';
+        await o.putContents(finalContents);
+        expect(await o.contents).to.equal(finalContents);
+        expect(o.caps.canRemove).to.be.true;
+        await o.rm();
+        expect(await o.exists).to.be.false;
+        await o.rm(); //should squelch ENOENT
+    });
+});
 
 describe('FileArtifactFactory', ()=>{
 

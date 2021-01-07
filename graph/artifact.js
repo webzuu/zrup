@@ -1,6 +1,11 @@
 import md5 from "md5";
 import {UnimplementedAbstract} from "../error/unimplemented-abstract";
 
+/**
+ * @typedef {Object} Artifact~Caps
+ * @property {boolean} canRemove
+ */
+
 export class Artifact {
 
     /** @type {string} */
@@ -24,7 +29,7 @@ export class Artifact {
      */
     static get type()
     {
-        throw new Error(`Unimplemented abstract static Artifact::get type() in a derived class`);
+        throw new UnimplementedAbstract();
     }
 
     /** @return {string} */
@@ -48,7 +53,7 @@ export class Artifact {
      */
     get version()
     {
-        throw new Error(`Unimplemented abstract ${this.constructor.name}::get version()`);
+        throw new UnimplementedAbstract();
     }
 
     /**
@@ -57,7 +62,7 @@ export class Artifact {
      */
     get exists()
     {
-        throw new Error(`Unimplemented abstract ${this.constructor.name}::get exists()`);
+        throw new UnimplementedAbstract();
     }
 
     /** @return {string} */
@@ -72,8 +77,22 @@ export class Artifact {
         return `${this.type} ${this.identity}`;
     }
 
+    /** @return {Promise<void>} */
+    async rm()
+    {
+        throw new UnimplementedAbstract();
+    }
+
     /** @return {string} */
     static get NONEXISTENT_VERSION() { return "[nonexistent]"; }
+
+    /** @return {Artifact~Caps} */
+    get caps()
+    {
+        return {
+            canRemove: false
+        };
+    }
 }
 
 export class ArtifactManager
