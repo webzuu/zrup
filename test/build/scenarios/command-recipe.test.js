@@ -50,11 +50,11 @@ describe("CommandRecipe", async() => {
         const expected = d.artifactManager.get('expected.txt');
 
         let job = null;
-
         async function runNewJob() {
             await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
             return job;
         }
+
 
         //build fresh
         expect((await runNewJob()).recipeInvoked).to.be.true;
@@ -70,5 +70,24 @@ describe("CommandRecipe", async() => {
 
         //don't rebuild if dependencies unchanged again
         expect((await runNewJob()).recipeInvoked).to.be.false;
+    });
+
+    it('captures empty output', async() => {
+        const db = new Db(path.join(d.tmpDir.toString(),".data"));
+
+        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
+        ruleBuilder.finalize();
+
+        const target = d.artifactManager.get('shouldBeEmpty.txt');
+
+        let job = null;
+        async function runNewJob() {
+            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(target)).run();
+            return job;
+        }
+
+        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect(await target.exists).to.be.true;
+        expect(await target.contents).to.equal("");
     });
 })

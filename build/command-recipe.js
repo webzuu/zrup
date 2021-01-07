@@ -132,11 +132,18 @@ export class CommandRecipe extends Recipe
         if (cwd) options.cwd = path.resolve(job.rule.module.absolutePath, cwd);
 
         const child = spawn(cmd, args, options);
-        for(let listener of out) child.stdout.on('data',listener);
-        for(let listener of err) child.stderr.on('data',listener);
+        for(let listener of out) {
+            child.stdout.on('data',listener);
+            child.on('exit', _ => { listener(''); });
+        }
+        for(let listener of err) {
+            child.stderr.on('data',listener);
+            child.on('exit', _ => { listener(''); });
+        }
         for(let listener of combined) {
             child.stdout.on('data',listener);
             child.stderr.on('data',listener);
+            child.on('exit', _ => { listener(''); });
         }
 
         return new Promise((resolve, reject) => {
