@@ -4,6 +4,9 @@
  */
 import fs from "fs/promises";
 
+import resolvePath from "better-path-resolve";
+
+
 export async function is_there(path)
 {
     try {
@@ -14,3 +17,4 @@ export async function is_there(path)
         return false;
     }
 }
+

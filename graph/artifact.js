@@ -1,4 +1,5 @@
 import md5 from "md5";
+import {UnimplementedAbstract} from "../error/unimplemented-abstract";
 
 export class Artifact {
 
@@ -11,13 +12,19 @@ export class Artifact {
         this.#identity = ''+aid;
     }
 
+    /** @return {string} */
+    get type()
+    {
+        return this.constructor.type;
+    }
+
     /**
      * @return {string}
      * @abstract
      */
-    get type()
+    static get type()
     {
-        throw new Error(`Unimplemented abstract ${this.constructor.name}::get type()`);
+        throw new Error(`Unimplemented abstract static Artifact::get type() in a derived class`);
     }
 
     /** @return {string} */
@@ -124,7 +131,7 @@ export class ArtifactManager
     }
 
     /**
-     * @param {Artifact~reference} ref
+     * @param {Artifact~Reference} ref
      * @return {Artifact|null}
      */
     find(ref)
@@ -133,7 +140,7 @@ export class ArtifactManager
     }
 
     /**
-     * @param {Artifact~reference} ref
+     * @param {Artifact~Reference} ref
      * @return {Artifact}
      */
     get(ref)
@@ -169,6 +176,42 @@ export class ArtifactManager
  * @typedef {Function & { type: string|undefined }} Artifact~ClassConstructor
  */
 
+/**
+ * @abstract
+ */
+export class ArtifactResolver
+{
+    /**
+     * @param {AID} aid
+     * @return {AID}
+     * @abstract
+     */
+    normalize(aid)
+    {
+        return aid.withType(this.type);
+    }
+
+    /**
+     * @return {string}
+     * @abstract
+     */
+    get type()
+    {
+        throw new UnimplementedAbstract();
+    }
+
+    /**
+     * @param {AID} aid
+     * @return {string}
+     * @abstract
+     */
+    resolveToExternalIdentifier(aid)
+    {
+        throw new UnimplementedAbstract();
+    }
+
+}
+
 export class ArtifactFactory
 {
     /** @type {ArtifactManager} */
@@ -180,16 +223,21 @@ export class ArtifactFactory
     /** @type {string} */
     #type;
 
+    /** @type {ArtifactResolver} */
+    #artifactResolver;
+
     /**
      * @param {ArtifactManager} manager
      * @param {Artifact~ClassConstructor} artifactConstructor
+     * @param {ArtifactResolver} artifactResolver
      */
-    constructor(manager, artifactConstructor)
+    constructor(manager, artifactConstructor, artifactResolver)
     {
-        const type = artifactConstructor.type || this.constructor.type || null;
+        this.#artifactResolver = artifactResolver;
+        const type = this.constructor.type || artifactConstructor.type || null;
         if ("string" !== typeof type) {
             throw new Error(
-                "Either the artifact class or the factory class must have a static string property named \"type\""
+                "Either the factory class or the artifact class must have a static string property named \"type\""
             );
         }
         this.#manager = manager;
@@ -216,7 +264,7 @@ export class ArtifactFactory
      */
     normalize(aid)
     {
-        return aid.withType(this.type);
+        return this.resolver.normalize(aid);
     }
 
     /**
@@ -241,7 +289,7 @@ export class ArtifactFactory
     }
 
     /**
-     * @param {Artifact~reference} ref
+     * @param {Artifact~Reference} ref
      * @param {*[] | undefined} extraArgs
      * @return {*[]}
      */
@@ -249,6 +297,31 @@ export class ArtifactFactory
     {
         return extraArgs || [];
     }
+
+    /**
+     * @param {AID} aid
+     * @return {string}
+     */
+    resolveToExternalIdentifier(aid)
+    {
+        return this.resolver.resolveToExternalIdentifier(aid);
+    }
+
+    /** @return {ArtifactResolver} */
+    get resolver()
+    {
+        return this.#artifactResolver;
+    }
+
+    /**
+     * @return {string|undefined}
+     */
+    static get type()
+    {
+        return undefined;
+    }
+
+
 }
 
 export class AID
@@ -324,7 +397,7 @@ export class AID
         );
     }
 
-    /** @return {Artifact~descriptor} */
+    /** @return {Artifact~Descriptor} */
     get descriptor()
     {
         return {
@@ -335,7 +408,7 @@ export class AID
     }
 
     /**
-     * @param {Artifact~descriptor} descriptor
+     * @param {Artifact~Descriptor} descriptor
      * @return {string}
      */
     static descriptorToString(descriptor)
@@ -357,7 +430,7 @@ export class AID
 
     /**
      * @param {string} aid
-     * @return {Artifact~descriptor|boolean}
+     * @return {Artifact~Descriptor|boolean}
      */
     static parse(aid)
     {
@@ -370,11 +443,11 @@ export class AID
 }
 
 /**
- * @typedef {string|AID} Artifact~reference
+ * @typedef {string|AID} Artifact~Reference
  */
 
 /**
- * @typedef {Object} Artifact~descriptor
+ * @typedef {Object} Artifact~Descriptor
  * @property {string|undefined} [type]
  * @property {string|undefined} [module]
  * @property {string|undefined} [ref]

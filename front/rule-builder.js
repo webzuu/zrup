@@ -19,7 +19,7 @@
 
 /**
  * @callback RuleBuilder~artifactNominator
- * @param {...Artifact~reference} artifactRefs
+ * @param {...Artifact~Reference} artifactRefs
  */
 
 import {Rule} from "../graph/rule";
@@ -140,7 +140,7 @@ export class RuleBuilder
     /**
      * @param {Module} module
      * @param {Rule} rule
-     * @param {...Artifact~reference} artifactRefs
+     * @param {...Artifact~Reference} artifactRefs
      * @return {RuleBuilder~artifactNominator}
      */
     depends(module, rule, ...artifactRefs)
@@ -155,7 +155,7 @@ export class RuleBuilder
     /**
      * @param {Module} module
      * @param {Rule} rule
-     * @param {...Artifact~reference} artifactRefs
+     * @param {...Artifact~Reference} artifactRefs
      * @return {RuleBuilder~artifactNominator}
      */
     produces(module, rule, ...artifactRefs)

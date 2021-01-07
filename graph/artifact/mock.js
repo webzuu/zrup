@@ -1,6 +1,7 @@
 import {AID, Artifact, ArtifactManager, ArtifactFactory} from "../artifact";
 import {PromiseKeeper} from "../../util/promise-keeper";
-import {FileArtifactFactory} from "./file";
+import * as path from "path";
+import {FileArtifactFactoryAbstract, FileArtifactResolver} from "./file";
 
 export class MockArtifact extends Artifact
 {
@@ -9,7 +10,7 @@ export class MockArtifact extends Artifact
     #type;
 
     /**
-     * @param {Artifact~reference} ref
+     * @param {Artifact~Reference} ref
      * @param {string} type
      * @param {PromiseKeeper} pk
      */
@@ -44,6 +45,14 @@ export class MockArtifact extends Artifact
     {
         this.#pk.set(this.key, "contents", contents);
     }
+
+    static get type() {
+        throw new Error(
+            "MockArtifact has dynamic artifact type. If you are trying to subclass ArtifactFactory to make instances"
+            +" of MockArtifact mocking a specific type, you need to override the type property on the factory" +
+            +" class constructor"
+        );
+    }
 }
 
 export class MockFileFactory extends ArtifactFactory
@@ -61,20 +70,23 @@ export class MockFileFactory extends ArtifactFactory
      */
     constructor(manager, project, pk)
     {
-        super(manager, MockArtifact);
+        super(manager, MockArtifact, new FileArtifactResolver(project));
         this.#project = project;
         this.#pk = pk;
     }
 
-    prependRequiredConstructorArgs(extraArgs)
+    prependRequiredConstructorArgs(aid, extraArgs)
     {
-        return [MockFileFactory.type, this.#pk, ...super.prependRequiredConstructorArgs(extraArgs)];
+        return [MockFileFactory.type, this.#pk, ...super.prependRequiredConstructorArgs(aid, extraArgs)];
     }
 
-    normalize(aid)
-    {
-        return FileArtifactFactory.normalizeUsingProject(aid, this.#project);
-    }
-
-    static type = "file";
+    static get type() { return "file"; };
 }
+
+Object.assign(
+    MockFileFactory.prototype,
+    {
+        normalize: FileArtifactFactoryAbstract.prototype.normalize,
+        resolveModule: FileArtifactFactoryAbstract.prototype.resolveModule
+    }
+)

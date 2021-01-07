@@ -9,7 +9,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "better-path-resolve": "^1.0.0",
     "execa": "^5.0.0",
+    "is-subdir": "^1.1.1",
     "md5": "^2.3.0",
     "md5-file": "^5.0.0",
     "module-alias": "^2.2.2",

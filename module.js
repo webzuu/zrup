@@ -30,7 +30,7 @@ export class Module
         this.#parent = parent;
         this.#path = path;
         this.#name = name || null;
-        this.#absolutePath = this.parent ? this.parent.resolve(path) : fsPath.resolve('/',path);
+        this.#absolutePath = this.parent ? fsPath.resolve(this.parent.absolutePath,path) : fsPath.resolve('/',path);
         if (this.project) this.project.addModule(this);
     }
 
@@ -50,7 +50,7 @@ export class Module
     get absolutePath() { return this.#absolutePath; }
 
     /**
-     * @param {Artifact~reference} ref
+     * @param {Artifact~Reference} ref
      * @return {string}
      */
     resolve(ref) {

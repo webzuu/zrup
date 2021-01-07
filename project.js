@@ -9,7 +9,9 @@ export class Project
 {
     #index = {
         module: {
+            /** @type {Object.<string, Module>} */
             name: {},
+            /** @type {Object.<string, Module>} */
             path: {}
         }
     }
@@ -41,7 +43,7 @@ export class Project
     addModule(module)
     {
         this.#index.module.name[module.name]
-            = this.#index.module.path[fsPath.relative(this.path, module.resolve(""))]
+            = this.#index.module.path[fsPath.relative(this.path, module.absolutePath)]
             = module;
         if (!this.#rootModule && !module.parent) this.#rootModule = module;
         return module;
@@ -55,6 +57,12 @@ export class Project
     getModuleByName(name,require)
     {
         return this.#index.module.name[name] || null;
+    }
+
+    /** @return {Module[]} */
+    get allModules()
+    {
+        return Object.values(this.#index.module.name);
     }
 
     /**
@@ -76,33 +84,5 @@ export class Project
     get path()
     {
         return this.#rootDirectory;
-    }
-
-    /**
-     * @param {string} path
-     * @return {Module|null}
-     */
-    findClosestModule(path)
-    {
-        //TODO: maintain a tree of modules and use it to optimize this
-        let prefix = "";
-        let result = null;
-        let index = this.#index.module.name
-        for(let moduleName in index) {
-            /** @type {Module} */
-            let module = index[moduleName];
-            const modulePath = module.absolutePath;
-            if (
-                path.startsWith(modulePath)
-                && (
-                    path.length <= modulePath.length
-                    || path.charAt(modulePath.length) === "/"
-                )
-            ) {
-                prefix = modulePath;
-                result = module;
-            }
-        }
-        return result;
     }
 }

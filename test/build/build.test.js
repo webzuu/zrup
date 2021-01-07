@@ -26,6 +26,7 @@ import { Dependency } from "../../graph/dependency";
 import {Project} from "../../project";
 import {Artifact, ArtifactManager} from "../../graph/artifact";
 import {Module} from "../../module";
+import {FileArtifactFactory} from "../../graph/artifact/file";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 

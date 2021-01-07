@@ -1,25 +1,22 @@
-import {AID, Artifact, ArtifactFactory} from "../artifact";
+import {AID, Artifact, ArtifactFactory, ArtifactResolver} from "../artifact";
 import md5File from "md5-file";
 import fs from "fs";
 const fsp = fs.promises;
 import {Module} from "../../module";
+import * as pathUtils from "path";
+import isSubdir from "is-subdir";
 
 export class FileArtifact extends Artifact {
     #resolvedPath;
 
     /**
      *
-     * @param {Artifact~reference} ref
+     * @param {Artifact~Reference} ref
      * @param {string} resolvedPath
      */
     constructor(ref, resolvedPath) {
         super(`${ref}`);
         this.#resolvedPath = resolvedPath;
-    }
-
-    get type()
-    {
-        return "file";
     }
 
     get exists()
@@ -58,48 +55,61 @@ export class FileArtifact extends Artifact {
     static get type() { return "file"; }
 }
 
-
-export class FileArtifactFactory extends ArtifactFactory
+export class FileArtifactResolver extends ArtifactResolver
 {
     /** @type {Project} */
-    #project;
+    #project
+
+    /** @type {string} */
+    #infix
 
     /**
-     * @param {ArtifactManager} manager
      * @param {Project} project
+     * @param {string|undefined} [infix]
      */
-    constructor(manager, project) {
-        super(manager, FileArtifact);
-        this.#project = project;
+    constructor(project, infix)
+    {
+        super();
+        this.#project=project
+        this.#infix = infix || '';
     }
 
     /**
      * @param {AID} aid
-     * @param {Project} project
      * @return {AID}
      */
-    static normalizeUsingProject(aid, project) {
-        const {statedModule, closestModule} = FileArtifactFactory.resolveModuleUsingProject(aid, project);
+    normalize(aid) {
+        const {statedModule, closestModule} = this.resolveModule(aid);
         if (!closestModule) {
             throw new Error(`Could not find module responsible for "${aid}"`);
         }
         if (closestModule !== statedModule) {
-            //TODO: warn about incorrect path
-            return aid.withModule(closestModule.name).withRef(closestModule.resolve(path));
+            //TODO: warn about artifact aliasing
+            const absolutePath = pathUtils.resolve(statedModule.absolutePath, aid.ref);
+            const relativeToClosest = pathUtils.relative(absolutePath, closestModule.absolutePath)
+            return aid.withModule(closestModule.name).withRef(relativeToClosest);
         }
-        return aid.withModule(closestModule.name);
+        return aid.withModule(closestModule.name).withType(this.type);
     }
 
     /**
      * @param {AID} aid
-     * @param {Project} project
+     * @return {string}
+     */
+    resolveToExternalIdentifier(aid) {
+        const statedModule = aid.module ? this.#project.getModuleByName(aid.module) : this.#project.rootModule;
+        return this.applyInfix(pathUtils.resolve(statedModule.absolutePath, aid.ref));
+    }
+
+    /**
+     * @param {AID} aid
      * @return {{statedModule: Module, closestModule: (Module|null)}}
      */
-    static resolveModuleUsingProject(aid, project)
+    resolveModule(aid)
     {
         const statedModule = aid.module
-            ? project.getModuleByName(aid.module)
-            : project.rootModule
+            ? this.#project.getModuleByName(aid.module)
+            : this.#project.rootModule
 
         if (!statedModule) {
             if (aid.module) {
@@ -111,26 +121,200 @@ export class FileArtifactFactory extends ArtifactFactory
                 )
             }
         }
-        const path = statedModule.resolve(aid.ref);
-        return {statedModule, closestModule: project.findClosestModule(path)};
+        const path = this.resolveToExternalIdentifier(aid);
+        return {statedModule, closestModule: this.findClosestModule(path)};
     }
 
-    normalize(aid)
+    /**
+     * @param {string} path
+     * @return {boolean}
+     */
+    isInfixed(path)
     {
-        return FileArtifactFactory.normalizeUsingProject(super.normalize(aid), this.#project);
+        return isSubdir(this.treePrefix, pathUtils.resolve(this.#project.path, path))
     }
 
-
-    prependRequiredConstructorArgs(ref, extraArgs)
+    /**
+     * @param {string} path
+     * @return {string}
+     */
+    applyInfix(path)
     {
-        const {closestModule} = FileArtifactFactory.resolveModuleUsingProject(new AID(ref), this.#project);
-        return [
-            closestModule.resolve(new AID(ref).withModule(closestModule.name)),
-            ...extraArgs
-        ]
+        if (this.isInfixed(path)) return path;
+        const infixed = pathUtils.resolve(
+            this.treePrefix,
+            pathUtils.relative(
+                this.#project.path,
+                pathUtils.resolve(
+                    this.#project.path,
+                    path
+                )
+            )
+        );
+        return (
+            pathUtils.isAbsolute(path)
+                ? infixed
+                : pathUtils.relative(this.#project.path, infixed)
+        );
+    }
+
+    /**
+     * @param {string} path
+     * @return {string}
+     */
+    removeInfix(path)
+    {
+        if (!this.isInfixed(path)) return path;
+        const uninfixed = pathUtils.resolve(
+            this.#project.path,
+            pathUtils.relative(
+                this.treePrefix,
+                pathUtils.resolve(
+                    this.#project.path,
+                    path
+                )
+            )
+        )
+        return (
+            pathUtils.isAbsolute(path)
+                ? uninfixed
+                : pathUtils.relative(this.#project.path, uninfixed)
+        );
+    }
+
+    /**
+     * @param {string} externalIdentifier
+     * @return {Module|null}
+     */
+    findClosestModule(externalIdentifier)
+    {
+        const uninfixed = this.removeInfix(externalIdentifier);
+
+        let prefix = "";
+        let result = null;
+        for(let module of this.#project.allModules) {
+            const modulePath = module.absolutePath;
+            if (
+                (
+                    uninfixed.length === modulePath.length
+                    || uninfixed.length > modulePath.length && uninfixed.charAt(modulePath.length) === "/"
+                )
+                && uninfixed.startsWith(modulePath)
+            ) {
+                prefix = modulePath;
+                result = module;
+            }
+        }
+        return result;
+    }
+
+    /** @return {string} */
+    get type() {
+        return "file";
+    }
+
+    /** @return {string} */
+    get treeInfix()
+    {
+        return this.#infix;
+    }
+
+    /** @return {string} */
+    get treePrefix()
+    {
+        return pathUtils.join(this.#project.path, this.treeInfix)
     }
 }
 
 /**
- * @typedef {(Module|null)} FileArtifactFactory~ModuleOpt
+ * @property {FileArtifactResolver} resolver
+ * @abstract
  */
+export class FileArtifactFactoryAbstract extends ArtifactFactory
+{
+    /** @type {Project} */
+    #project;
+
+    /**
+     * @param {ArtifactManager} manager
+     * @param {Project} project
+     * @param {Artifact~ClassConstructor} artifactConstructor
+     * @param {FileArtifactResolver} resolver
+     */
+    constructor(
+        manager,
+        project,
+        artifactConstructor,
+        resolver
+    ) {
+        super(manager, artifactConstructor, resolver);
+        this.#project = project;
+    }
+
+    prependRequiredConstructorArgs(ref, extraArgs)
+    {
+        return [
+            this.resolveToExternalIdentifier(new AID(''+ref)),
+            ...extraArgs
+        ]
+    }
+    /**
+     * @param {string} externalIdentifier
+     * @return {Module|null}
+     */
+    findClosestModule(externalIdentifier)
+    {
+        return this.resolver.findClosestModule(externalIdentifier)
+    }
+
+    /**
+     * @param {string} path
+     * @return {boolean}
+     */
+    isInfixed(path)
+    {
+        return this.resolver.isInfixed(path);
+    }
+
+    /**
+     * @param {string} path
+     * @return {string}
+     */
+    applyInfix(path)
+    {
+        return this.resolver.applyInfix(path);
+    }
+
+    /**
+     * @param {string} path
+     * @return {string}
+     */
+    removeInfix(path)
+    {
+        return this.resolver.removeInfix(path);
+    }
+
+    /** @return {string} */
+    get treeInfix()
+    {
+        return this.resolver.treeInfix;
+    }
+
+    /** @return {string} */
+    get treePrefix()
+    {
+        return this.resolver.treePrefix;
+    }
+}
+
+export class FileArtifactFactory extends FileArtifactFactoryAbstract
+{
+    /**
+     * @param {ArtifactManager} manager
+     * @param {Project} project
+     * @param {string|undefined} [infix]
+     */
+    constructor(manager, project, infix) {
+        super(manager, project, FileArtifact, new FileArtifactResolver(project, infix));
+    }
+}

@@ -2,9 +2,16 @@ import chai from "chai";
 import asserttype from 'chai-asserttype';
 chai.use(asserttype);
 const expect = chai.expect;
-import {AID} from "../../graph/artifact";
+import {AID, ArtifactManager} from "../../graph/artifact";
+import {Project} from "../../project";
 
-const undefined = (_ => _)();
+import {fileURLToPath} from 'url';
+import {dirname} from 'path';
+import {MockFileFactory} from "../../graph/artifact/mock";
+import {PromiseKeeper} from "../../util/promise-keeper";
+import {Module} from "../../module";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 describe("AID.parse", () => {
     const parseData = {
@@ -63,3 +70,15 @@ describe("AID", () => {
         expect(aid3.descriptor).to.deep.equal(aid.descriptor);
     });
 });
+
+describe("ArtifactManager", () => {
+
+    it("Normalizes artifact identities", async() => {
+        const project = new Project(__dirname+"/tmp");
+        const artifactManager = new ArtifactManager();
+        new MockFileFactory(artifactManager, project, new PromiseKeeper());
+        project.addModule(Module.createRoot(project, "test"));
+        const artifact = artifactManager.get("foo/bar.js");
+        expect(artifact.identity).to.equal("file:test+foo/bar.js");
+    });
+})
