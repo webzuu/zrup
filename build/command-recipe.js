@@ -53,8 +53,9 @@ import {spawn} from "child_process";
 import fs from "fs";
 import * as path from "path";
 import {FileArtifact} from "../graph/artifact/file";
-import {AID} from "../graph/artifact";
+import {AID, Artifact} from "../graph/artifact";
 import {Readable} from "stream";
+import {Dependency} from "../graph/dependency";
 
 export class CommandError extends Error
 {
@@ -108,21 +109,30 @@ export class CommandRecipe extends Recipe
         const err = [];
         const combined = [];
 
+        const resolve = (...refs) => refs.map(ref => {
+            const artifact = job.build.artifactManager.get(obtainArtifactReferenceFrom(ref));
+            const externalIdentifier = job.build.artifactManager.resolveToExternalIdentifier(artifact.identity);
+            const result = { toString: () => externalIdentifier };
+            Object.defineProperty(result, "artifact", { get: () => artifact });
+            return result;
+        });
+
         const builderParams = {
             cmd: (cmdString, ...argStrings) => {
                 cmd = cmdString;
-                args.push(...argStrings);
+                args.push(...argStrings.map(_ => ''+_));
             },
-            args: (...argStrings) => { args.push(...argStrings); },
+            args: (...argStrings) => { args.push(...argStrings.map(_ => ''+_)); },
             cwd: cwdValue => { cwd = cwdValue; },
             out: sink => { out.push(makeOutputSink(job, sink)); },
             err: sink => { err.push(makeOutputSink(job, sink)); },
             combined: sink => { combined.push(makeOutputSink(job, sink)); },
+            resolve
         }
 
         this.#commandBuilder(builderParams);
 
-        return {cmd, args, cwd, out, err, combined};
+        return {cmd, args, cwd, out, err, combined, resolve};
     }
 
     createChildProcess(job, config)
@@ -191,6 +201,9 @@ function makeOutputSink(job, sink) {
     if ('function'===typeof sink) {
         return sink;
     }
+    if ('object' === typeof sink && 'function' === typeof sink.toString) {
+        sink = sink.toString();
+    }
     if (('string'===typeof sink) || (sink instanceof AID)) {
         sink = job.build.artifactManager.get(sink);
     }
@@ -211,4 +224,17 @@ function addDataListenerToStreams(listener, child, ...streams)
         stream.on('data', listener);
     }
     child.on('exit', () => { listener(''); });
+}
+
+/**
+ * @param {(Artifact|AID|Dependency|string)}artifactLike
+ * @return {string}
+ */
+function obtainArtifactReferenceFrom(artifactLike)
+{
+    if ("string" === typeof artifactLike) return artifactLike;
+    if (artifactLike instanceof Artifact) return artifactLike.identity;
+    if (artifactLike instanceof Dependency) return artifactLike.artifact.identity;
+    if (artifactLike instanceof AID) return artifactLike.toString();
+    throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
 }
