@@ -141,28 +141,34 @@ export class RuleBuilder
      * @param {Module} module
      * @param {Rule} rule
      * @param {...Artifact~Reference} artifactRefs
-     * @return {RuleBuilder~artifactNominator}
+     * @return {Dependency[]}
      */
     depends(module, rule, ...artifactRefs)
     {
+        const result = [];
         for (let ref of artifactRefs) {
             const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }));
             const whenAbsent = Dependency.ABSENT_VIOLATION;
-            rule.addDependency(artifact, whenAbsent);
+            result.push(rule.addDependency(artifact, whenAbsent));
         }
+        return result;
     }
 
     /**
      * @param {Module} module
      * @param {Rule} rule
      * @param {...Artifact~Reference} artifactRefs
-     * @return {RuleBuilder~artifactNominator}
+     * @return {Artifact[]}
      */
     produces(module, rule, ...artifactRefs)
     {
+        const result = [];
         for(let ref of artifactRefs) {
-            rule.addOutput(this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name })));
+            const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }))
+            rule.addOutput(artifact);
+            result.push(artifact);
         }
+        return result;
     }
 
     /**

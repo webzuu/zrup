@@ -142,11 +142,15 @@ export class ModuleBuilder
     async #import(containingDir)
     {
         const base = path.join(containingDir, this.#getSpecFileBasename());
+        let importedModule = null;
         for(let ext of ["mjs","cjs","js"]) {
             try {
-                return (await import(`${base}.${ext}`)).default;
+                importedModule = (await import(`${base}.${ext}`)).default;
+                return importedModule;
             }
-            catch(e) {}
+            catch(e) {
+                const v=(_=>_)("whatever");
+            }
         }
         throw new Error(`No zrup module definition file found in ${containingDir}`);
     }
