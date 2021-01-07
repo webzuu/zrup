@@ -109,20 +109,15 @@ export class CommandRecipe extends Recipe
         const err = [];
         const combined = [];
 
-        const resolve = (...refs) => refs.map(ref => {
-            const artifact = job.build.artifactManager.get(obtainArtifactReferenceFrom(ref));
-            const externalIdentifier = job.build.artifactManager.resolveToExternalIdentifier(artifact.identity);
-            const result = { toString: () => externalIdentifier };
-            Object.defineProperty(result, "artifact", { get: () => artifact });
-            return result;
-        });
+        const resolve = resolveArtifacts.bind(null,job,false);
+        const resolveExceptStrings = resolveArtifacts.bind(null,job,true);
 
         const builderParams = {
-            cmd: (cmdString, ...argStrings) => {
+            cmd: (cmdString, ...argItems) => {
                 cmd = cmdString;
-                args.push(...argStrings.map(_ => ''+_));
+                args.push(...resolveExceptStrings(...argItems).map(_ => ''+_));
             },
-            args: (...argStrings) => { args.push(...argStrings.map(_ => ''+_)); },
+            args: (...argItems) => { args.push(...resolveExceptStrings(...argItems).map(_ => ''+_)); },
             cwd: cwdValue => { cwd = cwdValue; },
             out: sink => { out.push(makeOutputSink(job, sink)); },
             err: sink => { err.push(makeOutputSink(job, sink)); },
@@ -201,14 +196,14 @@ function makeOutputSink(job, sink) {
     if ('function'===typeof sink) {
         return sink;
     }
+    if (sink instanceof FileArtifact) {
+        return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity));
+    }
     if ('object' === typeof sink && 'function' === typeof sink.toString) {
         sink = sink.toString();
     }
     if (('string'===typeof sink) || (sink instanceof AID)) {
         sink = job.build.artifactManager.get(sink);
-    }
-    if (sink instanceof FileArtifact) {
-        return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity));
     }
     throw new Error("Output sink must be an artifact reference or a callback");
 }
@@ -227,7 +222,7 @@ function addDataListenerToStreams(listener, child, ...streams)
 }
 
 /**
- * @param {(Artifact|AID|Dependency|string)}artifactLike
+ * @param {(Artifact|AID|Dependency|string)} artifactLike
  * @return {string}
  */
 function obtainArtifactReferenceFrom(artifactLike)
@@ -237,4 +232,21 @@ function obtainArtifactReferenceFrom(artifactLike)
     if (artifactLike instanceof Dependency) return artifactLike.artifact.identity;
     if (artifactLike instanceof AID) return artifactLike.toString();
     throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
+}
+
+/**
+ * @param {Job} job
+ * @param {boolean} skipStrings
+ * @param {...(Artifact|AID|Dependency|string)} refs
+ * @return {(string|{toString: function(): string})[]}
+ */
+function resolveArtifacts(job, skipStrings, ...refs) {
+    return refs.map(ref => {
+        if (skipStrings && 'string' === typeof ref) return ref;
+        const artifact = job.build.artifactManager.get(obtainArtifactReferenceFrom(ref));
+        const externalIdentifier = job.build.artifactManager.resolveToExternalIdentifier(artifact.identity);
+        const result = { toString: () => externalIdentifier };
+        Object.defineProperty(result, "artifact", { get: () => artifact });
+        return result;
+    });
 }

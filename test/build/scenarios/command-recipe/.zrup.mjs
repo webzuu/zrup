@@ -4,21 +4,27 @@ export default function test({module, rule}) {
 
     rule(function concatenated({depends, produces}) {
 
-        const [outs, ins] = [produces('actual.txt'), depends('src/input1.txt', 'src/input2.txt')];
+        const [[target], sources] = [
+            produces('actual.txt'),
+            depends('src/input1.txt', 'src/input2.txt')
+        ];
 
-        return new CommandRecipe(({cmd, out, resolve}) => {
-            cmd("cat", ...resolve(...ins));
-            out(...resolve(...outs));
+        return new CommandRecipe(({cmd, out}) => {
+            cmd("cat", ...sources);
+            out(target);
         });
     });
 
     rule(function fromEmpty({depends, produces}) {
 
-        const [outs, ins] = [produces('shouldBeEmpty.txt'), depends('src/empty.txt')];
+        const [[target], sources] = [
+            produces('shouldBeEmpty.txt'),
+            depends('src/empty.txt')
+        ];
 
-        return new CommandRecipe(({cmd, out, resolve}) => {
-            cmd("cat", ...resolve(...ins));
-            out(...resolve(...outs));
+        return new CommandRecipe(({cmd, out}) => {
+            cmd("cat", ...sources);
+            out(target);
         })
     });
 };
