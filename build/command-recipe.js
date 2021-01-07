@@ -42,6 +42,8 @@ import {Recipe} from "./recipe";
 import {spawn} from "child_process";
 import fs from "fs";
 import * as path from "path";
+import {FileArtifact} from "../graph/artifact/file";
+import {AID} from "../graph/artifact";
 
 export class CommandError extends Error
 {
@@ -95,6 +97,20 @@ export class CommandRecipe extends Recipe
         const err = [];
         const combined = [];
 
+        function makeOutputSink(sink)
+        {
+            if ('function'===typeof sink) {
+                return sink;
+            }
+            if (('string'===typeof sink) || (sink instanceof AID)) {
+                sink = job.build.artifactManager.get(sink);
+            }
+            if (sink instanceof FileArtifact) {
+                return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity));
+            }
+            throw new Error("Output sink must be an artifact reference or a callback");
+        }
+
         const builderParams = {
             cmd: (cmdString, ...argStrings) => {
                 cmd = cmdString;
@@ -102,9 +118,9 @@ export class CommandRecipe extends Recipe
             },
             args: (...argStrings) => { args.push(...argStrings); },
             cwd: cwdValue => { cwd = cwdValue; },
-            out: listener => { out.push(listener); },
-            err: listener => { err.push(listener); },
-            combined: listener => { combined.push(listener); }
+            out: sink => { out.push(makeOutputSink(sink)); },
+            err: sink => { err.push(makeOutputSink(sink)); },
+            combined: sink => { combined.push(makeOutputSink(sink)); },
         }
 
         this.#commandBuilder(builderParams);

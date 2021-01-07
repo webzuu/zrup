@@ -1,5 +1,4 @@
-import {captureTo, CommandRecipe} from "../../../../build/command-recipe.js";
-import * as path from "path";
+import {CommandRecipe} from "../../../../build/command-recipe.js";
 
 export default function test({module, rule}) {
 
@@ -12,7 +11,7 @@ export default function test({module, rule}) {
 
         return new CommandRecipe(({cmd, out}) => {
             cmd("cat", ...src);
-            out(captureTo(path.resolve(module.absolutePath, target)));
+            out(target);
         });
     }
     rule(concatenated);

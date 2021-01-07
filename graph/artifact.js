@@ -189,6 +189,16 @@ export class ArtifactManager
         this.#index.artifact.key[artifact.key] = this.#index.artifact.identity[artifact.identity] = artifact;
         return artifact;
     }
+
+    /**
+     * @param {Artifact~Reference} ref
+     * @return {string}
+     */
+    resolveToExternalIdentifier(ref)
+    {
+        const aid = this.normalizeAID(new AID(ref));
+        return this.getFactoryForType(aid.type, true).resolveToExternalIdentifier(aid);
+    }
 }
 
 /**
