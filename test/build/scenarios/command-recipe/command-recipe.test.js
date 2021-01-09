@@ -1,6 +1,6 @@
-import {ProjectTesting} from "../../../util/testing";
+import {ProjectTesting} from "../../../../util/testing";
 import path from "path";
-import {RuleBuilder} from "../../../front/rule-builder";
+import {RuleBuilder} from "../../../../front/rule-builder";
 import copy from "recursive-copy";
 
 import {fileURLToPath} from 'url';
@@ -9,10 +9,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import chai from "chai";
 const expect = chai.expect;
-import {ModuleBuilder} from "../../../front/module-builder";
-import {Build} from "../../../build";
-import {Db} from "../../../db";
-import {AID} from "../../../graph/artifact";
+import {ModuleBuilder} from "../../../../front/module-builder";
+import {Build} from "../../../../build";
+import {Db} from "../../../../db";
 import * as fs from "fs";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
@@ -20,15 +19,12 @@ const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: fals
 /** @type {RuleBuilder|null} */
 let ruleBuilder = null;
 
-/**
- * @param {string} scenarioDir
- */
-function setup(scenarioDir)
+function setup()
 {
     d.setup();
     beforeEach(async () => {
+        await copy(path.join(__dirname, "files"), d.project.path, {dot: true});
         ruleBuilder = new RuleBuilder(d.project, d.artifactManager);
-        await copy(path.join(__dirname, scenarioDir), d.project.path, {dot: true});
     });
     afterEach(() => {
         ruleBuilder = null;
@@ -37,11 +33,11 @@ function setup(scenarioDir)
 
 describe("CommandRecipe", async() => {
 
-    setup('command-recipe');
+    setup();
 
     it("executes a simple command as part of a build job", async() => {
 
-        const db = new Db(path.join(d.tmpDir.toString(),".data"));
+        const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();

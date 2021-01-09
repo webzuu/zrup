@@ -22,7 +22,8 @@ describe("AID.parse", () => {
         "file:foo/bar.js":              { type: "file", ref: "foo/bar.js"                           },
         "module+foo/bar.js":            { module: "module", ref: "foo/bar.js"                       },
         "internal:module+foo/bar.js":   { type: "internal", module: "module", ref: "foo/bar.js"     },
-        "file:__ROOT__+foo/bar.js":     { type: "file", module: "__ROOT__", ref: "foo/bar.js"       }
+        "file:__ROOT__+foo/bar.js":     { type: "file", module: "__ROOT__", ref: "foo/bar.js"       },
+        "expected-log.txt":             { ref: "expected-log.txt"                                   }
     }
 
     for(let aidString of Object.getOwnPropertyNames(parseData)) {

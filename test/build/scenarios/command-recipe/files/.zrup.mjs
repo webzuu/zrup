@@ -1,4 +1,4 @@
-import {CommandRecipe} from "../../../../build/command-recipe.js";
+import {CommandRecipe} from "../../../../../build/recipe/command.js";
 
 export default function test({module, rule}) {
 

@@ -48,14 +48,14 @@
  * @param {CommandRecipe~BuilderParams} params
  */
 
-import {Recipe} from "./recipe";
+import {Recipe} from "../recipe";
 import {spawn} from "child_process";
 import fs from "fs";
 import * as path from "path";
-import {FileArtifact} from "../graph/artifact/file";
-import {AID, Artifact} from "../graph/artifact";
+import {FileArtifact} from "../../graph/artifact/file";
+import {AID, Artifact} from "../../graph/artifact";
 import {Readable} from "stream";
-import {Dependency} from "../graph/dependency";
+import {Dependency} from "../../graph/dependency";
 
 export class CommandError extends Error
 {

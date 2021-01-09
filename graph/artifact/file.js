@@ -45,6 +45,7 @@ export class FileArtifact extends Artifact {
         return await fsp.readFile(this.#resolvedPath,'utf-8');
     }
 
+    /** @return {Promise<void>} */
     async rm()
     {
         try {
@@ -56,6 +57,25 @@ export class FileArtifact extends Artifact {
     }
 
     /** @return {Promise<void>} */
+    async truncate()
+    {
+        await fsp.truncate(this.#resolvedPath);
+    }
+
+    /**
+     *  @param {string} str
+     * @return {Promise<void>}
+     */
+    async append(str)
+    {
+        await fsp.mkdir(pathUtils.dirname(this.#resolvedPath), {mode: 0o755, recursive: true});
+        await fsp.appendFile(this.#resolvedPath, str);
+    }
+
+    /**
+     * @param {string} contents
+     * @return {Promise<void>}
+     */
     async putContents(contents)
     {
         await fsp.mkdir(pathUtils.dirname(this.#resolvedPath), {mode: 0o755, recursive: true});

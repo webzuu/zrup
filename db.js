@@ -1,11 +1,18 @@
 import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import { open, Database, Statement } from "sqlite";
 import sleep from "simple-async-sleep";
+import fs from "fs/promises";
+import path from "path";
+
+/**
+ * @typedef {Promise<Database<sqlite3.Database,sqlite3.Statement>>} DbPromise
+ */
 
 async function openDb(filename)
 {
     let db
     try {
+        await fs.mkdir(path.dirname(filename),{mode: 0o755, recursive:true});
         db = await open({ filename, driver: sqlite3.Database });
     }
     catch(e) {
@@ -111,7 +118,11 @@ async function prepareStatements(db)
 }
 
 export class Db {
+
+    /** @type {DbPromise} */
     #db;
+
+    /** @type {Promise<Object>} */
     #stmt;
 
     constructor(dbFilePath)

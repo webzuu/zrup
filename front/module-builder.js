@@ -149,7 +149,9 @@ export class ModuleBuilder
                 return importedModule;
             }
             catch(e) {
-                const v=(_=>_)("whatever");
+                if ("ERR_MODULE_NOT_FOUND" !== e.code) {
+                    throw e;
+                }
             }
         }
         throw new Error(`No zrup module definition file found in ${containingDir}`);
