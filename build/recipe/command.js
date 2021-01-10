@@ -1,11 +1,13 @@
 /**
  * @callback CommandRecipe~commandAcceptor
  * @param {string} command
+ * @param {...(string|Artifact|AID|Dependency)}} arguments
+ * @param
  */
 
 /**
  * @callback CommandRecipe~argumentsAcceptor
- * @param {...string} arg
+ * @param {...(string|Artifact|AID|Dependency)} arguments
  */
 
 /**
@@ -24,18 +26,28 @@
  */
 
 /**
+ * @callback CommandRecipe~templateTransformer
+ * @param {string[]} strings
+ * @param {...*} variables
+ * @return string
+ */
+
+/**
  * @typedef {Object.<string,*>} CommandRecipe~BuilderParams
- * @property {CommandRecipe~commandAcceptor} cmd
+ * @property {CommandRecipe~commandAcceptor} exec
+ * @property {CommandRecipe~argumentsAcceptor} shell
  * @property {CommandRecipe~argumentsAcceptor} args
  * @property {CommandRecipe~cwdAcceptor} cwd
  * @property {CommandRecipe~outputListenerAcceptor} out
  * @property {CommandRecipe~outputListenerAcceptor} err
  * @property {CommandRecipe~outputListenerAcceptor} combined
+ * @property {CommandRecipe~templateTransformer} T
  */
 
 /**
  * @typedef {Object} CommandRecipe~Config
- * @property {string} cmd
+ * @property {string} exec
+ * @property {boolean} shell
  * @property {string[]} args
  * @property {string|undefined} cwd
  * @property {CommandRecipe~outputListener[]} out
@@ -56,6 +68,7 @@ import {FileArtifact} from "../../graph/artifact/file";
 import {AID, Artifact} from "../../graph/artifact";
 import {Readable} from "stream";
 import {Dependency} from "../../graph/dependency";
+import {reassemble} from "../../test/util/tagged-template";
 
 export class CommandError extends Error
 {
@@ -102,7 +115,8 @@ export class CommandRecipe extends Recipe
      */
     configureFor(job)
     {
-        let cmd = "";
+        let exec = "";
+        let shell = false;
         const args = [];
         let cwd = undefined;
         const out = [];
@@ -113,21 +127,26 @@ export class CommandRecipe extends Recipe
         const resolveExceptStrings = resolveArtifacts.bind(null,job,true);
 
         const builderParams = {
-            cmd: (cmdString, ...argItems) => {
-                cmd = cmdString;
+            exec: (cmdString, ...argItems) => {
+                exec = cmdString;
                 args.push(...resolveExceptStrings(...argItems).map(_ => ''+_));
+            },
+            shell: (...argItems) => {
+                exec = resolveExceptStrings(...argItems).map(_ => ''+_).join(" ");
+                shell = true;
             },
             args: (...argItems) => { args.push(...resolveExceptStrings(...argItems).map(_ => ''+_)); },
             cwd: cwdValue => { cwd = cwdValue; },
             out: sink => { out.push(makeOutputSink(job, sink)); },
             err: sink => { err.push(makeOutputSink(job, sink)); },
             combined: sink => { combined.push(makeOutputSink(job, sink)); },
-            resolve
+            resolve,
+            T: reassemble.bind(null, ref => resolveArtifacts(job, false, ref)[0])
         }
 
         this.#commandBuilder(builderParams);
 
-        return {cmd, args, cwd, out, err, combined, resolve};
+        return {exec, shell, args, cwd, out, err, combined, resolve};
     }
 
     createChildProcess(job, config)
@@ -137,14 +156,16 @@ export class CommandRecipe extends Recipe
      * @return {ChildProcessWithoutNullStreams}
      */
     {
-        let {cmd, args, cwd, out, err, combined} = config;
+        let {exec, shell, args, cwd, out, err, combined} = config;
         if ('undefined' === typeof cwd) {
             cwd = job.rule.module.absolutePath;
         }
         const options = {};
+        if (shell) options.shell = "/bin/bash";
         if (cwd) options.cwd = path.resolve(job.rule.module.absolutePath, cwd);
-
-        const child = spawn(cmd, args, options);
+        exec = exec.replace(/^\s+/,'').replace(/\s+$/,'');
+        if (shell) exec = `set -euo pipefail; ${exec}`;
+        const child = spawn(exec, args, options);
 
         for(let listener of out) addDataListenerToStreams(listener, child, child.stdout);
         for(let listener of err) addDataListenerToStreams(listener, child, child.stderr);
@@ -157,7 +178,7 @@ export class CommandRecipe extends Recipe
         return new Promise((resolve, reject) => {
             child.on('exit', (code, signal) => {
                 if (code !== 0 || signal) {
-                    reject(new CommandError(job, config.cmd, code, signal));
+                    reject(new CommandError(job, config.exec.trimStart().trimEnd(), code, signal));
                 }
                 else {
                     resolve();
@@ -204,6 +225,9 @@ function makeOutputSink(job, sink) {
     }
     if (('string'===typeof sink) || (sink instanceof AID)) {
         sink = job.build.artifactManager.get(sink);
+    }
+    if (sink instanceof FileArtifact) {
+        return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity));
     }
     throw new Error("Output sink must be an artifact reference or a callback");
 }

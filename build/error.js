@@ -1,15 +1,19 @@
 export class BuildError extends Error
 {
-    constructor(message, previous) {
+    /**
+     * @param {string} message
+     * @param {Error} [reason]
+     */
+    constructor(message, reason) {
         super(message);
-        this.previous = previous;
+        this.reason = reason;
     }
 
     getBuildTraceAsString()
     {
         let trace = this.message;
-        if (this.previous instanceof BuildError) trace = trace + "\n"+`because ${this.previous.getBuildTraceAsString()}`;
-        else if (this.previous instanceof Error) trace = trace + "\n"+`because ${this.previous.message}\n${this.previous.stack}`;
+        if (this.reason instanceof BuildError) trace = trace + "\n"+`because ${this.reason.getBuildTraceAsString()}`;
+        else if (this.reason instanceof Error) trace = trace + "\n"+`because ${this.reason.message}\n${this.reason.stack}`;
         return trace;
     }
 

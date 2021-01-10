@@ -10,7 +10,8 @@
  */
 
 /**
- * @typedef {Object.<string,*>} RuleBuilder~DefinerParams
+ * @typedef RuleBuilder~DefinerParams
+ * @type {object}
  * @property {Rule} rule
  * @property {RuleBuilder~artifactNominator} depends
  * @property {RuleBuilder~artifactNominator} produces
@@ -148,8 +149,7 @@ export class RuleBuilder
         const result = [];
         for (let ref of artifactRefs) {
             const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }));
-            const whenAbsent = Dependency.ABSENT_VIOLATION;
-            result.push(rule.addDependency(artifact, whenAbsent));
+            result.push(rule.addDependency(artifact, Dependency.ABSENT_VIOLATION));
         }
         return result;
     }

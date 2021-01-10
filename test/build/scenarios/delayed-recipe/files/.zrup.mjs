@@ -12,8 +12,8 @@ export default function test({module, rule}) {
             depends('src/input1.txt', 'src/input2.txt')
         ];
 
-        const command = new CommandRecipe(({cmd, out}) => {
-            cmd("cat", ...sources);
+        const command = new CommandRecipe(({exec, out}) => {
+            exec("cat", ...sources);
             out(target);
         });
 

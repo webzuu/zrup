@@ -8,11 +8,15 @@ import {dirname} from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import chai from "chai";
+import chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
 const expect = chai.expect;
 import {ModuleBuilder} from "../../../../front/module-builder";
 import {Build} from "../../../../build";
 import {Db} from "../../../../db";
 import * as fs from "fs";
+import {CommandError} from "../../../../build/recipe/command";
+import {BuildError} from "../../../../build/error";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
 
@@ -85,5 +89,71 @@ describe("CommandRecipe", async() => {
         expect((await runNewJob()).recipeInvoked).to.be.true;
         expect(await target.exists).to.be.true;
         expect(await target.contents).to.equal("");
+    });
+
+    it("executes a command using a subshell", async() => {
+        const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+
+        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
+        ruleBuilder.finalize();
+
+        const actual = d.artifactManager.get('transformed.txt');
+        const expected = d.artifactManager.get('expected-tr-i-o.txt');
+
+        let job = null;
+        async function runNewJob() {
+            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
+            return job;
+        }
+
+
+        //build fresh
+        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect(await actual.version).to.equal(await expected.version);
+    });
+
+    it("transforms artifacts to files in tagged template string", async() => {
+
+        const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+
+        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
+        ruleBuilder.finalize();
+
+        const actual = d.artifactManager.get('viaTemplateString.txt');
+        const expected = d.artifactManager.get('expected-tr-i-o.txt');
+
+        let job = null;
+        async function runNewJob() {
+            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
+            return job;
+        }
+
+        //build fresh
+        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect(await actual.contents).to.equal(await expected.contents);
+    });
+
+    it("detects pipeline failures", async () => {
+        const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+
+        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
+        ruleBuilder.finalize();
+
+        const actual = d.artifactManager.get('pipeFail.txt');
+
+        let job = null;
+        async function runNewJob() {
+            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
+            return job;
+        }
+
+        try {
+            await runNewJob();
+        }
+        catch(e) {
+            expect(e).to.be.instanceOf(BuildError);
+            expect(e.reason).to.be.instanceOf(CommandError);
+            expect(e.getBuildTraceAsString()).to.match(/\bpipeFail recipe exited with code 173\b/);
+        }
     });
 })

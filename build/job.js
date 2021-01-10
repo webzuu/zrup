@@ -36,8 +36,13 @@ export class Job {
 
     async run()
     {
-        if (this.finished) return this;
-        return await (this.promise || (this.promise = this.#guardedWork()));
+        try {
+            if (this.finished) return this;
+            return await (this.promise || (this.promise = this.#guardedWork()));
+        }
+        catch(e) {
+            throw e; //debug final wrapped error here
+        }
     }
 
     async #guardedWork() {
