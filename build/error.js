@@ -1,3 +1,5 @@
+const inspect = Symbol.for('nodejs.util.inspect.custom');
+
 export class BuildError extends Error
 {
     /**
@@ -15,6 +17,11 @@ export class BuildError extends Error
         if (this.reason instanceof BuildError) trace = trace + "\n"+`because ${this.reason.getBuildTraceAsString()}`;
         else if (this.reason instanceof Error) trace = trace + "\n"+`because ${this.reason.message}\n${this.reason.stack}`;
         return trace;
+    }
+
+    [inspect]()
+    {
+        return this.getBuildTraceAsString();
     }
 
     /**

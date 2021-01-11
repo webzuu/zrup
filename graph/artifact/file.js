@@ -7,6 +7,8 @@ import * as pathUtils from "path";
 import isSubdir from "is-subdir";
 
 export class FileArtifact extends Artifact {
+
+    /** @type {string} */
     #resolvedPath;
 
     /**
@@ -86,8 +88,6 @@ export class FileArtifact extends Artifact {
     {
         return Object.assign({}, super.caps, {canRemove: true});
     }
-
-    static get type() { return "file"; }
 }
 
 export class FileArtifactResolver extends ArtifactResolver
@@ -98,15 +98,20 @@ export class FileArtifactResolver extends ArtifactResolver
     /** @type {string} */
     #infix
 
+    /** @type {string} */
+    #type
+
     /**
      * @param {Project} project
-     * @param {string|undefined} [infix]
+     * @param {string} [infix]
+     * @param {string} [type]
      */
-    constructor(project, infix)
+    constructor(project, infix, type)
     {
         super();
         this.#project=project
         this.#infix = infix || '';
+        this.#type = type || 'file';
     }
 
     /**
@@ -245,7 +250,7 @@ export class FileArtifactResolver extends ArtifactResolver
 
     /** @return {string} */
     get type() {
-        return "file";
+        return this.#type;
     }
 
     /** @return {string} */
@@ -263,9 +268,8 @@ export class FileArtifactResolver extends ArtifactResolver
 
 /**
  * @property {FileArtifactResolver} resolver
- * @abstract
  */
-export class FileArtifactFactoryAbstract extends ArtifactFactory
+export class FileArtifactFactory extends ArtifactFactory
 {
     /** @type {Project} */
     #project;
@@ -273,16 +277,11 @@ export class FileArtifactFactoryAbstract extends ArtifactFactory
     /**
      * @param {ArtifactManager} manager
      * @param {Project} project
-     * @param {Artifact~ClassConstructor} artifactConstructor
-     * @param {FileArtifactResolver} resolver
+     * @param {string} [type]
+     * @param {string} [infix]
      */
-    constructor(
-        manager,
-        project,
-        artifactConstructor,
-        resolver
-    ) {
-        super(manager, artifactConstructor, resolver);
+    constructor(manager, project, type, infix) {
+        super(manager, FileArtifact, new FileArtifactResolver(project, infix, type), type);
         this.#project = project;
     }
 
@@ -293,6 +292,7 @@ export class FileArtifactFactoryAbstract extends ArtifactFactory
             ...extraArgs
         ]
     }
+
     /**
      * @param {string} externalIdentifier
      * @return {Module|null}
@@ -339,17 +339,5 @@ export class FileArtifactFactoryAbstract extends ArtifactFactory
     get treePrefix()
     {
         return this.resolver.treePrefix;
-    }
-}
-
-export class FileArtifactFactory extends FileArtifactFactoryAbstract
-{
-    /**
-     * @param {ArtifactManager} manager
-     * @param {Project} project
-     * @param {string|undefined} [infix]
-     */
-    constructor(manager, project, infix) {
-        super(manager, project, FileArtifact, new FileArtifactResolver(project, infix));
     }
 }

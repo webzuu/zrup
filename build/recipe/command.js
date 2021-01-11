@@ -68,7 +68,8 @@ import {FileArtifact} from "../../graph/artifact/file";
 import {AID, Artifact} from "../../graph/artifact";
 import {Readable} from "stream";
 import {Dependency} from "../../graph/dependency";
-import {reassemble} from "../../test/util/tagged-template";
+import {reassemble} from "../../util/tagged-template";
+import {BuildError} from "../error";
 
 export class CommandError extends Error
 {
@@ -144,7 +145,18 @@ export class CommandRecipe extends Recipe
             T: reassemble.bind(null, ref => resolveArtifacts(job, false, ref)[0])
         }
 
-        this.#commandBuilder(builderParams);
+        try  {
+            this.#commandBuilder(builderParams);
+        }
+        catch(e) {
+            if (e instanceof OutputSinkIsArray) {
+                throw new BuildError(
+                    "Cannot create an output sink from an array. Did you forget to pick an element from"
+                    +" the array returned by produces() before passing it to out()?"
+                )
+            }
+            throw e;
+        }
 
         return {exec, shell, args, cwd, out, err, combined, resolve};
     }
@@ -213,7 +225,12 @@ export function captureTo(outputFilePath)
     }
 }
 
+class OutputSinkIsArray extends Error {}
+
 function makeOutputSink(job, sink) {
+    if (Array.isArray(sink)) {
+        throw new OutputSinkIsArray();
+    }
     if ('function'===typeof sink) {
         return sink;
     }
@@ -227,7 +244,8 @@ function makeOutputSink(job, sink) {
         sink = job.build.artifactManager.get(sink);
     }
     if (sink instanceof FileArtifact) {
-        return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity));
+        const resolved = job.build.artifactManager.resolveToExternalIdentifier(sink.identity);
+        return captureTo(resolved);
     }
     throw new Error("Output sink must be an artifact reference or a callback");
 }

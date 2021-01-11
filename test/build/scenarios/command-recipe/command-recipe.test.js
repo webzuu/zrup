@@ -15,7 +15,7 @@ import {ModuleBuilder} from "../../../../front/module-builder";
 import {Build} from "../../../../build";
 import {Db} from "../../../../db";
 import * as fs from "fs";
-import {CommandError} from "../../../../build/recipe/command";
+import {CommandError, CommandRecipe} from "../../../../build/recipe/command";
 import {BuildError} from "../../../../build/error";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
@@ -156,4 +156,23 @@ describe("CommandRecipe", async() => {
             expect(e.getBuildTraceAsString()).to.match(/\bpipeFail recipe exited with code 173\b/);
         }
     });
+
+    it('escapes newlines in commands', async() => {
+        const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+
+        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
+        ruleBuilder.finalize();
+
+        const actual = d.artifactManager.get('handle-command-newlines.txt');
+        const expected = d.artifactManager.get('expected-handle-command-newlines.txt');
+
+        let job = null;
+        async function runNewJob() {
+            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
+            return job;
+        }
+
+        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect(await actual.version).to.equal(await expected.version);
+    })
 })

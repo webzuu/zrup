@@ -58,14 +58,14 @@ const test = function test({rule}) {
 
     rule(function pipeFail({produces,depends}) {
 
-        const [[output], [input1, input2]] = [
+        const [[output], inputs] = [
             produces('pipeFail.txt'),
             depends('src/input1.txt', 'src/input2.txt')
         ];
 
         return new CommandRecipe(({shell, out,T}) => {
             shell(T`
-                cat ${input1} ${'src/input2.txt'} \
+                cat ${inputs[0]} ${'src/input2.txt'} \
                     | bash -c "exit 173" \
                     | tr i o
             `);
@@ -73,7 +73,19 @@ const test = function test({rule}) {
         });
     });
 
+    rule(function handleNewLines({produces, depends}) {
 
+        const [target] = produces('handle-command-newlines.txt');
+
+        return new CommandRecipe(({shell, out, T}) =>{
+
+            out(target);
+            shell(T`
+                echo "foo";
+                echo "bar"
+            `);
+        });
+    })
 };
 
 export default test;

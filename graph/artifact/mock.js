@@ -1,7 +1,7 @@
 import {AID, Artifact, ArtifactManager, ArtifactFactory} from "../artifact";
 import {PromiseKeeper} from "../../util/promise-keeper";
 import * as path from "path";
-import {FileArtifactFactoryAbstract, FileArtifactResolver} from "./file";
+import {FileArtifactFactory, FileArtifactResolver} from "./file";
 
 export class MockArtifact extends Artifact
 {
@@ -86,7 +86,7 @@ export class MockFileFactory extends ArtifactFactory
 Object.assign(
     MockFileFactory.prototype,
     {
-        normalize: FileArtifactFactoryAbstract.prototype.normalize,
-        resolveModule: FileArtifactFactoryAbstract.prototype.resolveModule
+        normalize: FileArtifactFactory.prototype.normalize,
+        resolveModule: FileArtifactFactory.prototype.resolveModule
     }
 )

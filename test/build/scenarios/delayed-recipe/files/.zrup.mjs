@@ -3,7 +3,6 @@ import {DelayedRecipe} from "../../../../../build/recipe/delayed.js";
 
 export default function test({module, rule}) {
 
-    debugger;
     rule(function concatenated({depends, produces}) {
 
         debugger;

@@ -42,7 +42,7 @@ describe('FileArtifactFactory', ()=>{
     it("finds closest module", async() => {
         const root = pathUtils.join(tmpDir.toString(), ".zrup");
         const prj = new Project(root);
-        const factory = new FileArtifactFactory(new ArtifactManager(),prj);
+        const factory = new FileArtifactFactory(new ArtifactManager(), prj);
         Module.createRoot(prj, "test")
         const foo = new Module(prj.rootModule, "foo", "foo-module");
         const bar = new Module(foo, "bar/baz", "bar-module");
@@ -65,7 +65,7 @@ describe('FileArtifactFactory', ()=>{
         const root = tmpDir.toString();
         const prj = new Project(root);
         const infix = "foo/bar";
-        const factory = new FileArtifactFactory(new ArtifactManager(), prj, infix);
+        const factory = new FileArtifactFactory(new ArtifactManager(), prj,undefined,infix);
         expect(factory.treeInfix).to.equal(infix);
         expect(factory.isInfixed("baz/demo")).to.be.false;
         expect(factory.isInfixed(`${infix}/baz/demo`)).to.be.true;
@@ -77,7 +77,7 @@ describe('FileArtifactFactory', ()=>{
         const root = tmpDir.toString();
         const prj = new Project(root);
         const infix = "foo/bar";
-        const factory = new FileArtifactFactory(new ArtifactManager(), prj, infix);
+        const factory = new FileArtifactFactory(new ArtifactManager(), prj, undefined, infix);
 
         expect(factory.applyInfix("gen/lou")).to.equal(`${infix}/gen/lou`);
         expect(factory.applyInfix(`${infix}/gen/lou`)).to.equal(`${infix}/gen/lou`)
@@ -97,7 +97,7 @@ describe('FileArtifactFactory', ()=>{
         const root = tmpDir.toString();
         const prj = new Project(root);
         const infix = "foo/bar";
-        const factory = new FileArtifactFactory(new ArtifactManager(), prj, infix);
+        const factory = new FileArtifactFactory(new ArtifactManager(), prj, undefined, infix);
 
         expect(factory.removeInfix(`${infix}/gen/lou`)).to.equal("gen/lou");
         expect(factory.removeInfix(`gen/lou`)).to.equal(`gen/lou`)

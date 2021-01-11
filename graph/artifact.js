@@ -2,10 +2,15 @@ import md5 from "md5";
 import {UnimplementedAbstract} from "../error/unimplemented-abstract";
 
 /**
+ * @typedef {Function & { type: string|undefined }} Artifact~ClassConstructor
+ */
+
+/**
  * @typedef {Object} Artifact~Caps
  * @property {boolean} canRemove
  */
 
+/***/
 export class Artifact {
 
     /** @type {string} */
@@ -20,16 +25,7 @@ export class Artifact {
     /** @return {string} */
     get type()
     {
-        return this.constructor.type;
-    }
-
-    /**
-     * @return {string}
-     * @abstract
-     */
-    static get type()
-    {
-        throw new UnimplementedAbstract();
+        return AID.parse(this.#identity).type;
     }
 
     /** @return {string} */
@@ -95,264 +91,7 @@ export class Artifact {
     }
 }
 
-export class ArtifactManager
-{
-    #index = {
-        factory: {
-            type: {}
-        },
-        artifact: {
-            key: {},
-            identity: {}
-        }
-    };
-
-    /** @type {string} */
-    #defaultType = "file";
-
-    /** @param {string|undefined} [defaultType] */
-    constructor(defaultType)
-    {
-        this.#defaultType = defaultType || "file";
-    }
-
-    /** @param {ArtifactFactory} factory */
-    addFactory(factory)
-    {
-        if (factory.type in this.#index.factory.type) {
-            throw new Error(`Attempt to register more than one factory for artifact type "${factory.type}"`);
-        }
-        this.#index.factory.type[factory.type] = factory;
-    }
-
-    /**
-     * @param {string|null} type
-     * @param {boolean|undefined} [require]
-     * @return {ArtifactFactory|null}
-     */
-    getFactoryForType(type, require)
-    {
-        const result = this.#index.factory.type[type || this.#defaultType] || null;
-        if (!result && true===require) {
-            throw new Error(`No factory was registered for artifact type "${type}"`);
-        }
-        return result;
-    }
-
-    /**
-     * @param {AID} aid
-     * @return {AID}
-     */
-    normalizeAID(aid)
-    {
-        const factory = this.getFactoryForType(aid.type, true);
-        return factory ? factory.normalize(aid) : aid;
-    }
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @return {Artifact|null}
-     */
-    find(ref)
-    {
-        return this.#index.artifact.identity[""+ref];
-    }
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @return {Artifact}
-     */
-    get(ref)
-    {
-        const aid = new AID(""+ref);
-        const factory = this.getFactoryForType(aid.type, true);
-        const normalized = factory.normalize(aid);
-        return this.find(normalized) || this.#create(factory, normalized);
-    }
-
-    /**
-     * @return {string[]}
-     */
-    get allReferences()
-    {
-        return Object.keys(this.#index.artifact.identity);
-    }
-
-    /**
-     * @param {ArtifactFactory} factory
-     * @param {AID} aid
-     * @return {Artifact}
-     */
-    #create(factory, aid)
-    {
-        const artifact = factory.make(aid);
-        this.#index.artifact.key[artifact.key] = this.#index.artifact.identity[artifact.identity] = artifact;
-        return artifact;
-    }
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @return {string}
-     */
-    resolveToExternalIdentifier(ref)
-    {
-        const aid = this.normalizeAID(new AID(ref));
-        return this.getFactoryForType(aid.type, true).resolveToExternalIdentifier(aid);
-    }
-}
-
-/**
- * @typedef {Function & { type: string|undefined }} Artifact~ClassConstructor
- */
-
-/**
- * @abstract
- */
-export class ArtifactResolver
-{
-    /**
-     * @param {AID} aid
-     * @return {AID}
-     * @abstract
-     */
-    normalize(aid)
-    {
-        return aid.withType(this.type);
-    }
-
-    /**
-     * @return {string}
-     * @abstract
-     */
-    get type()
-    {
-        throw new UnimplementedAbstract();
-    }
-
-    /**
-     * @param {AID} aid
-     * @return {string}
-     * @abstract
-     */
-    resolveToExternalIdentifier(aid)
-    {
-        throw new UnimplementedAbstract();
-    }
-
-}
-
-export class ArtifactFactory
-{
-    /** @type {ArtifactManager} */
-    #manager;
-
-    /** @type {Artifact~ClassConstructor} */
-    #artifactConstructor;
-
-    /** @type {string} */
-    #type;
-
-    /** @type {ArtifactResolver} */
-    #artifactResolver;
-
-    /**
-     * @param {ArtifactManager} manager
-     * @param {Artifact~ClassConstructor} artifactConstructor
-     * @param {ArtifactResolver} artifactResolver
-     */
-    constructor(manager, artifactConstructor, artifactResolver)
-    {
-        this.#artifactResolver = artifactResolver;
-        const type = this.constructor.type || artifactConstructor.type || null;
-        if ("string" !== typeof type) {
-            throw new Error(
-                "Either the factory class or the artifact class must have a static string property named \"type\""
-            );
-        }
-        this.#manager = manager;
-        this.#artifactConstructor = artifactConstructor;
-        this.#type = type;
-        this.#manager.addFactory(this);
-    }
-
-    /** @return {Artifact~ClassConstructor} */
-    get artifactConstructor()
-    {
-        return this.#artifactConstructor;
-    }
-
-    /** @return {string} */
-    get type()
-    {
-        return this.#type;
-    }
-
-    /**
-     * @param {AID} aid
-     * @return {AID}
-     */
-    normalize(aid)
-    {
-        return this.resolver.normalize(aid);
-    }
-
-    /**
-     * @param {AID|string} aidOrAIDString
-     * @param extra
-     * @return {Artifact}
-     */
-    make(aidOrAIDString, ...extra)
-    {
-        return this.makeFromNormalized(this.normalize(new AID(""+aidOrAIDString)),...extra);
-    }
-
-    /**
-     * @param {AID} aid
-     * @param extra
-     * @return {Artifact}
-     */
-    makeFromNormalized(aid, ...extra)
-    {
-        const ctor = this.artifactConstructor;
-        return new ctor(aid, ...this.prependRequiredConstructorArgs(aid, extra));
-    }
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @param {*[] | undefined} extraArgs
-     * @return {*[]}
-     */
-    prependRequiredConstructorArgs(ref, extraArgs)
-    {
-        return extraArgs || [];
-    }
-
-    /**
-     * @param {AID} aid
-     * @return {string}
-     */
-    resolveToExternalIdentifier(aid)
-    {
-        return this.resolver.resolveToExternalIdentifier(aid);
-    }
-
-    /** @return {ArtifactResolver} */
-    get resolver()
-    {
-        return this.#artifactResolver;
-    }
-
-    /**
-     * @return {string|undefined}
-     */
-    static get type()
-    {
-        return undefined;
-    }
-
-
-}
-
+/***/
 export class AID
 {
     /** @type {string|undefined} */
@@ -463,12 +202,270 @@ export class AID
      */
     static parse(aid)
     {
-        //TODO: handle escaped + in ref
+        //TODO: handle escaped '+' in ref
         const matches = (''+aid).match(/^(?:(?<type>[-a-z]+):)?(?:(?<module>[A-Za-z_][-0-9A-Za-z_]*)\+)?(?<ref>[^+]*)$/);
         if (!matches) return false;
         const result = {};
         for(let key of ['type','module','ref']) if (undefined !== matches.groups[key]) result[key] = matches.groups[key];
         return result;
+    }
+}
+
+/***/
+export class ArtifactManager
+{
+    #index = {
+        factory: {
+            type: {}
+        },
+        artifact: {
+            key: {},
+            identity: {}
+        }
+    };
+
+    /** @type {string} */
+    #defaultType = "file";
+
+    /** @param {string|undefined} [defaultType] */
+    constructor(defaultType)
+    {
+        this.#defaultType = defaultType || "file";
+    }
+
+    /** @param {ArtifactFactory} factory */
+    addFactory(factory)
+    {
+        if (factory.type in this.#index.factory.type) {
+            throw new Error(`Attempt to register more than one factory for artifact type "${factory.type}"`);
+        }
+        this.#index.factory.type[factory.type] = factory;
+    }
+
+    /**
+     * @param {string|null} type
+     * @param {boolean|undefined} [require]
+     * @return {ArtifactFactory|null}
+     */
+    getFactoryForType(type, require)
+    {
+        const result = this.#index.factory.type[type || this.#defaultType] || null;
+        if (!result && true===require) {
+            throw new Error(`No factory was registered for artifact type "${type}"`);
+        }
+        return result;
+    }
+
+    /**
+     * @param {AID} aid
+     * @return {AID}
+     */
+    normalizeAID(aid)
+    {
+        const factory = this.getFactoryForType(aid.type, true);
+        return factory ? factory.normalize(aid) : aid;
+    }
+
+    /**
+     * @param {Artifact~Reference} ref
+     * @return {Artifact|null}
+     */
+    find(ref)
+    {
+        return this.#index.artifact.identity[""+ref];
+    }
+
+    /**
+     * @param {Artifact~Reference} ref
+     * @return {Artifact}
+     */
+    get(ref)
+    {
+        const aid = new AID(""+ref);
+        const factory = this.getFactoryForType(aid.type, true);
+        const normalized = factory.normalize(aid);
+        return this.find(normalized) || this.#create(factory, normalized);
+    }
+
+    /**
+     * @return {string[]}
+     */
+    get allReferences()
+    {
+        return Object.keys(this.#index.artifact.identity);
+    }
+
+    /**
+     * @param {ArtifactFactory} factory
+     * @param {AID} aid
+     * @return {Artifact}
+     */
+    #create(factory, aid)
+    {
+        const artifact = factory.make(aid);
+        this.#index.artifact.key[artifact.key] = this.#index.artifact.identity[artifact.identity] = artifact;
+        return artifact;
+    }
+
+    /**
+     * @param {Artifact~Reference} ref
+     * @return {string}
+     */
+    resolveToExternalIdentifier(ref)
+    {
+        const aid = this.normalizeAID(new AID(ref));
+        return this.getFactoryForType(aid.type, true).resolveToExternalIdentifier(aid);
+    }
+}
+
+/**
+ * @abstract
+ */
+export class ArtifactResolver
+{
+    /**
+     * @param {AID} aid
+     * @return {AID}
+     * @abstract
+     */
+    normalize(aid)
+    {
+        return aid.withType(this.type);
+    }
+
+    /**
+     * @return {string}
+     * @abstract
+     */
+    get type()
+    {
+        throw new UnimplementedAbstract();
+    }
+
+    /**
+     * @param {AID} aid
+     * @return {string}
+     * @abstract
+     */
+    resolveToExternalIdentifier(aid)
+    {
+        throw new UnimplementedAbstract();
+    }
+
+}
+
+export class ArtifactFactory
+{
+    /** @type {ArtifactManager} */
+    #manager;
+
+    /** @type {Artifact~ClassConstructor} */
+    #artifactConstructor;
+
+    /** @type {string} */
+    #type;
+
+    /** @type {ArtifactResolver} */
+    #artifactResolver;
+
+    /**
+     * @param {ArtifactManager} manager
+     * @param {Artifact~ClassConstructor} artifactConstructor
+     * @param {ArtifactResolver} artifactResolver
+     * @param {string} [type]
+     */
+    constructor(
+        manager,
+        artifactConstructor,
+        artifactResolver,
+        type
+    )
+    {
+        this.#manager = manager;
+        this.#artifactResolver = artifactResolver;
+        this.#artifactConstructor = artifactConstructor;
+        this.#type = type || artifactResolver.type || this.constructor.type || artifactConstructor.type || null;
+        if ("string" !== typeof this.#type) {
+            throw new Error(
+                "Resolver object or factory constructor must have a string property named \"type\", or the type argument must be given"
+            );
+        }
+        this.#manager.addFactory(this);
+    }
+
+    /** @return {Artifact~ClassConstructor} */
+    get artifactConstructor()
+    {
+        return this.#artifactConstructor;
+    }
+
+    /** @return {string} */
+    get type()
+    {
+        return this.#type;
+    }
+
+    /**
+     * @param {AID} aid
+     * @return {AID}
+     */
+    normalize(aid)
+    {
+        return this.resolver.normalize(aid);
+    }
+
+    /**
+     * @param {AID|string} aidOrAIDString
+     * @param extra
+     * @return {Artifact}
+     */
+    make(aidOrAIDString, ...extra)
+    {
+        return this.makeFromNormalized(this.normalize(new AID(""+aidOrAIDString)),...extra);
+    }
+
+    /**
+     * @param {AID} aid
+     * @param extra
+     * @return {Artifact}
+     */
+    makeFromNormalized(aid, ...extra)
+    {
+        const ctor = this.artifactConstructor;
+        return new ctor(aid, ...this.prependRequiredConstructorArgs(aid, extra));
+    }
+
+    /**
+     * @param {Artifact~Reference} ref
+     * @param {*[] | undefined} extraArgs
+     * @return {*[]}
+     */
+    prependRequiredConstructorArgs(ref, extraArgs)
+    {
+        return extraArgs || [];
+    }
+
+    /**
+     * @param {AID} aid
+     * @return {string}
+     */
+    resolveToExternalIdentifier(aid)
+    {
+        return this.resolver.resolveToExternalIdentifier(aid);
+    }
+
+    /** @return {ArtifactResolver} */
+    get resolver()
+    {
+        return this.#artifactResolver;
+    }
+
+    /**
+     * @return {string|undefined}
+     */
+    static get type()
+    {
+        return undefined;
     }
 }
 
