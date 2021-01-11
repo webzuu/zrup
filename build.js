@@ -1,7 +1,6 @@
 import md5 from "md5";
 import {Job} from "./build/job";
 import {BuildError} from "./build/error";
-import v8 from "v8";
 
 export class Build {
 
@@ -168,6 +167,7 @@ export class Build {
     async isUpToDate(job)
     {
         const rule = job.rule;
+        if (rule.always) return false;
         await job.prepare();
         const outputs = job.outputs;
         const allOutputsExist =

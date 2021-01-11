@@ -10,10 +10,10 @@ import {Dependency} from "./dependency";
  */
 
 /**
- * @property {{ [string]: Dependency} } dependencies
- * @property {{ [string]: Artifact }} outputs
- * @property {{ [string]: Rule }} after - Rules that are order-only dependencies
- * @property {Recipe} recipe
+ * @property {Object.<string,Dependency>} dependencies
+ * @property {Object.<string,Artifact>} outputs
+ * @property {Object.<string,Rule>} after - Rules that are order-only dependencies
+ * @property {boolean} always
  */
 export class Rule {
 
@@ -29,7 +29,6 @@ export class Rule {
     /** @type {Recipe|null} */
     #recipe;
 
-
     /**
      * @param {Module} module
      * @param {string} name
@@ -43,6 +42,7 @@ export class Rule {
         this.outputs = {};
         this.dependencies = {};
         this.after = {};
+        this.always = false;
     }
 
     /** @return {Module} */

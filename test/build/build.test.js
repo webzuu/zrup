@@ -228,6 +228,26 @@ describe("Build", () => {
         expect(job2.recipeInvoked).to.be.true;
     });
 
+    it("always rebuilds a target of an always-rule", async() => {
+        let {pk,g,db,target,source,makeTarget,rule,build} = simple();
+        rule.always = true;
+        answers(pk,{
+            [target.key]: [false],
+            [source.key]: [true,"857142"]
+        });
+        let job = await build.getJobForArtifact(target);
+        await job.run();
+        expect(job.recipeInvoked).to.be.true;
+        expect(await target.exists).to.be.true;
+        expect(await build.isUpToDate(job)).to.be.false;
+        build = new Build(build.graph, build.db, build.artifactManager);
+        job = await build.getJobForArtifact(target);
+        expect(job.recipeInvoked).to.be.false;
+        await job.run();
+        expect(job.recipeInvoked).to.be.true;
+        expect(await build.isUpToDate(job)).to.be.false;
+    })
+
     it("gets actual version info for target with nonexistent source", async() => {
         // noinspection JSUnusedLocalSymbols
         let {pk,g,target,source,makeTarget,rule,build} = simple();
