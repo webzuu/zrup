@@ -216,6 +216,7 @@ export function captureTo(outputFilePath)
     let append = false;
     return chunk => {
         if(!append) {
+            fs.mkdirSync(path.dirname(outputFilePath),{mode: 0o755, recursive: true});
             fs.writeFileSync(outputFilePath, chunk);
             append = true;
         }

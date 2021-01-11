@@ -85,7 +85,22 @@ const test = function test({rule}) {
                 echo "bar"
             `);
         });
+    });
+
+    rule(function internals({produces, depends}) {
+
+        const [target] = produces('internal:foo/bar/handle-command-newlines.txt');
+
+        return new CommandRecipe(({shell, out, T}) =>{
+
+            out(target);
+            shell(T`
+                echo "foo";
+                echo "bar"
+            `);
+        });
     })
+
 };
 
 export default test;

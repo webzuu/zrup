@@ -174,5 +174,24 @@ describe("CommandRecipe", async() => {
 
         expect((await runNewJob()).recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
-    })
+    });
+
+    it('resolves internal artifacts', async() => {
+        const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+
+        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
+        ruleBuilder.finalize();
+
+        const actual = d.artifactManager.get('internal:foo/bar/handle-command-newlines.txt');
+        const expected = d.artifactManager.get('expected-handle-command-newlines.txt');
+
+        let job = null;
+        async function runNewJob() {
+            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
+            return job;
+        }
+
+        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect(await actual.version).to.equal(await expected.version);
+    });
 })

@@ -32,7 +32,7 @@ export class FileArtifact extends Artifact {
                 return await md5File(this.#resolvedPath);
             }
             catch(e) {
-                //TODO: examine the cause of error, don't assume it's because the file didn't exist
+                if (e.code !== "ENOENT") throw e;
             }
             return Artifact.NONEXISTENT_VERSION;
         })();
