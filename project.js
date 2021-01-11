@@ -1,6 +1,6 @@
-import {Module} from "./module";
+import {Module} from "./module.js";
 import fsPath from "path";
-import {Graph} from "./graph";
+import {Graph} from "./graph.js";
 
 /**
  * @callback

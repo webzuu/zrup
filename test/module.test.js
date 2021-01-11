@@ -1,4 +1,4 @@
-import {Project} from "../project";
+import {Project} from "../project.js";
 import {fileURLToPath} from "url";
 import path, {dirname} from "path";
 
@@ -9,8 +9,8 @@ import chai from "chai";
 import asserttype from 'chai-asserttype';
 chai.use(asserttype);
 import chaiAsPromised from "chai-as-promised";
-import {ModuleTesting} from "../util/testing";
-import {Module} from "../module";
+import {ModuleTesting} from "../util/testing.js";
+import {Module} from "../module.js";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 import {mkdir as fsMkDir}  from "fs/promises";

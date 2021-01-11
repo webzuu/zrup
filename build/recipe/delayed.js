@@ -1,4 +1,4 @@
-import {Recipe} from "../recipe";
+import {Recipe} from "../recipe.js";
 
 export class DelayedRecipe extends Recipe
 {

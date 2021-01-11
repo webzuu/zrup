@@ -16,7 +16,7 @@
  * @property {RuleBuilder~definerAcceptor} rule
  */
 
-import {Module} from "../module";
+import {Module} from "../module.js";
 import fs, {promises as fsp} from "fs";
 import * as path from "path";
 

@@ -4,12 +4,12 @@ import rimraf from "rmfr";
 import fs from "fs";
 const fsp = fs.promises;
 
-import {Db} from "../db";
-import {Project} from "../project";
-import {Module} from "../module";
-import {ArtifactManager} from "../graph/artifact";
-import {FileArtifactFactory} from "../graph/artifact/file";
-import {Recipe} from "../build/recipe";
+import {Db} from "../db.js";
+import {Project} from "../project.js";
+import {Module} from "../module.js";
+import {ArtifactManager} from "../graph/artifact.js";
+import {FileArtifactFactory} from "../graph/artifact/file.js";
+import {Recipe} from "../build/recipe.js";
 
 export class TempDir
 {

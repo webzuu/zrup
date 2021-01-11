@@ -1,6 +1,6 @@
 import chai from "chai";
 import asserttype from 'chai-asserttype';
-import {PromiseKeeper} from "../../util/promise-keeper";
+import {PromiseKeeper} from "../../util/promise-keeper.js";
 chai.use(asserttype);
 const expect = chai.expect;
 

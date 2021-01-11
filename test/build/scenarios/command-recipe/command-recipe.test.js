@@ -1,6 +1,6 @@
-import {ProjectTesting} from "../../../../util/testing";
+import {ProjectTesting} from "../../../../util/testing.js";
 import path from "path";
-import {RuleBuilder} from "../../../../front/rule-builder";
+import {RuleBuilder} from "../../../../front/rule-builder.js";
 import copy from "recursive-copy";
 
 import {fileURLToPath} from 'url';
@@ -11,12 +11,12 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
-import {ModuleBuilder} from "../../../../front/module-builder";
-import {Build} from "../../../../build";
-import {Db} from "../../../../db";
+import {ModuleBuilder} from "../../../../front/module-builder.js";
+import {Build} from "../../../../build.js";
+import {Db} from "../../../../db.js";
 import * as fs from "fs";
-import {CommandError, CommandRecipe} from "../../../../build/recipe/command";
-import {BuildError} from "../../../../build/error";
+import {CommandError, CommandRecipe} from "../../../../build/recipe/command.js";
+import {BuildError} from "../../../../build/error.js";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
 

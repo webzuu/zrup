@@ -1,5 +1,5 @@
 import fsPath from "path";
-import {AID} from "./graph/artifact";
+import {AID} from "./graph/artifact.js";
 
 export class Module
 {
@@ -74,4 +74,8 @@ export class Module
         project.addModule(rootModule);
         return rootModule;
     }
+}
+
+/** @param {ModuleBuilder~definer} definer */
+export function module(definer) {
 }

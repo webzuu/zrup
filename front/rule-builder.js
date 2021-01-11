@@ -23,10 +23,10 @@
  * @param {...Artifact~Reference} artifactRefs
  */
 
-import {Rule} from "../graph/rule";
-import {Module} from "../module";
-import {AID} from "../graph/artifact";
-import {Dependency} from "../graph/dependency";
+import {Rule} from "../graph/rule.js";
+import {Module} from "../module.js";
+import {AID} from "../graph/artifact.js";
+import {Dependency} from "../graph/dependency.js";
 
 /**
  * @callback RuleBuilder~ruleNominator

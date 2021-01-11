@@ -3,9 +3,9 @@ import asserttype from 'chai-asserttype';
 chai.use(asserttype);
 const expect = chai.expect;
 
-import {MockArtifact} from "../../../graph/artifact/mock";
-import {PromiseKeeper} from "../../../util/promise-keeper";
-import {ArtifactList} from "../../../graph/artifact/artifact-list";
+import {MockArtifact} from "../../../graph/artifact/mock.js";
+import {PromiseKeeper} from "../../../util/promise-keeper.js";
+import {ArtifactList} from "../../../graph/artifact/artifact-list.js";
 
 describe("Artifact list", () => {
 

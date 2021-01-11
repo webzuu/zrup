@@ -7,26 +7,26 @@ const expect = chai.expect;
 
 import path from "path";
 
-import {MockFileFactory} from "../../graph/artifact/mock";
+import {MockFileFactory} from "../../graph/artifact/mock.js";
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import { DbTesting } from "../../util/testing";
-import { Graph } from "../../graph";
-import { PromiseKeeper } from "../../util/promise-keeper";
-import { Recipe } from "../../build/recipe";
+import { DbTesting } from "../../util/testing.js";
+import { Graph } from "../../graph.js";
+import { PromiseKeeper } from "../../util/promise-keeper.js";
+import { Recipe } from "../../build/recipe.js";
 import md5 from "md5";
-import {Rule} from "../../graph/rule";
-import { Build } from "../../build";
-import { BuildError } from "../../build/error";
-import { Dependency } from "../../graph/dependency";
-import {Project} from "../../project";
-import {Artifact, ArtifactManager} from "../../graph/artifact";
-import {Module} from "../../module";
-import {FileArtifactFactory} from "../../graph/artifact/file";
+import {Rule} from "../../graph/rule.js";
+import { Build } from "../../build.js";
+import { BuildError } from "../../build/error.js";
+import { Dependency } from "../../graph/dependency.js";
+import {Project} from "../../project.js";
+import {Artifact, ArtifactManager} from "../../graph/artifact.js";
+import {Module} from "../../module.js";
+import {FileArtifactFactory} from "../../graph/artifact/file.js";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 

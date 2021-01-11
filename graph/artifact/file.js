@@ -1,8 +1,8 @@
-import {AID, Artifact, ArtifactFactory, ArtifactResolver} from "../artifact";
+import {AID, Artifact, ArtifactFactory, ArtifactResolver} from "../artifact.js";
 import md5File from "md5-file";
 import fs from "fs";
 const fsp = fs.promises;
-import {Module} from "../../module";
+import {Module} from "../../module.js";
 import * as pathUtils from "path";
 import isSubdir from "is-subdir";
 

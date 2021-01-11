@@ -10,11 +10,11 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import {RuleBuilder} from "../../front/rule-builder";
-import {ProjectTesting} from "../../util/testing";
-import {Rule} from "../../graph/rule";
+import {RuleBuilder} from "../../front/rule-builder.js";
+import {ProjectTesting} from "../../util/testing.js";
+import {Rule} from "../../graph/rule.js";
 import path from "path";
-import {ModuleBuilder} from "../../front/module-builder";
+import {ModuleBuilder} from "../../front/module-builder.js";
 import copy from "recursive-copy";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});

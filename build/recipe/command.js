@@ -60,16 +60,16 @@
  * @param {CommandRecipe~BuilderParams} params
  */
 
-import {Recipe} from "../recipe";
+import {Recipe} from "../recipe.js";
 import {spawn} from "child_process";
 import fs from "fs";
 import * as path from "path";
-import {FileArtifact} from "../../graph/artifact/file";
-import {AID, Artifact} from "../../graph/artifact";
+import {FileArtifact} from "../../graph/artifact/file.js";
+import {AID, Artifact} from "../../graph/artifact.js";
 import {Readable} from "stream";
-import {Dependency} from "../../graph/dependency";
-import {reassemble} from "../../util/tagged-template";
-import {BuildError} from "../error";
+import {Dependency} from "../../graph/dependency.js";
+import {reassemble} from "../../util/tagged-template.js";
+import {BuildError} from "../error.js";
 
 export class CommandError extends Error
 {

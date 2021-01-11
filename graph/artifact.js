@@ -1,5 +1,5 @@
 import md5 from "md5";
-import {UnimplementedAbstract} from "../error/unimplemented-abstract";
+import {UnimplementedAbstract} from "../error/unimplemented-abstract.js";
 
 /**
  * @typedef {Function & { type: string|undefined }} Artifact~ClassConstructor

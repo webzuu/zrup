@@ -1,6 +1,6 @@
-import {BuildError} from "./error";
-import {Dependency} from "../graph/dependency";
-import {AID} from "../graph/artifact";
+import {BuildError} from "./error.js";
+import {Dependency} from "../graph/dependency.js";
+import {AID} from "../graph/artifact.js";
 
 /**
  * @property {Build} build

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+HERE="$( cd "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
+RUNNER="$( realpath "${HERE}"/../front/runner.js )"
+node "${RUNNER}" "$@"

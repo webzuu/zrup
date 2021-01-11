@@ -1,4 +1,4 @@
-import {Project} from "../project";
+import {Project} from "../project.js";
 import {fileURLToPath} from "url";
 import path, {dirname} from "path";
 
@@ -9,13 +9,13 @@ import chai from "chai";
 import asserttype from 'chai-asserttype';
 chai.use(asserttype);
 import chaiAsPromised from "chai-as-promised";
-import {TempDir} from "../util/testing";
-import {Module} from "../module";
+import {TempDir} from "../util/testing.js";
+import {Module} from "../module.js";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 import {mkdir as fsMkDir}  from "fs/promises";
-import {FileArtifactFactory} from "../graph/artifact/file";
-import {ArtifactManager} from "../graph/artifact";
+import {FileArtifactFactory} from "../graph/artifact/file.js";
+import {ArtifactManager} from "../graph/artifact.js";
 
 async function mkdir(path) {
     await fsMkDir(path, { mode: 0o755, recursive: true });

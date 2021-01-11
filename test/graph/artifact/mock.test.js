@@ -1,7 +1,7 @@
 import chai from "chai";
 import asserttype from 'chai-asserttype';
-import {MockArtifact} from "../../../graph/artifact/mock";
-import {PromiseKeeper} from "../../../util/promise-keeper";
+import {MockArtifact} from "../../../graph/artifact/mock.js";
+import {PromiseKeeper} from "../../../util/promise-keeper.js";
 import path from "path";
 chai.use(asserttype);
 const expect = chai.expect;
@@ -12,7 +12,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import {DbTesting} from "../../../util/testing";
+import {DbTesting} from "../../../util/testing.js";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 

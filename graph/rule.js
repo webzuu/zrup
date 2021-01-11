@@ -1,6 +1,6 @@
 import md5 from "md5";
-import {Module} from "../module";
-import {Dependency} from "./dependency";
+import {Module} from "../module.js";
+import {Dependency} from "./dependency.js";
 
 /**
  * @callback BuilderCallback

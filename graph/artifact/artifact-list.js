@@ -1,4 +1,4 @@
-import {Artifact} from "../artifact";
+import {Artifact} from "../artifact.js";
 import md5 from "md5";
 
 export class ArtifactList extends Artifact

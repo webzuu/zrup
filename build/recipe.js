@@ -1,4 +1,4 @@
-import {BuildError} from "./error";
+import {BuildError} from "./error.js";
 
 export class Recipe
 {

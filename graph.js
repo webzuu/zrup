@@ -1,4 +1,4 @@
-import {uniqueAdd} from "./util/indexing";
+import {uniqueAdd} from "./util/indexing.js";
 
 export class Graph
 {

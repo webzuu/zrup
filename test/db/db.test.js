@@ -13,7 +13,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import {DbTesting, TempDir} from "../../util/testing";
+import {DbTesting, TempDir} from "../../util/testing.js";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 

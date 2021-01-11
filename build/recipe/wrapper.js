@@ -20,7 +20,7 @@
  * @property {WrapperRecipe~parachronousCallback} [after]
  */
 
-import {NopRecipe, Recipe} from "../recipe";
+import {NopRecipe, Recipe} from "../recipe.js";
 
 export class WrapperRecipe extends Recipe
 {

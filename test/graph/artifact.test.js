@@ -2,14 +2,14 @@ import chai from "chai";
 import asserttype from 'chai-asserttype';
 chai.use(asserttype);
 const expect = chai.expect;
-import {AID, ArtifactManager} from "../../graph/artifact";
-import {Project} from "../../project";
+import {AID, ArtifactManager} from "../../graph/artifact.js";
+import {Project} from "../../project.js";
 
 import {fileURLToPath} from 'url';
 import {dirname} from 'path';
-import {MockFileFactory} from "../../graph/artifact/mock";
-import {PromiseKeeper} from "../../util/promise-keeper";
-import {Module} from "../../module";
+import {MockFileFactory} from "../../graph/artifact/mock.js";
+import {PromiseKeeper} from "../../util/promise-keeper.js";
+import {Module} from "../../module.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 

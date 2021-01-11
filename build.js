@@ -1,6 +1,6 @@
 import md5 from "md5";
-import {Job} from "./build/job";
-import {BuildError} from "./build/error";
+import {Job} from "./build/job.js";
+import {BuildError} from "./build/error.js";
 
 export class Build {
 

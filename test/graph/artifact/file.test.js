@@ -1,9 +1,9 @@
 import pathUtils from "path";
-import {Project} from "../../../project";
-import {FileArtifact, FileArtifactFactory} from "../../../graph/artifact/file";
-import {ArtifactManager} from "../../../graph/artifact";
-import {Module} from "../../../module";
-import {TempDir} from "../../../util/testing";
+import {Project} from "../../../project.js";
+import {FileArtifact, FileArtifactFactory} from "../../../graph/artifact/file.js";
+import {ArtifactManager} from "../../../graph/artifact.js";
+import {Module} from "../../../module.js";
+import {TempDir} from "../../../util/testing.js";
 
 import {fileURLToPath} from 'url';
 import {dirname} from 'path';
