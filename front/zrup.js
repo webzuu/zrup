@@ -2,7 +2,7 @@ import * as findUp from "find-up";
 import fs from "fs/promises";
 import {Project} from "../project";
 import {Db} from "../db";
-import {ArtifactManager, ArtifactFactory} from "../graph/artifact";
+import {ArtifactManager} from "../graph/artifact";
 import {FileArtifactFactory} from "../graph/artifact/file";
 import {RuleBuilder} from "./rule-builder";
 import {ModuleBuilder} from "./module-builder";
@@ -15,6 +15,11 @@ import * as util from "util";
  * @property {string} zrupDir
  * @property {string} dataDir
  * @property {Object.<string, string>} channels
+ */
+
+/**
+ * @typedef {Object.<string,*>} Zrup~Options
+ * @property {string[]} goals
  */
 
 /***/
@@ -42,10 +47,12 @@ export class Zrup
 
     /**
      * @param {string} projectRoot
-     * @param {Zrup~Config} config
+     * @param {Zrup~Config} [config]
      */
-    constructor(projectRoot, {zrupDir,dataDir,channels})
+    constructor(projectRoot, config)
     {
+        this.#projectRoot = projectRoot;
+        const {zrupDir,dataDir,channels} = this.#config = config || Zrup.loadConfig(this.#projectRoot);
         this.#project = new Project(projectRoot);
         this.#db = new Db(path.join(this.#project.path, dataDir.replace(/<zrupDir>/,zrupDir)));
         this.#artifactManager = new ArtifactManager();
@@ -62,6 +69,10 @@ export class Zrup
         this.#moduleBuilder = new ModuleBuilder(this.#project, this.#ruleBuilder);
     }
 
+    /**
+     * @param {Zrup~Options} options
+     * @return {Promise<void>}
+     */
     async run(options) {
 
         try {
@@ -72,7 +83,7 @@ export class Zrup
             const jobs = Promise.all(requestedArtifacts.map(async artifact => await build.getJobForArtifact(artifact)));
             console.log("Running build jobs");
             const runs = jobs.map(async job => await job.run());
-            await Promise.all(jobs.map(async job => await job.run()));
+            await Promise.all(runs);
             console.log("All done");
         }
         catch(e) {
@@ -84,7 +95,7 @@ export class Zrup
      * @param {string} [absDirectory]
      * @return {Promise<void>}
      */
-    async init(absDirectory)
+    static async init(absDirectory)
     {
         absDirectory = absDirectory || process.cwd();
         process.chdir(absDirectory);
@@ -100,9 +111,19 @@ export class Zrup
         await fs.writeFile(path.join(absDirectory,".zrup.json"),json);
     }
 
+    /**
+     *
+     * @param {string} fromWhere
+     * @return {Promise<void>}
+     */
+    static async loadConfig(fromWhere)
+    {
+        return JSON.parse(await fs.readFile(path.join(fromWhere,'.zrup.json'),'utf-8'));
+    }
+
     static async locateRoot(cwd)
     {
-        await findUp('.zrup.json',{type: file});
+        await findUp('.zrup.json', {cwd, type: file});
     }
 }
 

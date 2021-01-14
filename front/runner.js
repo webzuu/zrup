@@ -4,6 +4,7 @@ import findUp from "find-up";
 import fs from "fs/promises";
 
 import { program, Command } from "commander";
+import * as path from "path";
 
 import {fileURLToPath} from 'url';
 import {dirname} from 'path';
@@ -17,11 +18,11 @@ async function main(argv)
 {
     const cli = await parseCommandLine();
     if (cli.init) {
-        const zrup = new Zrup(process.cwd());
-        await zrup.init(...cli.args);
+        await Zrup.init(path.resolve(process.cwd(), cli.args[0] || '.') );
         return;
     }
     const there = await Zrup.locateRoot(process.cwd());
+    const zrup = new Zrup(there);
 }
 
 /**

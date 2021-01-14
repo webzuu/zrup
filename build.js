@@ -1,6 +1,7 @@
 import md5 from "md5";
 import {Job} from "./build/job.js";
 import {BuildError} from "./build/error.js";
+import {Dependency} from "./graph/dependency.js";
 
 export class Build {
 
