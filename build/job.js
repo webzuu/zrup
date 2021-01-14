@@ -1,6 +1,7 @@
 import {BuildError} from "./error.js";
 import {Dependency} from "../graph/dependency.js";
 import {AID} from "../graph/artifact.js";
+import {Build} from "../build.js";
 
 /**
  * @property {Build} build
@@ -22,7 +23,9 @@ export class Job {
      */
     constructor(build, rule)
     {
+        /** @type {Build} */
         this.build = build;
+        /** @type {Rule} */
         this.rule = rule;
         this.recipeInvoked = false;
         this.promise = null;
@@ -69,7 +72,9 @@ export class Job {
         await Promise.all(this.dependencies.map(dependency => this.ensureDependency(dependency)));
         if (!await this.build.isUpToDate(this)) {
             this.recipeInvoked = true;
+            this.build.emit('invoking.recipe',this.rule);
             await this.rule.recipe.executeFor(this);
+            this.build.emit('invoked.recipe',this.rule);
             await this.detectRewritesAfterUse();
             await this.build.recordVersionInfo(this);
         }

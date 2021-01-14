@@ -32,7 +32,9 @@ import * as path from "path";
  * @property {ModuleBuilder~definer} definer
  */
 
-export class ModuleBuilder
+import EventEmitter from "events";
+
+export class ModuleBuilder extends EventEmitter
 {
     /** @type {Project} */
     #project;
@@ -45,6 +47,7 @@ export class ModuleBuilder
      */
     constructor(project, ruleBuilder)
     {
+        super();
         this.#project = project;
         this.#ruleBuilder = ruleBuilder;
     }
@@ -66,7 +69,9 @@ export class ModuleBuilder
                 ? this.#project.addModule(new Module(parentModule, path, name))
                 : Module.createRoot(this.#project, name)
         );
+        this.emit('defining.module',moduleToBeDefined,path,name);
         definer(this.#bindDefinerArgs(moduleToBeDefined));
+        this.emit('defined.module',moduleToBeDefined,path,name);
     }
 
     /**
@@ -143,9 +148,12 @@ export class ModuleBuilder
     {
         const base = path.join(containingDir, this.#getSpecFileBasename());
         let importedModule = null;
+        this.emit('loading.module',base);
         for(let ext of ["mjs","cjs","js"]) {
             try {
-                importedModule = (await import(`${base}.${ext}`)).default;
+                const fullPath = `${base}.${ext}`;
+                importedModule = (await import(fullPath)).default;
+                this.emit('loaded.module', fullPath);
                 return importedModule;
             }
             catch(e) {

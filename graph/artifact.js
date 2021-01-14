@@ -103,6 +103,7 @@ export class AID
     constructor(aidString)
     {
         const descriptor = AID.parse(aidString);
+        if (false===descriptor) throw new Error(`Invalid AID string ${aidString}`);
         this.#type = descriptor.type;
         this.#module = descriptor.module;
         this.#ref = descriptor.ref;
@@ -203,7 +204,7 @@ export class AID
     static parse(aid)
     {
         //TODO: handle escaped '+' in ref
-        const matches = (''+aid).match(/^(?:(?<type>[-a-z]+):)?(?:(?<module>[A-Za-z_][-0-9A-Za-z_]*)\+)?(?<ref>[^+]*)$/);
+        const matches = (''+aid).match(/^(?:(?<type>[-a-z]+):)?(?:(?<module>[A-Za-z_$][-0-9A-Za-z_$]*)\+)?(?<ref>[^+]*)$/);
         if (!matches) return false;
         const result = {};
         for(let key of ['type','module','ref']) if (undefined !== matches.groups[key]) result[key] = matches.groups[key];

@@ -22,7 +22,10 @@ async function main(argv)
         return;
     }
     const there = await Zrup.locateRoot(process.cwd());
-    const zrup = new Zrup(there);
+    const zrup = new Zrup(there, await Zrup.loadConfig(there));
+    await zrup.run({
+        goals: cli.args
+    });
 }
 
 /**
@@ -46,4 +49,6 @@ async function getVersion()
 
 
 
-(async () => { await main(process.argv); })().then(() => { process.exit(0); });
+(async () => {
+    await main(process.argv);
+})().then(() => { process.exit(0); });

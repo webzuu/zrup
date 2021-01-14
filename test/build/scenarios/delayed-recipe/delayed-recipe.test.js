@@ -53,7 +53,7 @@ describe("DelayedRecipe", async() => {
 
         let t = process.hrtime.bigint();
         await runNewJob();
-        expect(Number(process.hrtime.bigint()-t)/1000000).to.not.be.lessThan(750);
+        expect(Number(process.hrtime.bigint()-t)/1000000).to.not.be.lessThan(300);
         expect(job.recipeInvoked).to.be.true;
         expect(await actual.exists).to.be.true;
         expect(await actual.version).to.equal(await expected.version);

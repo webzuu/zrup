@@ -176,8 +176,11 @@ export class CommandRecipe extends Recipe
         if (shell) options.shell = "/bin/bash";
         if (cwd) options.cwd = path.resolve(job.rule.module.absolutePath, cwd);
         exec = exec.replace(/^\s+/,'').replace(/\s+$/,'');
+        const rawExec = exec+'';
         if (shell) exec = `set -euo pipefail; ${exec}`;
+        job.build.emit('spawning.command',job,rawExec,args,options);
         const child = spawn(exec, args, options);
+        job.build.emit('spawned.command',job, child);
 
         for(let listener of out) addDataListenerToStreams(listener, child, child.stdout);
         for(let listener of err) addDataListenerToStreams(listener, child, child.stderr);
@@ -193,6 +196,7 @@ export class CommandRecipe extends Recipe
                     reject(new CommandError(job, config.exec.trimStart().trimEnd(), code, signal));
                 }
                 else {
+                    job.build.emit('completed.command',job,child);
                     resolve();
                 }
             });
@@ -211,13 +215,20 @@ export class CommandRecipe extends Recipe
     }
 }
 
-export function captureTo(outputFilePath)
+/**
+ *
+ * @param {string} outputFilePath
+ * @param {Job} job
+ * @return {function(*=): void}
+ */
+export function captureTo(outputFilePath,job)
 {
     let append = false;
     return chunk => {
         if(!append) {
             fs.mkdirSync(path.dirname(outputFilePath),{mode: 0o755, recursive: true});
             fs.writeFileSync(outputFilePath, chunk);
+            job.build.emit('capturing.output',job,outputFilePath);
             append = true;
         }
         else {
@@ -236,7 +247,7 @@ function makeOutputSink(job, sink) {
         return sink;
     }
     if (sink instanceof FileArtifact) {
-        return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity));
+        return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity),job);
     }
     if ('object' === typeof sink && 'function' === typeof sink.toString) {
         sink = sink.toString();
@@ -246,7 +257,7 @@ function makeOutputSink(job, sink) {
     }
     if (sink instanceof FileArtifact) {
         const resolved = job.build.artifactManager.resolveToExternalIdentifier(sink.identity);
-        return captureTo(resolved);
+        return captureTo(resolved,job);
     }
     throw new Error("Output sink must be an artifact reference or a callback");
 }

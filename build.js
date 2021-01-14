@@ -2,8 +2,9 @@ import md5 from "md5";
 import {Job} from "./build/job.js";
 import {BuildError} from "./build/error.js";
 import {Dependency} from "./graph/dependency.js";
+import EventEmitter from "events";
 
-export class Build {
+export class Build extends EventEmitter {
 
     #built;
     #reliedUpon;
@@ -15,6 +16,7 @@ export class Build {
      */
     constructor(graph, db, artifactManager)
     {
+        super();
         this.graph = graph;
         this.db = db;
         this.artifactManager = artifactManager;

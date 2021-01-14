@@ -45,7 +45,9 @@ import {Dependency} from "../graph/dependency.js";
  * @property {RuleBuilder~boundDefiner} boundDefiner
  */
 
-export class RuleBuilder
+import EventEmitter from "events";
+
+export class RuleBuilder extends EventEmitter
 {
     /** @type {Project} */
     #project;
@@ -65,6 +67,7 @@ export class RuleBuilder
      */
     constructor(project, artifactManager)
     {
+        super();
         this.#project = project;
         this.#artifactManager = artifactManager;
     }
@@ -95,6 +98,7 @@ export class RuleBuilder
         const rule = new Rule(module, name);
         this.project.graph.addRule(rule);
         this.#declarations.push(this.#createDeclaration(module, rule, definer));
+        this.emit('declared.rule', module, rule);
     }
 
     /**
@@ -149,7 +153,9 @@ export class RuleBuilder
         const result = [];
         for (let ref of artifactRefs) {
             const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }));
-            result.push(rule.addDependency(artifact, Dependency.ABSENT_VIOLATION));
+            const dependency = rule.addDependency(artifact, Dependency.ABSENT_VIOLATION);
+            result.push(dependency);
+            this.emit("depends", module, rule, dependency);
         }
         return result;
     }
@@ -167,6 +173,7 @@ export class RuleBuilder
             const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }))
             rule.addOutput(artifact);
             result.push(artifact);
+            this.emit("produces", module, rule, artifact);
         }
         return result;
     }
@@ -180,12 +187,15 @@ export class RuleBuilder
     after(module, dependentRule, ...prerequisiteRuleRefs)
     {
         this.#afterEdges[dependentRule.key] = (this.#afterEdges[dependentRule.key] || []).concat(prerequisiteRuleRefs);
+        for(let ref of prerequisiteRuleRefs) this.emit('after', module, dependentRule, ref);
     }
 
     finalize()
     {
-        for(let {rule, boundDefiner} of this.#declarations) {
+        for(let {rule, boundDefiner,module} of this.#declarations) {
+            this.emit('defining.rule',module,rule);
             rule.recipe = boundDefiner();
+            this.emit('defined.rule',module,rule);
         }
         for(let {rule} of this.#declarations) {
             this.project.graph.indexRule(rule);
