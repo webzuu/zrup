@@ -14,6 +14,9 @@
  * @property {Module} module
  * @property {ModuleBuilder~includeNominator} include
  * @property {RuleBuilder~definerAcceptor} rule
+ * @property {RuleBuilder~artifactNominator} depends
+ * @property {RuleBuilder~artifactNominator} produces
+ * @property {RuleBuilder~ruleNominator} after
  */
 
 import {Module} from "../module.js";
@@ -83,7 +86,10 @@ export class ModuleBuilder extends EventEmitter
         return {
             module,
             include: this.includeMany.bind(this, module),
-            rule: this.#ruleBuilder.bindDefinerAcceptor(module)
+            rule: this.#ruleBuilder.bindDefinerAcceptor(module),
+            depends: this.#ruleBuilder.depends,
+            produces: this.#ruleBuilder.produces,
+            after: this.#ruleBuilder.after
         };
     }
 

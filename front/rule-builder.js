@@ -1,3 +1,9 @@
+import EventEmitter from "events";
+import {Rule} from "../graph/rule.js";
+import {Module} from "../module.js";
+import {AID} from "../graph/artifact.js";
+import {Dependency} from "../graph/dependency.js";
+
 /**
  * @callback RuleBuilder~definerAcceptor
  * @param {RuleBuilder~definer} definer
@@ -23,11 +29,6 @@
  * @param {...Artifact~Reference} artifactRefs
  */
 
-import {Rule} from "../graph/rule.js";
-import {Module} from "../module.js";
-import {AID} from "../graph/artifact.js";
-import {Dependency} from "../graph/dependency.js";
-
 /**
  * @callback RuleBuilder~ruleNominator
  * @param {...string} ruleRefs
@@ -45,8 +46,7 @@ import {Dependency} from "../graph/dependency.js";
  * @property {RuleBuilder~boundDefiner} boundDefiner
  */
 
-import EventEmitter from "events";
-
+/***/
 export class RuleBuilder extends EventEmitter
 {
     /** @type {Project} */
@@ -60,6 +60,9 @@ export class RuleBuilder extends EventEmitter
 
     /** @type {{ [string]: string[]}} */
     #afterEdges = {};
+
+    /** @type {(Rule|null)} */
+    #currentRule;
 
     /**
      * @param {Project} project
@@ -136,20 +139,19 @@ export class RuleBuilder extends EventEmitter
     {
         return {
             rule,
-            depends: this.depends.bind(this, module, rule),
-            produces: this.produces.bind(this, module, rule),
-            after: this.after.bind(this, module, rule)
+            depends: this.depends,
+            produces: this.produces,
+            after: this.after
         }
     }
 
     /**
-     * @param {Module} module
-     * @param {Rule} rule
      * @param {...Artifact~Reference} artifactRefs
      * @return {Dependency[]}
      */
-    depends(module, rule, ...artifactRefs)
+    unbound_depends(...artifactRefs)
     {
+        const rule = this.requireCurrentRule('depends'), module = rule.module;
         const result = [];
         for (let ref of artifactRefs) {
             const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }));
@@ -160,14 +162,19 @@ export class RuleBuilder extends EventEmitter
         return result;
     }
 
+    #bound_depends;
+    /** @return {RuleBuilder~artifactNominator} */
+    get depends() {
+        return this.#bound_depends || (this.#bound_depends = this.unbound_depends.bind(this))
+    }
+
     /**
-     * @param {Module} module
-     * @param {Rule} rule
      * @param {...Artifact~Reference} artifactRefs
      * @return {Artifact[]}
      */
-    produces(module, rule, ...artifactRefs)
+    unbound_produces(...artifactRefs)
     {
+        const rule = this.requireCurrentRule('produces'), module = rule.module;
         const result = [];
         for(let ref of artifactRefs) {
             const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }))
@@ -178,24 +185,53 @@ export class RuleBuilder extends EventEmitter
         return result;
     }
 
-    /**
-     * @param {Module} module
-     * @param {Rule} dependentRule
-     * @param {...string} prerequisiteRuleRefs
-     * @return {RuleBuilder~artifactNominator}
-     */
-    after(module, dependentRule, ...prerequisiteRuleRefs)
+    #bound_produces;
+    /** @return {RuleBuilder~artifactNominator} */
+    get produces() {
+        return this.#bound_produces || (this.#bound_produces = this.unbound_produces.bind(this));
+    }
+
+    /** @param {...string} prerequisiteRuleRefs */
+    unbound_after(...prerequisiteRuleRefs)
     {
+        const dependentRule = this.requireCurrentRule('after'), module = dependentRule.module;
         this.#afterEdges[dependentRule.key] = (this.#afterEdges[dependentRule.key] || []).concat(prerequisiteRuleRefs);
         for(let ref of prerequisiteRuleRefs) this.emit('after', module, dependentRule, ref);
     }
 
+    #bound_after;
+    /** @return {RuleBuilder~artifactNominator} */
+    get after() {
+        return this.#bound_after || (this.#bound_after = this.unbound_after.bind(this));
+    }
+
+    /**
+     * @param {string} bindingName
+     * @return {Rule}
+     */
+    requireCurrentRule(bindingName)
+    {
+        if (!this.#currentRule) {
+            throw new Error(
+                `DSL error: ${bindingName}() cannot be used outside of rule definition callback, even though `
+                +'it is passed to the module definition callback in order to minimize boilerplate'
+            );
+        }
+        return this.#currentRule;
+    }
+
     finalize()
     {
-        for(let {rule, boundDefiner,module} of this.#declarations) {
+        for(let {rule, boundDefiner, module} of this.#declarations) {
             this.emit('defining.rule',module,rule);
-            rule.recipe = boundDefiner();
-            this.emit('defined.rule',module,rule);
+            this.#currentRule = rule;
+            try {
+                rule.recipe = boundDefiner();
+                this.emit('defined.rule',module,rule);
+            }
+            finally {
+                this.#currentRule = null;
+            }
         }
         for(let {rule} of this.#declarations) {
             this.project.graph.indexRule(rule);
@@ -239,5 +275,4 @@ export class RuleBuilder extends EventEmitter
         }
         dependentRule.after[prerequisiteRuleKey]=prerequisiteRule;
     }
-
 }

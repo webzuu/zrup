@@ -1,9 +1,9 @@
 import {CommandRecipe} from "../../../../../build/recipe/command.js";
 
 /** @type {ModuleBuilder~definer} */
-const test = function test({rule}) {
+const test = function test({rule,produces,depends}) {
 
-    rule(function fromEmpty({depends, produces}) {
+    rule(function fromEmpty() {
 
         const [[target], sources] = [
             produces('shouldBeEmpty.txt'),
@@ -16,7 +16,7 @@ const test = function test({rule}) {
         })
     });
 
-    rule(function concatenated({depends, produces}) {
+    rule(function concatenated() {
 
         const [[target], sources] = [
             produces('actual.txt'),
@@ -29,10 +29,10 @@ const test = function test({rule}) {
         });
     });
 
-    rule(function transformed(b) {
+    rule(function transformed() {
         const [[target], sources] = [
-            b.produces('transformed.txt'),
-            b.depends('src/input1.txt', 'src/input2.txt')
+            produces('transformed.txt'),
+            depends('src/input1.txt', 'src/input2.txt')
         ];
 
         return new CommandRecipe(({shell, out}) => {
@@ -41,7 +41,7 @@ const test = function test({rule}) {
         });
     });
 
-    rule(function viaTemplateString({produces,depends}) {
+    rule(function viaTemplateString() {
         const [[output], [input1, input2]] = [
             produces('viaTemplateString.txt'),
             depends('src/input1.txt', 'src/input2.txt')
@@ -56,7 +56,7 @@ const test = function test({rule}) {
         });
     });
 
-    rule(function pipeFail({produces,depends}) {
+    rule(function pipeFail() {
 
         const [[output], inputs] = [
             produces('pipeFail.txt'),
@@ -73,7 +73,7 @@ const test = function test({rule}) {
         });
     });
 
-    rule(function handleNewLines({produces, depends}) {
+    rule(function handleNewLines() {
 
         const [target] = produces('handle-command-newlines.txt');
 
@@ -87,7 +87,7 @@ const test = function test({rule}) {
         });
     });
 
-    rule(function internals({produces, depends}) {
+    rule(function internals() {
 
         const [target] = produces('internal:foo/bar/handle-command-newlines.txt');
 
