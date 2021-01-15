@@ -47,8 +47,6 @@ async function getVersion()
     return data.version;
 }
 
-
-
 (async () => {
     await main(process.argv);
 })().then(() => { process.exit(0); });

@@ -69,7 +69,7 @@ export class Job {
     async #work()
     {
         await this.prepare();
-        await Promise.all(this.dependencies.map(dependency => this.ensureDependency(dependency)));
+        await Promise.all(this.dependencies.map(async dependency => await this.ensureDependency(dependency)));
         if (!await this.build.isUpToDate(this)) {
             this.recipeInvoked = true;
             this.build.emit('invoking.recipe',this.rule);

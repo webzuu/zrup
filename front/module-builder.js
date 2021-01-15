@@ -19,9 +19,12 @@
  * @property {RuleBuilder~ruleNominator} after
  */
 
+import {CommandRecipe} from "../build/recipe/command.js";
+import {AID, Artifact} from "../graph/artifact.js";
+import {Dependency} from "../graph/dependency.js";
 import {Module} from "../module.js";
-import fs, {promises as fsp} from "fs";
 import * as path from "path";
+import DT from "ducktype";
 
 /**
  * @callback ModuleBuilder~includeNominator
@@ -37,7 +40,8 @@ import * as path from "path";
 
 import EventEmitter from "events";
 
-export class ModuleBuilder extends EventEmitter
+let self;
+export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
 {
     /** @type {Project} */
     #project;
@@ -73,7 +77,7 @@ export class ModuleBuilder extends EventEmitter
                 : Module.createRoot(this.#project, name)
         );
         this.emit('defining.module',moduleToBeDefined,path,name);
-        definer(this.#bindDefinerArgs(moduleToBeDefined));
+        await definer(this.#bindDefinerArgs(moduleToBeDefined));
         this.emit('defined.module',moduleToBeDefined,path,name);
     }
 
@@ -89,9 +93,70 @@ export class ModuleBuilder extends EventEmitter
             rule: this.#ruleBuilder.bindDefinerAcceptor(module),
             depends: this.#ruleBuilder.depends,
             produces: this.#ruleBuilder.produces,
-            after: this.#ruleBuilder.after
+            after: this.#ruleBuilder.after,
+            to: this.to.bind(this, module)
         };
     }
+
+    to(module, ruleName, descriptorProvider)
+    {
+        this.#ruleBuilder.acceptDefiner(
+            module,
+            ruleName,
+            this.createShellCommandRuleDefiner(descriptorProvider)
+        )
+    }
+
+    /** @return {RuleBuilder~definer} */
+    createShellCommandRuleDefiner(descriptorProvider)
+    {
+        // noinspection UnnecessaryLocalVariableJS
+        /** @type {RuleBuilder~definer} */
+        const definer = (R) => {
+            const descriptor = descriptorProvider(R);
+            self.commandDescriptorSchema.validate(descriptor);
+            return new CommandRecipe(C => {
+
+                C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd : [descriptor.cmd]));
+                if ('args' in descriptor) {
+                    C.args(...(Array.isArray(descriptor.args) ? descriptor.args : [descriptor.args]))
+                }
+                for(let key of ['args','cwd','out','err','combined']) {
+                    if (!(key in descriptor)) continue;
+                    for (let item of (Array.isArray(descriptor[key]) ? descriptor[key] : [descriptor[key]])) {
+                        C[key](item);
+                    }
+                }
+            });
+        };
+        return definer;
+    }
+
+    static #commandDescriptorSchema;
+
+    static get commandDescriptorSchema()
+    {
+        return (
+            self.#commandDescriptorSchema
+            ||
+            (self.#commandDescriptorSchema = self.#buildCommandDescriptorSchema())
+        );
+    }
+
+    static #buildCommandDescriptorSchema() {
+
+        const resolvable = DT(Artifact, AID, Dependency);
+        const outputListener = DT(resolvable, Function);
+        return DT({
+            cmd: DT(resolvable, String, [DT(resolvable, String)]),
+            args: DT(resolvable, String, [DT(resolvable, String)], {optional: true}),
+            cwd: DT(resolvable, {optional: true}),
+            out: DT(outputListener, [outputListener], {optional: true}),
+            err: DT(outputListener, [outputListener], {optional: true}),
+            combined: DT(outputListener, [outputListener], {optional: true})
+        });
+    }
+
 
     /**
      *
@@ -177,6 +242,7 @@ export class ModuleBuilder extends EventEmitter
         return ".zrup"; //TODO: make configurable
     }
 
+    // noinspection JSMethodCanBeStatic
     /**
      * @param {Module} parentModule
      * @param {string} subpathSegments
@@ -184,6 +250,6 @@ export class ModuleBuilder extends EventEmitter
      */
     #resolveModuleBase(parentModule,...subpathSegments)
     {
-        return module.resolve(path.join(...subpathSegments, this.#getSpecFileBasename()));
+        return parentModule.resolve(path.join(...subpathSegments));
     }
 }

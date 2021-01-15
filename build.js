@@ -74,12 +74,15 @@ export class Build extends EventEmitter {
         let ruleKey = this.graph.index.output.rule.get(key);
         if (ruleKey) return ruleKey;
         ruleKey = await this.db.getProducingRule(key, "undefined"===typeof version ? await artifact.version : version);
+        if (!this.graph.index.rule.key.has(ruleKey)) {
+            //This may be a rule that no longer exists in the graph!
+            return null;
+        }
         if (ruleKey) return ruleKey;
         return null;
     }
 
     /**
-     *
      * @param {Artifact} output
      * @return {Promise<object>}
      */

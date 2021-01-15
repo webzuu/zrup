@@ -160,29 +160,30 @@ export class Db {
 
     async has(targetId)
     {
-        // noinspection JSUnresolvedVariable
-        const queryResult = (await (await this.stmt).has.get({
+        const queryResult = await this.get('has', {
             '@target': targetId
-        }));
+        });
+        // noinspection JSUnresolvedVariable
         return queryResult.c > 0;
     }
     async hasVersion(targetId, version)
     {
-        // noinspection JSUnresolvedVariable
-        return (await (await this.stmt).hasVersion.get({
+        const countResponse = await this.get('hasVersion',{
             '@target': targetId,
             '@version': version
-        })).c > 0;
+        });
+        // noinspection JSUnresolvedVariable
+        return countResponse.c > 0;
     }
     async listVersions(targetId)
     {
-        return (await (await this.stmt).listVersions.all({
+        return await this.all('listVersions',{
             '@target': targetId
-        }));
+        });
     }
     async listVersionSources(targetId, version)
     {
-        return await (await this.stmt).listVersionSources.all({
+        return await this.all('listVersionSources',{
             '@target': targetId,
             '@version': version
         });
@@ -199,32 +200,32 @@ export class Db {
      */
     async record(targetId, targetVersion, ruleKey, sourceId, sourceVersion)
     {
-        return (await (await this.stmt).record.run({
+        return await this.run('record', {
             '@target': targetId,
             '@targetVersion': targetVersion,
             '@rule': ruleKey,
             '@source': sourceId,
             '@sourceVersion': sourceVersion
-        }));
+        });
     }
     async retract(targetId, targetVersion)
     {
-        return (await (await this.stmt).retract.run({
+        return await this.run('retract', {
             '@target': targetId,
             '@version': targetVersion
-        }));
+        });
     }
     async retractTarget(targetId)
     {
-        return (await (await this.stmt).retractTarget.run({
+        return await this.run('retractTarget',{
             '@target': targetId
-        }));
+        });
     }
     async retractRule(ruleKey)
     {
-        return (await (await this.stmt).retractRule.run({
+        return await this.run('retractRule',{
             '@rule': ruleKey
-        }));
+        });
     }
 
     /**
@@ -233,9 +234,9 @@ export class Db {
      */
     async listRuleSources(ruleKey)
     {
-        return (await (await this.stmt).listRuleSources.all({
+        return await this.all('listRuleSources', {
             '@rule': ruleKey
-        }));
+        });
     }
 
     /**
@@ -244,9 +245,9 @@ export class Db {
      */
     async listRuleTargets(ruleKey)
     {
-        return (await (await this.stmt).listRuleTargets.all({
+        return await this.all('listRuleTargets',{
             '@rule': ruleKey
-        }));
+        });
     }
 
     /**
@@ -257,23 +258,21 @@ export class Db {
      */
     async getProducingRule(target, version)
     {
-        /**
-         * @type {object|null}
-         */
-        const result = (await (await this.stmt).getProducingRule.get({
+        /** @type {object|null} */
+        const result = await this.get('getProducingRule',{
             '@target': target,
             '@version': version
-        }));
+        });
         return result && result.rule;
     }
 
     async recordArtifact(key, type, identity)
     {
-        return (await (await this.stmt).recordArtifact.run({
+        return await this.run('recordArtifact',{
             '@key': key,
             '@type': type,
             '@identity': identity
-        }));
+        });
     }
 
     /**
@@ -282,14 +281,15 @@ export class Db {
      */
     async getArtifact(key)
     {
-        return (await (await this.stmt).getArtifact.get({
+        return await this.get('getArtifact',{
             '@key': key
-        })) || null;
+        }) || null;
     }
 
     async pruneArtifacts() {
         await (await this.stmt).pruneArtifacts.run();
     }
+
     async close() {
         if (!this.#db) return;
         const statements = await this.#stmt;
@@ -313,6 +313,38 @@ export class Db {
             await dbObj.close();
         }
         this.#db = null;
+    }
+
+    async query(verb, statementKey, data)
+    {
+        const statements = await this.stmt;
+        const prepared = statements[statementKey];
+        return await prepared[verb](data);
+    }
+
+    /**
+     * @param statementKey
+     * @param data
+     * @return {Promise<Object>|null}
+     */
+    async get(statementKey, data)
+    {
+        return await this.query('get', statementKey, data);
+    }
+
+    async run(statementKey, data)
+    {
+        return await this.query('run', statementKey, data);
+    }
+
+    /**
+     * @param statementKey
+     * @param data
+     * @return {Promise<Object[]>}
+     */
+    async all(statementKey, data)
+    {
+        return await this.query('all', statementKey, data);
     }
 }
 

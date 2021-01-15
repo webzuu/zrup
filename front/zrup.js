@@ -128,7 +128,9 @@ export class Zrup
             console.log("Running build jobs");
             const jobs = await jobsPromise;
             const runs = jobs.map(async job => await job.run());
+            console.time('Running build jobs');
             await Promise.all(runs);
+            console.timeEnd('Running build jobs');
             console.log("All done");
         }
         catch(e) {
