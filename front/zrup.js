@@ -136,6 +136,10 @@ export class Zrup
         catch(e) {
             console.error(util.inspect(e), e.message, e.stack);
         }
+        finally {
+            console.log(`Number of data queries:        ${this.#db.queryCount}`);
+            console.log(`Data queries took:             ${this.#db.queryTime} ms`);
+        }
     }
 
     /**

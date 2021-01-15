@@ -3,6 +3,7 @@ import { open, Database, Statement } from "sqlite";
 import sleep from "simple-async-sleep";
 import fs from "fs/promises";
 import path from "path";
+import {performance} from "perf_hooks"
 
 /**
  * @typedef {Promise<Database<sqlite3.Database,sqlite3.Statement>>} DbPromise
@@ -130,6 +131,8 @@ export class Db {
         this.dbFilePath = dbFilePath;
         this.#db = null;
         this.#stmt = null;
+        this.queryCount = 0;
+        this.queryTime = 0;
     }
 
     /**
@@ -319,7 +322,16 @@ export class Db {
     {
         const statements = await this.stmt;
         const prepared = statements[statementKey];
-        return await prepared[verb](data);
+        let result, start;
+        try {
+            start = performance.now();
+            result = await prepared[verb](data);
+        }
+        finally {
+            this.queryTime += performance.now()-start;
+            ++this.queryCount;
+        }
+        return result;
     }
 
     /**

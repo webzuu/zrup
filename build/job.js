@@ -32,6 +32,7 @@ export class Job {
         this.finished = false;
         this.recipeInvoked = false;
         this.dependencies = [];
+        this.recordedDependencies = [];
         this.outputs = [];
         this.dynamicOutputs = [];
         this.error = null;
@@ -171,22 +172,24 @@ export class Job {
     async collectDependencies()
     {
         const dependencies = {};
+        const recordedDependencies = {};
 
         for(let dependency of Object.values(this.rule.dependencies)) {
             dependencies[dependency.artifact.key] = dependency;
         }
 
-        const dynamicDependencies =
+        const dependencyRecords =
             (await this.build.db.listRuleSources(this.rule.key))
                 .filter(record => !(record.key in dependencies))
                 .map(record => this.artifactFromRecord(record))
                 .map(artifact => new Dependency(artifact, Dependency.ABSENT_STATE));
 
-        for(let dependency of dynamicDependencies) {
-            dependencies[dependency.artifact.key] = dependency;
+        for(let dependency of dependencyRecords) {
+            recordedDependencies[dependency.artifact.key] = dependency;
         }
 
         this.dependencies = Object.values(dependencies);
+        this.recordedDependencies = Object.values(recordedDependencies);
    }
 
     /**
