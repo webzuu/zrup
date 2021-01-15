@@ -10,7 +10,7 @@ const src = async function src({to, produces, depends})
 
     to("concatenate", () => (
         {
-            cmd: ['cat', ...depends(...sources)],
+            cmd: ['cat', depends(sources)],
             out: produces(target)  //when command writes to stdout
         }
     ));

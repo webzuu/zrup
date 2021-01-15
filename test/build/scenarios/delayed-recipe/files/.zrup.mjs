@@ -5,7 +5,6 @@ export default function test({module, rule}) {
 
     rule(function concatenated({depends, produces}) {
 
-        debugger;
         const [[target], sources] = [
             produces('actual.txt'),
             depends('src/input1.txt', 'src/input2.txt')

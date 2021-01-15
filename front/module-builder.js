@@ -114,7 +114,7 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
         /** @type {RuleBuilder~definer} */
         const definer = (R) => {
             const descriptor = descriptorProvider(R);
-            self.commandDescriptorSchema.validate(descriptor);
+            self.validateCommandDescriptorSchema(descriptor);
             return new CommandRecipe(C => {
 
                 C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd : [descriptor.cmd]));
@@ -130,6 +130,16 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
             });
         };
         return definer;
+    }
+
+    static validateCommandDescriptorSchema(descriptor) {
+
+        for(let key of Object.keys(descriptor)) {
+            if (Array.isArray(descriptor[key])) {
+                descriptor[key] = [...descriptor[key].flat()];
+            }
+        }
+        self.commandDescriptorSchema.validate(descriptor);
     }
 
     static #commandDescriptorSchema;

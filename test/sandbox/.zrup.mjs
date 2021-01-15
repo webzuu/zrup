@@ -9,7 +9,7 @@ const $$ = async function $$({include, to, produces, depends})
 
     to("install", () => (
         {
-            cmd: ['cp', ...depends(source), ...produces(target)]
+            cmd: ['cp', depends(source), produces(target)]
         }
     ));
 }

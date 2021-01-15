@@ -130,13 +130,13 @@ export class CommandRecipe extends Recipe
         const builderParams = {
             exec: (cmdString, ...argItems) => {
                 exec = cmdString;
-                args.push(...resolveExceptStrings(...argItems).map(_ => ''+_));
+                args.push(...resolveExceptStrings(...argItems.flat()).map(_ => ''+_));
             },
             shell: (...argItems) => {
-                exec = resolveExceptStrings(...argItems).map(_ => ''+_).join(" ");
+                exec = resolveExceptStrings(...argItems.flat()).map(_ => ''+_).join(" ");
                 shell = true;
             },
-            args: (...argItems) => { args.push(...resolveExceptStrings(...argItems).map(_ => ''+_)); },
+            args: (...argItems) => { args.push(...resolveExceptStrings(...argItems.flat()).map(_ => ''+_)); },
             cwd: cwdValue => { cwd = cwdValue; },
             out: sink => { out.push(makeOutputSink(job, sink)); },
             err: sink => { err.push(makeOutputSink(job, sink)); },

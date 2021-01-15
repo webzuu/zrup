@@ -145,15 +145,12 @@ export class RuleBuilder extends EventEmitter
         }
     }
 
-    /**
-     * @param {...Artifact~Reference} artifactRefs
-     * @return {Dependency[]}
-     */
-    unbound_depends(...artifactRefs)
+    /** @type {RuleBuilder~artifactNominator} */
+    depends = (...artifactRefs) =>
     {
         const rule = this.requireCurrentRule('depends'), module = rule.module;
         const result = [];
-        for (let ref of artifactRefs) {
+        for (let ref of artifactRefs.flat()) {
             const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }));
             const dependency = rule.addDependency(artifact, Dependency.ABSENT_VIOLATION);
             result.push(dependency);
@@ -162,21 +159,12 @@ export class RuleBuilder extends EventEmitter
         return result;
     }
 
-    #bound_depends;
-    /** @return {RuleBuilder~artifactNominator} */
-    get depends() {
-        return this.#bound_depends || (this.#bound_depends = this.unbound_depends.bind(this))
-    }
-
-    /**
-     * @param {...Artifact~Reference} artifactRefs
-     * @return {Artifact[]}
-     */
-    unbound_produces(...artifactRefs)
+    /** @type {RuleBuilder~artifactNominator} */
+    produces = (...artifactRefs) =>
     {
         const rule = this.requireCurrentRule('produces'), module = rule.module;
         const result = [];
-        for(let ref of artifactRefs) {
+        for(let ref of artifactRefs.flat()) {
             const artifact = this.#artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }))
             rule.addOutput(artifact);
             result.push(artifact);
@@ -185,24 +173,12 @@ export class RuleBuilder extends EventEmitter
         return result;
     }
 
-    #bound_produces;
-    /** @return {RuleBuilder~artifactNominator} */
-    get produces() {
-        return this.#bound_produces || (this.#bound_produces = this.unbound_produces.bind(this));
-    }
-
-    /** @param {...string} prerequisiteRuleRefs */
-    unbound_after(...prerequisiteRuleRefs)
+    /** @type {RuleBuilder~ruleNominator} */
+    after = (...prerequisiteRuleRefs) =>
     {
         const dependentRule = this.requireCurrentRule('after'), module = dependentRule.module;
         this.#afterEdges[dependentRule.key] = (this.#afterEdges[dependentRule.key] || []).concat(prerequisiteRuleRefs);
         for(let ref of prerequisiteRuleRefs) this.emit('after', module, dependentRule, ref);
-    }
-
-    #bound_after;
-    /** @return {RuleBuilder~artifactNominator} */
-    get after() {
-        return this.#bound_after || (this.#bound_after = this.unbound_after.bind(this));
     }
 
     /**
