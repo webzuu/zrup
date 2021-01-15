@@ -55,7 +55,11 @@ export class Zrup
         this.#projectRoot = projectRoot;
         const {zrupDir, dataDir, channels} = this.#config = config;
         this.#project = new Project(projectRoot);
-        this.#db = new Db(path.join(this.#project.path, dataDir.replace(/<zrupDir>/, zrupDir)));
+        this.#db = new Db(path.join(
+            this.#project.path,
+            dataDir.replace(/<zrupDir>/, zrupDir),
+            'state.sqlite'
+        ));
         this.#artifactManager = new ArtifactManager();
         new FileArtifactFactory(this.#artifactManager, this.#project /*, "file", "" */);
         for (let [channel, infix] of Object.entries(channels)) {
