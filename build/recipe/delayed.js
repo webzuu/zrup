@@ -4,8 +4,10 @@ export class DelayedRecipe extends Recipe
 {
     /** @type {Recipe} */
     #recipe;
+
     /** @type {number} */
     #delay_milliseconds;
+
     /**
      * @param {Recipe} recipe
      * @param {number} delay_milliseconds
@@ -17,30 +19,28 @@ export class DelayedRecipe extends Recipe
         this.#delay_milliseconds = delay_milliseconds;
     }
 
-    set job(job) {
-        super.job = this.#recipe.job = job;
-    }
-
-    async computeConfigFor(job) {
-        return {
+    async resolveSpecFor(job) {
+        const descriptor = {}
+        descriptor.recipeSpec = await this.#recipe.resolveSpecFor(job);
+        descriptor.recipeHash = await this.#recipe.hashSpec(descriptor.recipeSpec);
+        return Object.assign(descriptor,{
             recipe: this.#recipe,
-            recipeHash: await this.#recipe.hash,
             delay_milliseconds: this.#delay_milliseconds
-        };
+        });
     }
 
-    describeState(state) {
+    describeSpec(spec) {
         return {
-            recipe: state.recipeHash,
-            delayed_milliseconds: state.delay_milliseconds
+            recipe: spec.recipeHash,
+            delayed_milliseconds: spec.delay_milliseconds
         };
     }
 
-    async executeWithConfig(config) {
+    async executeFor(job, spec) {
         return new Promise((resolve, reject) => {
             setTimeout(
                 () => {
-                    config.recipe.execute()
+                    spec.recipe.executeFor(job, spec.recipeSpec)
                         .then(
                             (...v) => { resolve(...v); }
                         )
@@ -48,7 +48,7 @@ export class DelayedRecipe extends Recipe
                             (...e) => { reject(...e); }
                         );
                 },
-                parseInt(config.delay_milliseconds+'',10)
+                parseInt(spec.delay_milliseconds+'',10)
             );
         });
     }

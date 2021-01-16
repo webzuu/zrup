@@ -192,8 +192,12 @@ export class ProjectTesting
 
 export class DummyRecipe extends Recipe
 {
-    async execute() {
+    async executeFor(job,spec) {
         return undefined;
+    }
+
+    async resolveSpecFor(job) {
+        return {};
     }
 }
 

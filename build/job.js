@@ -1,3 +1,4 @@
+import {RecipeArtifact} from "../graph/artifact/recipe.js";
 import {BuildError} from "./error.js";
 import {Dependency} from "../graph/dependency.js";
 import {AID} from "../graph/artifact.js";
@@ -28,14 +29,18 @@ export class Job {
         /** @type {Rule} */
         this.rule = rule;
         this.recipeInvoked = false;
+        /** @type {Object|null} */
+        this.recipeSpec = null;
         this.promise = null;
         this.finished = false;
         this.recipeInvoked = false;
-        this.dependencies = [];
-        this.recordedDependencies = [];
         this.outputs = [];
         this.dynamicOutputs = [];
         this.error = null;
+        this.dependencies = [
+            new Dependency(RecipeArtifact.makeFor(this), Dependency.ABSENT_VIOLATION)
+        ];
+        this.recordedDependencies = [];
     }
 
     async run()
@@ -76,15 +81,40 @@ export class Job {
     async #work()
     {
         await this.prepare();
-        await Promise.all(this.dependencies.map(async dependency => await this.ensureDependency(dependency)));
+        await Promise.all(this.getMergedDependencies().map(async dependency => await this.ensureDependency(dependency)));
         if (!await this.build.isUpToDate(this)) {
-            this.recipeInvoked = true;
+            const recipeArtifact = this.build.artifactManager.get(`recipe:${this.rule.module.name}+${this.rule.name}`);
             this.build.emit('invoking.recipe',this.rule);
-            await this.rule.recipe.execute();
+            this.recipeInvoked = true;
+            await this.rule.recipe.executeFor(this, await recipeArtifact.spec);
             this.build.emit('invoked.recipe',this.rule);
             await this.detectRewritesAfterUse();
             await this.build.recordVersionInfo(this);
         }
+    }
+
+    getMergedDependencies() {
+        const merged = {};
+        for(let dep of [...this.recordedDependencies, ...this.dependencies]) {
+            const key = dep.artifact.key;
+            if (merged.hasOwnProperty(key)) {
+                if (merged[key] === dep) {
+                    continue;
+                }
+                if (
+                    merged[key].whenAbsent === Dependency.ABSENT_STATE
+                    && dep.whenAbsent !== Dependency.ABSENT_STATE
+                ) {
+                    merged[key]=dep;
+                    continue;
+                }
+                if(merged[key].whenAbsent !== dep.whenAbsent) {
+                    throw new Error("Non-existence policy conflict between two dependencies on the same artifact");
+                }
+            }
+            merged[key] = dep;
+        }
+        return Object.values(merged);
     }
 
     async prepare()
@@ -175,8 +205,9 @@ export class Job {
 
     async collectDependencies()
     {
-        const dependencies = {};
-        const recordedDependencies = {};
+        const
+            dependencies = {},
+            recordedDependencies = {};
 
         for(let dependency of Object.values(this.rule.dependencies)) {
             dependencies[dependency.artifact.key] = dependency;

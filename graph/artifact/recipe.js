@@ -3,15 +3,17 @@ import {Rule} from "../rule.js";
 
 export class RecipeArtifact extends Artifact
 {
+    #specPromise;
+    #versionPromise;
+
     /**
-     *
-     * @param {Artifact~Reference} aid
-     * @param {Rule} rule
+     * @param {string} aid
+     * @param {Job} job
      */
-    constructor(aid, rule)
+    constructor(aid, job)
     {
         super(aid);
-        this.rule = rule;
+        this.job = job;
     }
 
     get exists()
@@ -19,9 +21,45 @@ export class RecipeArtifact extends Artifact
         return Promise.resolve(true);
     }
 
+    get spec() {
+        return (
+            this.#specPromise
+            ||
+            (
+                this.#specPromise
+                =
+                (async () => { return await this.job.rule.recipe.resolveSpecFor(this.job)})()
+            )
+        );
+    }
+
     get version()
     {
-        return Promise.resolve(this.rule.recipe.hash);
+        return (
+            this.#versionPromise
+            ||
+            (
+                this.#versionPromise
+                =
+                (async () => {
+                    return await this.job.rule.recipe.hashSpec(await this.spec)
+                })()
+            )
+        );
+    }
+
+    /** @param job */
+    static makeFor(job)
+    {
+        const ref = `recipe:${job.rule.module.name}+${job.rule.name}`;
+        const found = job.build.artifactManager.find(ref);
+        if (found) return found;
+        const result = new RecipeArtifact(
+            `recipe:${job.rule.module.name}+${job.rule.name}`,
+            job
+        );
+        job.build.artifactManager.put(result);
+        return result;
     }
 }
 
@@ -54,6 +92,7 @@ export class RecipeArtifactFactory extends ArtifactFactory
         this.#project = project;
     }
 
+    //TODO: roadblock these - this factory is just a dummy
     prependRequiredConstructorArgs(ref, extraArgs) {
         const rule = this.#resolveRule(ref);
         if (!rule) {

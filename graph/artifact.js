@@ -292,6 +292,23 @@ export class ArtifactManager
         return this.find(normalized) || this.#create(factory, normalized);
     }
 
+    /** @param {Artifact} artifact */
+    put(artifact)
+    {
+        const found = this.find(artifact.identity);
+        if (found === artifact) return;
+        if (found) {
+            throw new Error(`Attempted to store another artifact with already registered identity ${artifact.identity}`);
+        }
+        this.#putNew(artifact);
+    }
+
+    /** @param {Artifact} artifact */
+    #putNew(artifact)
+    {
+        this.#index.artifact.key[artifact.key] = this.#index.artifact.identity[artifact.identity] = artifact;
+    }
+
     /**
      * @return {string[]}
      */
@@ -308,7 +325,7 @@ export class ArtifactManager
     #create(factory, aid)
     {
         const artifact = factory.make(aid);
-        this.#index.artifact.key[artifact.key] = this.#index.artifact.identity[artifact.identity] = artifact;
+        this.#putNew(artifact);
         return artifact;
     }
 

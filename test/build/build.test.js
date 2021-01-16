@@ -41,7 +41,7 @@ class MakeItExistRecipe extends Recipe
         this.#pk = pk;
     }
 
-    async executeWithConfig(config) {
+    async executeFor(job, spec) {
         const onlyTarget = this.job.outputs[0];
         const key = onlyTarget.key;
         const sourceVersions = await Promise.all(
@@ -58,7 +58,7 @@ class MakeItExistRecipe extends Recipe
         this.#pk.set(key, "version", hash);
     }
 
-    async computeConfigFor(job) {
+    async resolveSpecFor(job) {
         return {};
     }
 }
@@ -191,7 +191,6 @@ describe("Build", () => {
         expect(job.finished).to.be.true;
         expect(job.recipeInvoked).to.be.true;
         const build2 = new Build(g, build.db,build.artifactManager);
-        makeTarget.reset();
         const job2 = await build2.getJobForArtifact(target);
         const isUpToDate = await build2.isUpToDate(job2)
         expect(isUpToDate).to.be.true;
@@ -209,7 +208,6 @@ describe("Build", () => {
         expect(job.finished).to.be.true;
         expect(await build.isUpToDate(job)).to.be.true;
         build = new Build(g,build.db,build.artifactManager);
-        makeTarget.reset();
         const job2 = await build.getJobForArtifact(target);
         await job2.run();
         expect(job2.finished).to.be.true;
@@ -230,7 +228,6 @@ describe("Build", () => {
         answers(pk,{[source.key]: [nil,"123456"]});
         expect(await build.isUpToDate(job)).to.be.false;
         build = new Build(g,build.db,build.artifactManager);
-        makeTarget.reset();
         const job2 = await build.getJobForArtifact(target);
         await job2.run();
         expect(job2.finished).to.be.true;
@@ -250,7 +247,6 @@ describe("Build", () => {
         expect(await target.exists).to.be.true;
         expect(await build.isUpToDate(job)).to.be.false;
         build = new Build(build.graph, build.db, build.artifactManager);
-        makeTarget.reset()
         job = await build.getJobForArtifact(target);
         expect(job.recipeInvoked).to.be.false;
         await job.run();

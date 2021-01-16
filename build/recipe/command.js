@@ -2,7 +2,6 @@
  * @callback CommandRecipe~commandAcceptor
  * @param {string} command
  * @param {...(string|Artifact|AID|Dependency)}} arguments
- * @param
  */
 
 /**
@@ -34,6 +33,7 @@
 
 /**
  * @typedef {Object.<string,*>} CommandRecipe~BuilderParams
+ * @property {Job} job
  * @property {CommandRecipe~commandAcceptor} exec
  * @property {CommandRecipe~argumentsAcceptor} shell
  * @property {CommandRecipe~argumentsAcceptor} args
@@ -69,7 +69,6 @@ import {AID, Artifact} from "../../graph/artifact.js";
 import {Readable} from "stream";
 import {Dependency} from "../../graph/dependency.js";
 import {reassemble} from "../../util/tagged-template.js";
-import {BuildError} from "../error.js";
 
 export class CommandError extends Error
 {
@@ -152,7 +151,7 @@ export class CommandRecipe extends Recipe
         });
     }
 
-    async computeConfigFor(job) {
+    async resolveSpecFor(job) {
         let exec = "";
         let shell = false;
         const args = [];
@@ -182,48 +181,38 @@ export class CommandRecipe extends Recipe
             T: reassemble.bind(null, ref => resolveArtifacts(job, false, ref)[0])
         }
 
-        try  {
-            this.#commandBuilder(builderParams);
-        }
-        catch(e) {
-            if (e instanceof OutputSinkIsArray) {
-                throw new BuildError(
-                    "Cannot create an output sink from an array. Did you forget to pick an element from"
-                    +" the array returned by produces() before passing it to out()?"
-                )
-            }
-            throw e;
-        }
+        this.#commandBuilder(builderParams);
 
-        return {exec, shell, args, cwd, out, err, combined, resolve};
+        return {job, exec, shell, args, cwd, out, err, combined, resolve};
     }
 
-    async executeWithConfig(config) {
-        const child = this.createChildProcess(this.job, config);
-        await this.createCompletionPromise(child, this.job, config);
+    async executeFor(job, spec) {
+        const child = this.createChildProcess(job, spec);
+        await this.createCompletionPromise(child, job, spec);
     }
 
-    describeState(state) {
+    describeSpec(spec) {
         const result = {};
-        result.exec = state.exec;
-        result.shell = state.shell;
-        result.args = state.args;
-        result.cwd = state.cwd;
-        result.out = state.out.map(this.#makeSinkDescriber("stdout"));
-        result.err = state.err.map(this.#makeSinkDescriber("stderr"));
-        result.combined = state.combined.map(this.#makeSinkDescriber("combined"));
+        result.exec = spec.exec;
+        result.shell = spec.shell;
+        result.args = spec.args;
+        result.cwd = spec.cwd;
+        result.out = spec.out.map(this.#makeSinkDescriber("stdout", spec));
+        result.err = spec.err.map(this.#makeSinkDescriber("stderr", spec));
+        result.combined = spec.combined.map(this.#makeSinkDescriber("combined", spec));
         return result;
     }
 
-    #makeSinkDescriber = (stream) =>
+    #makeSinkDescriber = (streamName, spec) =>
     {
         return sink => {
             if (sink.descriptor) return sink.descriptor;
-            this.job.build.emit(
+            spec.job.build.emit(
                 "warning",
                 "outputSink.descriptor.missing",
-                stream,
-                this.job
+                streamName,
+                spec,
+                spec.job
             );
             return sink.toString();
         }
