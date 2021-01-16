@@ -44,10 +44,33 @@ export class WrapperRecipe extends Recipe
         if (!this.#params.recipe) this.#params.recipe = new NopRecipe();
     }
 
-    async executeFor(job) {
-        const {recipe, before, around, after} = this.#params;
-        await before(job);
-        await around(job, recipe.executeFor.bind(recipe, job));
-        await after(job);
+
+    set job(job) {
+        super.job = this.#params.recipe.job = job;
+    }
+
+    async computeConfigFor(job) {
+        return Object.assign({},this.#params,{recipeHash: await this.#params.recipe.hash});
+    }
+
+
+    describeState(state) {
+        return {
+            recipe: state.recipeHash,
+            before: state.before.descriptor || state.before.toString(),
+            around: state.around.descriptor || state.around.toString(),
+            after: state.after.descriptor || state.after.toString()
+        }
+    }
+
+    /**
+     * @param {WrapperRecipe~Parameters} config
+     * @return {Promise<void>}
+     */
+    async executeWithConfig(config) {
+        const {recipe, before, around, after} = config;
+        await before(this.job);
+        await around(this.job, recipe.execute.bind(recipe, this.job));
+        await after(this.job);
     }
 }

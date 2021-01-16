@@ -5,6 +5,7 @@ import fs from "fs";
 const fsp = fs.promises;
 
 import {Db} from "../db.js";
+import {RecipeArtifactFactory} from "../graph/artifact/recipe.js";
 import {Project} from "../project.js";
 import {Module} from "../module.js";
 import {ArtifactManager} from "../graph/artifact.js";
@@ -165,6 +166,7 @@ export class ProjectTesting
         this.project = new Project(this.tmpDir.toString()); //assumes setup mechanism has already upped this.tmpDir
         this.artifactManager = new ArtifactManager();
         new FileArtifactFactory(this.artifactManager, this.project);
+        new RecipeArtifactFactory(this.artifactManager, this.project);
         new FileArtifactFactory(this.artifactManager, this.project, 'internal', '.zrup/.internal');
         new FileArtifactFactory(this.artifactManager, this.project, 'tmp', '.zrup/.tmp');
         if (this.options.createRootModule) this.project.addModule(Module.createRoot(this.project,"test"));
@@ -190,7 +192,7 @@ export class ProjectTesting
 
 export class DummyRecipe extends Recipe
 {
-    async executeFor(job) {
+    async execute() {
         return undefined;
     }
 }

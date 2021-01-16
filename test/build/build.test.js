@@ -11,6 +11,7 @@ import {MockFileFactory} from "../../graph/artifact/mock.js";
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import {RecipeArtifactFactory} from "../../graph/artifact/recipe.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -40,14 +41,14 @@ class MakeItExistRecipe extends Recipe
         this.#pk = pk;
     }
 
-    async executeFor(job) {
-        const onlyTarget = job.outputs[0];
+    async executeWithConfig(config) {
+        const onlyTarget = this.job.outputs[0];
         const key = onlyTarget.key;
         const sourceVersions = await Promise.all(
-            job.dependencies.map(
+            this.job.dependencies.map(
                 dep => (async () => [
-                    ["key", dep.key],
-                    ["version", await dep.version]
+                    ["key", dep.artifact.key],
+                    ["version", await dep.artifact.version]
                 ])()
             )
         );
@@ -56,17 +57,22 @@ class MakeItExistRecipe extends Recipe
         this.#pk.set(key, "exists",  true);
         this.#pk.set(key, "version", hash);
     }
+
+    async computeConfigFor(job) {
+        return {};
+    }
 }
 
 function simple()
 {
     const pk = new PromiseKeeper();
-    const g = new Graph();
     const makeTarget = new MakeItExistRecipe(pk);
     const prj = new Project(t.tmpDir.toString());
+    const g = prj.graph;
     Module.createRoot(prj, "test");
     const manager = new ArtifactManager();
     new MockFileFactory(manager, prj, pk);
+    new RecipeArtifactFactory(manager, prj);
     const target = manager.get('file:w.nginx');
     const source = manager.get('file:obey/w.nginx.php');
     const rule = new Rule(prj.rootModule, "w.nginx");
@@ -147,7 +153,7 @@ describe("Build", () => {
             [source.key]: [true,"142857"],
             [target.key]: [true,"857142"]
         });
-        const versionInfo = await build.getActualVersionInfo(rule);
+        const versionInfo = await build.getActualVersionInfo(Object.values(rule.dependencies));
         expect(versionInfo).to.be.object();
     });
 
@@ -185,6 +191,7 @@ describe("Build", () => {
         expect(job.finished).to.be.true;
         expect(job.recipeInvoked).to.be.true;
         const build2 = new Build(g, build.db,build.artifactManager);
+        makeTarget.reset();
         const job2 = await build2.getJobForArtifact(target);
         const isUpToDate = await build2.isUpToDate(job2)
         expect(isUpToDate).to.be.true;
@@ -202,6 +209,7 @@ describe("Build", () => {
         expect(job.finished).to.be.true;
         expect(await build.isUpToDate(job)).to.be.true;
         build = new Build(g,build.db,build.artifactManager);
+        makeTarget.reset();
         const job2 = await build.getJobForArtifact(target);
         await job2.run();
         expect(job2.finished).to.be.true;
@@ -222,6 +230,7 @@ describe("Build", () => {
         answers(pk,{[source.key]: [nil,"123456"]});
         expect(await build.isUpToDate(job)).to.be.false;
         build = new Build(g,build.db,build.artifactManager);
+        makeTarget.reset();
         const job2 = await build.getJobForArtifact(target);
         await job2.run();
         expect(job2.finished).to.be.true;
@@ -241,6 +250,7 @@ describe("Build", () => {
         expect(await target.exists).to.be.true;
         expect(await build.isUpToDate(job)).to.be.false;
         build = new Build(build.graph, build.db, build.artifactManager);
+        makeTarget.reset()
         job = await build.getJobForArtifact(target);
         expect(job.recipeInvoked).to.be.false;
         await job.run();
@@ -255,7 +265,7 @@ describe("Build", () => {
             [target.key]: [false],
             [source.key]: [false]
         });
-        const versionInfo = await build.getActualVersionInfo(rule);
+        const versionInfo = await build.getActualVersionInfo(Object.values(rule.dependencies));
         expect(versionInfo).to.be.object();
     })
 

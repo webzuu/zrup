@@ -46,6 +46,15 @@ export class MockArtifact extends Artifact
         this.#pk.set(this.key, "contents", contents);
     }
 
+
+    get caps() {
+        return {
+            canWrite: true,
+            canRemove: true,
+            canBuild: true
+        };
+    }
+
     static get type() {
         throw new Error(
             "MockArtifact has dynamic artifact type. If you are trying to subclass ArtifactFactory to make instances"
@@ -86,7 +95,6 @@ export class MockFileFactory extends ArtifactFactory
 Object.assign(
     MockFileFactory.prototype,
     {
-        normalize: FileArtifactFactory.prototype.normalize,
-        resolveModule: FileArtifactFactory.prototype.resolveModule
+        normalize: FileArtifactFactory.prototype.normalize
     }
 )

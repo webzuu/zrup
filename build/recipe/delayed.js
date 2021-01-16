@@ -16,18 +16,39 @@ export class DelayedRecipe extends Recipe
         this.#recipe = recipe;
         this.#delay_milliseconds = delay_milliseconds;
     }
-    async executeFor(job) {
+
+    set job(job) {
+        super.job = this.#recipe.job = job;
+    }
+
+    async computeConfigFor(job) {
+        return {
+            recipe: this.#recipe,
+            recipeHash: await this.#recipe.hash,
+            delay_milliseconds: this.#delay_milliseconds
+        };
+    }
+
+    describeState(state) {
+        return {
+            recipe: state.recipeHash,
+            delayed_milliseconds: state.delay_milliseconds
+        };
+    }
+
+    async executeWithConfig(config) {
         return new Promise((resolve, reject) => {
             setTimeout(
                 () => {
-                    this.#recipe.executeFor(job)
+                    config.recipe.execute()
                         .then(
                             (...v) => { resolve(...v); }
                         )
                         .catch(
                             (...e) => { reject(...e); }
                         );
-                }
+                },
+                parseInt(config.delay_milliseconds+'',10)
             );
         });
     }

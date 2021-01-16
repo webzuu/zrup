@@ -7,7 +7,9 @@ import {UnimplementedAbstract} from "../error/unimplemented-abstract.js";
 
 /**
  * @typedef {Object} Artifact~Caps
- * @property {boolean} canRemove
+ * @property {boolean} canWrite - if true, artifact's contents can be affected by builds
+ * @property {boolean} canRemove - if true, artifact can be removed (for strict builds)
+ * @property {boolean} canBuild - if false, consider the artifact to be a source and skip searching for producing rule
  */
 
 /***/
@@ -16,7 +18,7 @@ export class Artifact {
     /** @type {string} */
     #identity;
 
-    /** @param {AID|string} aid */
+    /** @param {Artifact~Reference} aid */
     constructor(aid)
     {
         this.#identity = ''+aid;
@@ -86,7 +88,9 @@ export class Artifact {
     get caps()
     {
         return {
-            canRemove: false
+            canWrite: false,
+            canRemove: false,
+            canBuild: false
         };
     }
 }
@@ -327,7 +331,6 @@ export class ArtifactResolver
     /**
      * @param {AID} aid
      * @return {AID}
-     * @abstract
      */
     normalize(aid)
     {

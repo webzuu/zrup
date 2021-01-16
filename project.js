@@ -74,6 +74,11 @@ export class Project
         return this.#index.module.path[path] || null;
     }
 
+    resetRecipes()
+    {
+        for (let rule of this.#graph.index.rule.key.values()) if (rule.recipe) rule.recipe.reset();
+    }
+
     /** @return {Module|null} */
     get rootModule()
     {

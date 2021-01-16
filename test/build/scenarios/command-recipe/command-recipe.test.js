@@ -51,6 +51,7 @@ describe("CommandRecipe", async() => {
 
         let job = null;
         async function runNewJob() {
+            d.project.resetRecipes();
             await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
             return job;
         }

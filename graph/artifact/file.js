@@ -86,7 +86,11 @@ export class FileArtifact extends Artifact {
 
     get caps()
     {
-        return Object.assign({}, super.caps, {canRemove: true});
+        return Object.assign({}, super.caps, {
+            canWrite: true,
+            canRemove: true,
+            canBuild: true
+        });
     }
 }
 
@@ -290,7 +294,7 @@ export class FileArtifactFactory extends ArtifactFactory
         return [
             this.resolveToExternalIdentifier(new AID(''+ref)),
             ...extraArgs
-        ]
+        ];
     }
 
     /**

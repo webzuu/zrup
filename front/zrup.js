@@ -1,5 +1,6 @@
 import findUp from "find-up";
 import fs from "fs/promises";
+import {RecipeArtifactFactory} from "../graph/artifact/recipe.js";
 import {Project} from "../project.js";
 import {Db} from "../db.js";
 import {ArtifactManager} from "../graph/artifact.js";
@@ -62,6 +63,7 @@ export class Zrup
         ));
         this.#artifactManager = new ArtifactManager();
         new FileArtifactFactory(this.#artifactManager, this.#project /*, "file", "" */);
+        new RecipeArtifactFactory(this.#artifactManager, this.#project);
         for (let [channel, infix] of Object.entries(channels)) {
             new FileArtifactFactory(
                 this.#artifactManager,

@@ -56,7 +56,12 @@ export class Build extends EventEmitter {
     {
         if (!ruleKey) return null;
         if (!this.index.rule.job.has(ruleKey)) {
-            this.index.rule.job.set(ruleKey, new Job(this, this.graph.index.rule.key.get(ruleKey)));
+            const job = new Job(this, this.graph.index.rule.key.get(ruleKey));
+            job.rule.recipe.job=job;
+            this.index.rule.job.set(
+                ruleKey,
+                job
+            );
         }
         return this.index.rule.job.get(ruleKey);
     }
@@ -69,6 +74,7 @@ export class Build extends EventEmitter {
      */
     async getRuleForArtifact(artifact, version)
     {
+        if(false === artifact.caps.canBuild) return null
         //TODO: either utilize sqlite caching or centralize this through ArtifactManager
         const key = artifact.key;
         let ruleKey = this.graph.index.output.rule.get(key);
@@ -148,14 +154,14 @@ export class Build extends EventEmitter {
 
     /**
      *
-     * @param {Rule} rule
+     * @param {Dependency[]} dependencies
      * @return {Promise<object>}
      */
-    async getActualVersionInfo(rule)
+    async getActualVersionInfo(dependencies)
     {
         const actualSourceVersions = {};
         await Promise.all(
-            Object.values(rule.dependencies).map(
+            dependencies.map(
                 dependency => (async () => {
                     actualSourceVersions[dependency.artifact.key] =
                         (await dependency.artifact.exists) ? (await dependency.artifact.version) : null;
@@ -183,7 +189,7 @@ export class Build extends EventEmitter {
         const [recordedSourceVersionsByOutput, actualSourceVersions] =
             await Promise.all([
                 Promise.all(outputs.map(this.getRecordedVersionInfo.bind(this))),
-                this.getActualVersionInfo(rule)
+                this.getActualVersionInfo(job.dependencies)
             ]);
         const actualSourceKeys = Object.getOwnPropertyNames(actualSourceVersions).sort();
         const actualSourceKeyHash = md5(JSON.stringify(actualSourceKeys));

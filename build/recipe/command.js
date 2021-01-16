@@ -110,12 +110,49 @@ export class CommandRecipe extends Recipe
         this.#commandBuilder = commandBuilder.bind(null);
     }
 
+    createChildProcess(job, config)
     /**
      * @param {Job} job
-     * @return {CommandRecipe~Config}
+     * @param {CommandRecipe~Config} config
+     * @return {ChildProcessWithoutNullStreams}
      */
-    configureFor(job)
     {
+        let {exec, shell, args, cwd, out, err, combined} = config;
+        if ('undefined' === typeof cwd) {
+            cwd = job.rule.module.absolutePath;
+        }
+        const options = {};
+        if (shell) options.shell = "/bin/bash";
+        if (cwd) options.cwd = path.resolve(job.rule.module.absolutePath, cwd);
+        exec = exec.replace(/^\s+/,'').replace(/\s+$/,'');
+        const rawExec = exec+'';
+        if (shell) exec = `set -euo pipefail; ${exec}`;
+        job.build.emit('spawning.command',job,rawExec,args,options);
+        const child = spawn(exec, args, options);
+        job.build.emit('spawned.command',job, child);
+
+        for(let listener of out) addDataListenerToStreams(listener, child, child.stdout);
+        for(let listener of err) addDataListenerToStreams(listener, child, child.stderr);
+        for(let listener of combined) addDataListenerToStreams(listener, child, child.stdout, child.stderr);
+        return child;
+    }
+
+    createCompletionPromise(child, job, config)
+    {
+        return new Promise((resolve, reject) => {
+            child.on('exit', (code, signal) => {
+                if (code !== 0 || signal) {
+                    reject(new CommandError(job, config.exec.trimStart().trimEnd(), code, signal));
+                }
+                else {
+                    job.build.emit('completed.command',job,child);
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async computeConfigFor(job) {
         let exec = "";
         let shell = false;
         const args = [];
@@ -161,70 +198,49 @@ export class CommandRecipe extends Recipe
         return {exec, shell, args, cwd, out, err, combined, resolve};
     }
 
-    createChildProcess(job, config)
-    /**
-     * @param {Job} job
-     * @param {CommandRecipe~Config} config
-     * @return {ChildProcessWithoutNullStreams}
-     */
+    async executeWithConfig(config) {
+        const child = this.createChildProcess(this.job, config);
+        await this.createCompletionPromise(child, this.job, config);
+    }
+
+    describeState(state) {
+        const result = {};
+        result.exec = state.exec;
+        result.shell = state.shell;
+        result.args = state.args;
+        result.cwd = state.cwd;
+        result.out = state.out.map(this.#makeSinkDescriber("stdout"));
+        result.err = state.err.map(this.#makeSinkDescriber("stderr"));
+        result.combined = state.combined.map(this.#makeSinkDescriber("combined"));
+        return result;
+    }
+
+    #makeSinkDescriber = (stream) =>
     {
-        let {exec, shell, args, cwd, out, err, combined} = config;
-        if ('undefined' === typeof cwd) {
-            cwd = job.rule.module.absolutePath;
+        return sink => {
+            if (sink.descriptor) return sink.descriptor;
+            this.job.build.emit(
+                "warning",
+                "outputSink.descriptor.missing",
+                stream,
+                this.job
+            );
+            return sink.toString();
         }
-        const options = {};
-        if (shell) options.shell = "/bin/bash";
-        if (cwd) options.cwd = path.resolve(job.rule.module.absolutePath, cwd);
-        exec = exec.replace(/^\s+/,'').replace(/\s+$/,'');
-        const rawExec = exec+'';
-        if (shell) exec = `set -euo pipefail; ${exec}`;
-        job.build.emit('spawning.command',job,rawExec,args,options);
-        const child = spawn(exec, args, options);
-        job.build.emit('spawned.command',job, child);
-
-        for(let listener of out) addDataListenerToStreams(listener, child, child.stdout);
-        for(let listener of err) addDataListenerToStreams(listener, child, child.stderr);
-        for(let listener of combined) addDataListenerToStreams(listener, child, child.stdout, child.stderr);
-        return child;
-    }
-
-    createCompletionPromise(child, job, config)
-    {
-        return new Promise((resolve, reject) => {
-            child.on('exit', (code, signal) => {
-                if (code !== 0 || signal) {
-                    reject(new CommandError(job, config.exec.trimStart().trimEnd(), code, signal));
-                }
-                else {
-                    job.build.emit('completed.command',job,child);
-                    resolve();
-                }
-            });
-        });
-    }
-
-    /**
-     * @param {Job} job
-     * @return {Promise<void>}
-     */
-    async executeFor(job)
-    {
-        const config = this.configureFor(job);
-        const child = this.createChildProcess(job, config);
-        await this.createCompletionPromise(child, job, config);
     }
 }
 
 /**
  *
- * @param {string} outputFilePath
+ * @param {Artifact~Reference} artifactRef
  * @param {Job} job
  * @return {function(*=): void}
  */
-export function captureTo(outputFilePath,job)
+export function captureTo(artifactRef,job)
 {
+    const outputFilePath = job.build.artifactManager.resolveToExternalIdentifier(artifactRef);
     let append = false;
-    return chunk => {
+    const result = chunk => {
         if(!append) {
             fs.mkdirSync(path.dirname(outputFilePath),{mode: 0o755, recursive: true});
             fs.writeFileSync(outputFilePath, chunk);
@@ -235,6 +251,11 @@ export function captureTo(outputFilePath,job)
             fs.appendFileSync(outputFilePath, chunk);
         }
     }
+    result.descriptor = {
+        action: "write to file artifact",
+        artifact: artifactRef+''
+    };
+    return result;
 }
 
 class OutputSinkIsArray extends Error {}

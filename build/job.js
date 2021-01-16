@@ -52,6 +52,12 @@ export class Job {
     async #guardedWork() {
         try {
             await this.#work();
+            this.dependencies.push(
+                new Dependency(
+                    this.build.artifactManager.get(`recipe:${this.rule.module.name}+${this.rule.name}`),
+                    Dependency.ABSENT_STATE
+                )
+            );
         }
         catch(e) {
             throw new BuildError(BuildError.formatRuleFailure(this.rule, e), e);
@@ -74,7 +80,7 @@ export class Job {
         if (!await this.build.isUpToDate(this)) {
             this.recipeInvoked = true;
             this.build.emit('invoking.recipe',this.rule);
-            await this.rule.recipe.executeFor(this);
+            await this.rule.recipe.execute();
             this.build.emit('invoked.recipe',this.rule);
             await this.detectRewritesAfterUse();
             await this.build.recordVersionInfo(this);
@@ -167,8 +173,6 @@ export class Job {
         await this.build.recordReliance(this.rule, dependency.artifact);
     }
 
-
-
     async collectDependencies()
     {
         const dependencies = {};
@@ -188,7 +192,7 @@ export class Job {
             recordedDependencies[dependency.artifact.key] = dependency;
         }
 
-        this.dependencies = Object.values(dependencies);
+        this.dependencies = [...this.dependencies, ...Object.values(dependencies)];
         this.recordedDependencies = Object.values(recordedDependencies);
    }
 
