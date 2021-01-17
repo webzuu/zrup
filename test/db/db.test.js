@@ -33,144 +33,144 @@ describe('Db', () => {
 
     it('records dependencies', async() => {
         const ruleKey='whatever';
-        expect(await t.db.has('A')).to.be.false;
-        await t.db.record('A','B',ruleKey,'C','D');
-        expect(await t.db.has('A')).to.be.true;
+        expect(t.db.has('A')).to.be.false;
+        t.db.record('A','B',ruleKey,'C','D');
+        expect(t.db.has('A')).to.be.true;
     });
 
     it('persists dependencies', async() => {
         const ruleKey='whatever';
-        await t.db.record('A','B',ruleKey,'C','D');
+        t.db.record('A','B',ruleKey,'C','D');
         await t.closeDb(); await t.openDb();
-        expect(await t.db.has('A')).to.be.true;
+        expect(t.db.has('A')).to.be.true;
     });
 
-    it('lists versions', async() => {
+    it('lists versions', () => {
         const ruleKey='whatever';
-        await t.db.record('A','B',ruleKey,'X','Y');
-        await t.db.record('A','C',ruleKey,'X','Z');
-        const answer = await t.db.listVersions('A');
+        t.db.record('A','B',ruleKey,'X','Y');
+        t.db.record('A','C',ruleKey,'X','Z');
+        const answer = t.db.listVersions('A');
         expect(answer).to.be.array();
         expect(answer.map(_ => _.version).sort()).to.deep.equal(['B','C']);
     });
 
-    it('lists version sources', async() => {
+    it('lists version sources', () => {
         const ruleKey='whatever';
-        await t.db.record('A','B',ruleKey,'U','V');
-        await t.db.record('A','B',ruleKey,'X','Y');
-        await t.db.record('A','C',ruleKey,'X','Z');
-        let answer = await t.db.listVersionSources('A','B');
+        t.db.record('A','B',ruleKey,'U','V');
+        t.db.record('A','B',ruleKey,'X','Y');
+        t.db.record('A','C',ruleKey,'X','Z');
+        let answer = t.db.listVersionSources('A','B');
         expect(answer).to.be.array();
         expect(answer.sort((l,r) => l.source.localeCompare(r.source)).map(_ => _.version)).to.deep.equal(['V','Y']);
-        answer = await t.db.listVersionSources('A','C');
+        answer = t.db.listVersionSources('A','C');
         expect(answer).to.be.array();
         expect(answer.sort((l,r) => l.source.localeCompare(r.source)).map(_ => _.version)).to.deep.equal(['Z']);
     });
 
-    it('retracts versions', async() => {
+    it('retracts versions', () => {
         const ruleKey='whatever';
-        await t.db.record('A','B',ruleKey,'C','D');
-        await t.db.record('A','E',ruleKey,'F','G');
-        expect(await t.db.hasVersion('A','B')).to.be.true;
-        await t.db.retract('A','B');
-        expect(await t.db.hasVersion('A','B')).to.be.false;
-        expect(await t.db.hasVersion('A','E')).to.be.true;
+        t.db.record('A','B',ruleKey,'C','D');
+        t.db.record('A','E',ruleKey,'F','G');
+        expect(t.db.hasVersion('A','B')).to.be.true;
+        t.db.retract('A','B');
+        expect(t.db.hasVersion('A','B')).to.be.false;
+        expect(t.db.hasVersion('A','E')).to.be.true;
     });
 
     it('retracts targets', async() => {
         const ruleKey = 'whatever';
-        await t.db.record('A','B',ruleKey,'C','D');
-        await t.db.record('A','E',ruleKey,'F','G');
-        await t.db.record('B','X',ruleKey,'Y','Z');
-        expect(await t.db.has('A')).to.be.true;
-        await t.db.retractTarget('A');
-        expect(await t.db.has('A')).to.be.false;
-        expect(await t.db.has('B')).to.be.true;
+        t.db.record('A','B',ruleKey,'C','D');
+        t.db.record('A','E',ruleKey,'F','G');
+        t.db.record('B','X',ruleKey,'Y','Z');
+        expect(t.db.has('A')).to.be.true;
+        t.db.retractTarget('A');
+        expect(t.db.has('A')).to.be.false;
+        expect(t.db.has('B')).to.be.true;
     });
 
-    it('retracts rules', async() => {
+    it('retracts rules', () => {
         const ruleKey1 = 'whatever';
         const ruleKey2 = 'cool';
-        await t.db.record('A','B',ruleKey1,'C','D');
-        await t.db.record('E','F',ruleKey1,'C','D');
-        await t.db.record('A','B',ruleKey1,'G','H');
-        await t.db.record('E','F',ruleKey1,'G','G');
-        await t.db.record('U','V',ruleKey2,'X','Y');
-        expect(await t.db.has('A')).to.be.true;
-        expect(await t.db.has('E')).to.be.true;
-        expect(await t.db.has('U')).to.be.true;
-        await t.db.retractRule(ruleKey1);
-        expect(await t.db.has('A')).to.be.false;
-        expect(await t.db.has('E')).to.be.false;
-        expect(await t.db.has('U')).to.be.true;
+        t.db.record('A','B',ruleKey1,'C','D');
+        t.db.record('E','F',ruleKey1,'C','D');
+        t.db.record('A','B',ruleKey1,'G','H');
+        t.db.record('E','F',ruleKey1,'G','G');
+        t.db.record('U','V',ruleKey2,'X','Y');
+        expect(t.db.has('A')).to.be.true;
+        expect(t.db.has('E')).to.be.true;
+        expect(t.db.has('U')).to.be.true;
+         t.db.retractRule(ruleKey1);
+        expect(t.db.has('A')).to.be.false;
+        expect(t.db.has('E')).to.be.false;
+        expect(t.db.has('U')).to.be.true;
     });
 
-    it("does not throw if artifact not found", async () => {
-        const result = await t.db.getArtifact("foo");
+    it("does not throw if artifact not found",  () => {
+        const result = t.db.getArtifact("foo");
         expect(result).to.be.null;
     });
 
-    it("records artifacts", async () => {
-        await t.db.recordArtifact("foo","file","foo.c");
-        const result = await t.db.getArtifact("foo");
+    it("records artifacts", () => {
+        t.db.recordArtifact("foo","file","foo.c");
+        const result = t.db.getArtifact("foo");
         expect(result.key).to.equal("foo");
         expect(result.type).to.equal("file");
         expect(result.identity).to.equal("foo.c");
     });
 
-    it("does not overwrite recorded artifacts", async() => {
-        await t.db.recordArtifact("foo","file","foo.c");
-        await t.db.recordArtifact("wrong","file","foo.c");
-        const foo = await t.db.getArtifact("foo");
+    it("does not overwrite recorded artifacts", () => {
+        t.db.recordArtifact("foo","file","foo.c");
+        t.db.recordArtifact("wrong","file","foo.c");
+        const foo = t.db.getArtifact("foo");
         expect(foo.key).to.equal("foo");
         expect(foo.type).to.equal("file");
         expect(foo.identity).to.equal("foo.c");
-        const wrong = await t.db.getArtifact("wrong");
+        const wrong = t.db.getArtifact("wrong");
         expect(wrong).to.be.null;
-        await t.db.recordArtifact("foo","whatever","nope.c");
-        const whatever = await t.db.getArtifact("foo");
+        t.db.recordArtifact("foo","whatever","nope.c");
+        const whatever = t.db.getArtifact("foo");
         expect(whatever.type).to.equal("file");
         expect(whatever.identity).to.equal("foo.c");
     });
 
-    it("considers enough characters from the identity field", async () => {
+    it("considers enough characters from the identity field", () => {
         const fooName = "a".repeat(1000)+"_foo";
         const barName = "a".repeat(1000)+"_bar";
-        await t.db.recordArtifact("foo","file",fooName);
-        await t.db.recordArtifact("bar","file",barName);
-        const foo = await t.db.getArtifact("foo");
+        t.db.recordArtifact("foo","file",fooName);
+        t.db.recordArtifact("bar","file",barName);
+        const foo = t.db.getArtifact("foo");
         expect(foo.identity).to.equal(fooName);
-        const bar = await t.db.getArtifact("bar");
+        const bar = t.db.getArtifact("bar");
         expect(bar.identity).to.equal(barName);
     });
 
-    it("prunes unreferenced artifacts", async () => {
+    it("prunes unreferenced artifacts", () => {
         const ruleKey='whatever';
-        await t.db.record("foo","0",ruleKey,"bar","0");
-        await t.db.record("foo","0",ruleKey,"baz","1");
-        await t.db.recordArtifact("foo","file","foo.o");
-        await t.db.recordArtifact("bar","file","bar.c");
-        await t.db.recordArtifact("baz","file","baz.h");
-        await t.db.recordArtifact("gee","file","gee.js");
-        await t.db.getArtifact("gee");
-        expect(await t.db.getArtifact("gee")).to.be.object;
-        await t.db.pruneArtifacts();
-        expect(await t.db.getArtifact("gee")).to.be.null;
-        expect(await t.db.getArtifact("foo")).to.be.object;
+        t.db.record("foo","0",ruleKey,"bar","0");
+        t.db.record("foo","0",ruleKey,"baz","1");
+        t.db.recordArtifact("foo","file","foo.o");
+        t.db.recordArtifact("bar","file","bar.c");
+        t.db.recordArtifact("baz","file","baz.h");
+        t.db.recordArtifact("gee","file","gee.js");
+        t.db.getArtifact("gee");
+        expect(t.db.getArtifact("gee")).to.be.object;
+        t.db.pruneArtifacts();
+        expect(t.db.getArtifact("gee")).to.be.null;
+        expect(t.db.getArtifact("foo")).to.be.object;
     });
 
-    it("lists rule sources", async() => {
+    it("lists rule sources", () => {
         const ruleKey = 'whatever';
-        await t.db.record("O","0",ruleKey,"FOO","1");
-        await t.db.record("O","0",ruleKey,"BAR","2");
-        await t.db.record("I","3",ruleKey,"FOO","1");
-        await t.db.record("I","3",ruleKey,"BAR","2");
-        await t.db.recordArtifact("O","file","module.o");
-        await t.db.recordArtifact("I","file","module.i");
-        await t.db.recordArtifact("FOO","file","foo.c");
-        await t.db.recordArtifact("BAR","file","bar.c");
+        t.db.record("O","0",ruleKey,"FOO","1");
+        t.db.record("O","0",ruleKey,"BAR","2");
+        t.db.record("I","3",ruleKey,"FOO","1");
+        t.db.record("I","3",ruleKey,"BAR","2");
+        t.db.recordArtifact("O","file","module.o");
+        t.db.recordArtifact("I","file","module.i");
+        t.db.recordArtifact("FOO","file","foo.c");
+        t.db.recordArtifact("BAR","file","bar.c");
         /** @type {object[]} */
-        const sources = await t.db.listRuleSources(ruleKey);
+        const sources = t.db.listRuleSources(ruleKey);
         expect(sources).to.be.array();
         expect(sources.length).to.equal(2);
         sources.sort((a, b) => a.key.localeCompare(b.key));
@@ -178,18 +178,18 @@ describe('Db', () => {
         expect(sources[1].key).to.equal("FOO");
     });
 
-    it("lists rule targets", async() => {
+    it("lists rule targets", () => {
         const ruleKey = 'whatever';
-        await t.db.record("O","0",ruleKey,"FOO","1");
-        await t.db.record("O","0",ruleKey,"BAR","2");
-        await t.db.record("I","3",ruleKey,"FOO","1");
-        await t.db.record("I","3",ruleKey,"BAR","2");
-        await t.db.recordArtifact("O","file","module.o");
-        await t.db.recordArtifact("I","file","module.i");
-        await t.db.recordArtifact("FOO","file","foo.c");
-        await t.db.recordArtifact("BAR","file","bar.c");
+        t.db.record("O","0",ruleKey,"FOO","1");
+        t.db.record("O","0",ruleKey,"BAR","2");
+        t.db.record("I","3",ruleKey,"FOO","1");
+        t.db.record("I","3",ruleKey,"BAR","2");
+        t.db.recordArtifact("O","file","module.o");
+        t.db.recordArtifact("I","file","module.i");
+        t.db.recordArtifact("FOO","file","foo.c");
+        t.db.recordArtifact("BAR","file","bar.c");
         /** @type {object[]} */
-        const targets = await t.db.listRuleTargets(ruleKey);
+        const targets = t.db.listRuleTargets(ruleKey);
         expect(targets).to.be.array();
         expect(targets.length).to.equal(2);
         targets.sort((a, b) => a.key.localeCompare(b.key));
@@ -197,24 +197,24 @@ describe('Db', () => {
         expect(targets[1].key).to.equal("O");
     });
 
-    it("gets target's producing rule", async() => {
+    it("gets target's producing rule", () => {
         const ruleKey = 'whatever';
-        await t.db.record("T","0",ruleKey,"FOO","1");
-        expect(await t.db.getProducingRule("T","0")).to.equal("whatever");
+        t.db.record("T","0",ruleKey,"FOO","1");
+        expect(t.db.getProducingRule("T","0")).to.equal("whatever");
     });
 
-    it("allows different producing rules for different target versions", async () =>{
-        await t.db.record("T","0","zeroth","FOO","1");
-        await t.db.record("T","0","zeroth","BAR","2");
-        await t.db.record("T","1","first","FOO","1");
-        await t.db.record("T","1","first","BAR","3");
-        expect(await t.db.getProducingRule("T","0")).to.equal("zeroth");
-        expect(await t.db.getProducingRule("T","1")).to.equal("first");
+    it("allows different producing rules for different target versions",  () =>{
+        t.db.record("T","0","zeroth","FOO","1");
+        t.db.record("T","0","zeroth","BAR","2");
+        t.db.record("T","1","first","FOO","1");
+        t.db.record("T","1","first","BAR","3");
+        expect(t.db.getProducingRule("T","0")).to.equal("zeroth");
+        expect(t.db.getProducingRule("T","1")).to.equal("first");
     });
 
-    it("disallows different producing rules for same target version", async () => {
-        await t.db.record("T","0","zeroth","FOO","1");
-        await expect(t.db.record("T","0","first","BAR","2")).to.be.rejectedWith(Error);
+    it("disallows different producing rules for same target version",  () => {
+        t.db.record("T","0","zeroth","FOO","1");
+        expect(() => t.db.record("T","0","first","BAR","2")).to.be.throw(Error);
     });
 
 });

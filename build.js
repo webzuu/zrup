@@ -7,7 +7,8 @@ import EventEmitter from "events";
 export class Build extends EventEmitter {
 
     #built;
-    #reliedUpon;
+    #whichRulesReliedOnArtifactVersion = {};
+    #whichArtifactVersionDidRuleRelyOn = {};
     /**
      *
      * @param {Graph} graph
@@ -26,7 +27,7 @@ export class Build extends EventEmitter {
             }
         }
         this.#built = {};
-        this.#reliedUpon = {};
+        this.#whichRulesReliedOnArtifactVersion = {};
     }
 
     /**
@@ -79,7 +80,7 @@ export class Build extends EventEmitter {
         const key = artifact.key;
         let ruleKey = this.graph.index.output.rule.get(key);
         if (ruleKey) return ruleKey;
-        ruleKey = await this.db.getProducingRule(key, "undefined"===typeof version ? await artifact.version : version);
+        ruleKey = this.db.getProducingRule(key, "undefined"===typeof version ? await artifact.version : version);
         if (!this.graph.index.rule.key.has(ruleKey)) {
             //This may be a rule that no longer exists in the graph!
             return null;
@@ -100,7 +101,7 @@ export class Build extends EventEmitter {
             sourceVersions: {}
         };
         const version = await output.version;
-        const versionSourcesResult = await this.db.listVersionSources(output.key, version);
+        const versionSourcesResult = this.db.listVersionSources(output.key, version);
         const sourceVersions = {};
         for(let row of versionSourcesResult) {
             sourceVersions[row.source] = row.version;
@@ -119,37 +120,41 @@ export class Build extends EventEmitter {
      */
     async recordVersionInfo(job)
     {
-        await this.recordArtifacts(job);
-        await Promise.all([...job.outputs,...job.dynamicOutputs].map(output => (async () => {
-            await this.db.retractTarget(output.key);
-            const outputVersion = await output.version;
-            await Promise.all(job.dependencies.map(dep => (async () => {
-                await this.db.record(
-                    output.key,
-                    outputVersion,
-                    job.rule.key,
-                    dep.artifact.key,
-                    await dep.artifact.version //TODO: use reliance data here instead of recomputing
-                );
-            })()));
-        })()));
+        const outputInfos = await Promise.all([...job.outputs, ...job.dynamicOutputs].map(async output => ({
+            output,
+            version: await output.version
+        })));
+        const transaction = this.db.db.transaction(() => {
+            this.recordArtifacts(job);
+            for (let info of outputInfos) {
+                this.db.retractTarget(info.output.key);
+                const outputVersion = info.version;
+                for (let dep of job.dependencies) {
+                    this.db.record(
+                        info.output.key,
+                        outputVersion,
+                        job.rule.key,
+                        dep.artifact.key,
+                        this.getVersionReliedOn(job.rule, dep.artifact, true)
+                    );
+                }
+            }
+        });
+        // noinspection JSValidateTypes
+        transaction();
     }
 
-    /**
-     * @param {Job} job
-     * @return {Promise<void>}
-     */
-    async recordArtifacts(job)
+    /** @param {Job} job */
+    recordArtifacts(job)
     {
-        const allArtifacts = [
+        const artifacts = [
             ...job.outputs,
             ...job.dynamicOutputs,
             ...job.dependencies.map(dep => dep.artifact)
         ];
-        const runningQueries = allArtifacts.map(artifact => (async () =>{
-            await this.db.recordArtifact(artifact.key, artifact.type, artifact.identity);
-        })());
-        await Promise.all(runningQueries);
+        for (let artifact of artifacts) this.db.recordArtifact(
+            artifact.key, artifact.type, artifact.identity
+        );
     }
 
     /**
@@ -180,17 +185,16 @@ export class Build extends EventEmitter {
     {
         const rule = job.rule;
         if (rule.always) return false;
-        await job.prepare();
+        job.prepare();
         const outputs = job.outputs;
         const allOutputsExist =
             (await Promise.all(outputs.map(artifact => artifact.exists)))
                 .reduce((previous, current) => previous && current, true);
         if (!allOutputsExist) return false;
-        const [recordedSourceVersionsByOutput, actualSourceVersions] =
-            await Promise.all([
-                Promise.all(outputs.map(this.getRecordedVersionInfo.bind(this))),
-                this.getActualVersionInfo(job.dependencies)
-            ]);
+        const [recordedSourceVersionsByOutput, actualSourceVersions] = await Promise.all([
+            Promise.all(outputs.map(this.getRecordedVersionInfo.bind(this))),
+            this.getActualVersionInfo(job.dependencies)
+        ])
         const actualSourceKeys = Object.getOwnPropertyNames(actualSourceVersions).sort();
         const actualSourceKeyHash = md5(JSON.stringify(actualSourceKeys));
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {
@@ -211,9 +215,9 @@ export class Build extends EventEmitter {
     getArtifactReliances(artifactKey)
     {
         const result = {};
-        for(let version of Object.getOwnPropertyNames(this.#reliedUpon[artifactKey] || {}))
+        for(let version of Object.getOwnPropertyNames(this.#whichRulesReliedOnArtifactVersion[artifactKey] || {}))
         {
-            result[version] = Object.assign({},this.#reliedUpon[artifactKey][version]);
+            result[version] = Object.assign({},this.#whichRulesReliedOnArtifactVersion[artifactKey][version]);
         }
         return result;
     }
@@ -226,8 +230,8 @@ export class Build extends EventEmitter {
     async recordReliance(rule, artifact)
     {
         const reliancesByVersion = (
-            this.#reliedUpon[artifact.key]
-            || (this.#reliedUpon[artifact.key] = {})
+            this.#whichRulesReliedOnArtifactVersion[artifact.key]
+            || (this.#whichRulesReliedOnArtifactVersion[artifact.key] = {})
         );
 
         const version = await artifact.version;
@@ -246,6 +250,32 @@ export class Build extends EventEmitter {
         else {
             reliancesByVersion[version] = { [rule.key]: rule };
         }
+
+        const reliancesByRule = (
+            this.#whichArtifactVersionDidRuleRelyOn[rule.key]
+            || (this.#whichArtifactVersionDidRuleRelyOn[rule.key] = {})
+        );
+        reliancesByRule[artifact.key] = version;
+    }
+
+    /**
+     * @param {Rule} rule
+     * @param {Artifact} artifact
+     * @param {boolean} required
+     * @return {(string|undefined)}
+     */
+    getVersionReliedOn(rule, artifact, required)
+    {
+        let result;
+        if (rule.key in this.#whichArtifactVersionDidRuleRelyOn) {
+            result = this.#whichArtifactVersionDidRuleRelyOn[rule.key][artifact.key];
+        }
+        if (!result && true===required) {
+            throw new BuildError(
+                `Internal error: unrecorded reliance info for rule ${rule.label} on ${artifact.identity} was requested`
+            )
+        }
+        return result;
     }
 
     /**

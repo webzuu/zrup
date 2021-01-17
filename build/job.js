@@ -82,7 +82,7 @@ export class Job {
      */
     async #work()
     {
-        await this.prepare();
+        this.prepare();
         await Promise.all(this.getMergedDependencies().map(async dependency => await this.ensureDependency(dependency)));
         if (!await this.build.isUpToDate(this)) {
             const recipeArtifact = this.build.artifactManager.get(`recipe:${this.rule.module.name}+${this.rule.name}`);
@@ -119,12 +119,12 @@ export class Job {
         return Object.values(merged);
     }
 
-    async prepare()
+    prepare()
     {
         if (this.#prepared) return;
         this.#prepared = true;
         this.preCollectOutputs();
-        await this.collectDependencies();
+        this.collectDependencies();
     }
 
     //TODO: test this mechanism!
@@ -207,7 +207,7 @@ export class Job {
         await this.build.recordReliance(this.rule, dependency.artifact);
     }
 
-    async collectDependencies()
+    collectDependencies()
     {
         const
             dependencies = {},
@@ -218,7 +218,7 @@ export class Job {
         }
 
         const dependencyRecords =
-            (await this.build.db.listRuleSources(this.rule.key))
+            this.build.db.listRuleSources(this.rule.key)
                 .filter(record => !(record.key in dependencies))
                 .map(record => this.artifactFromRecord(record))
                 .map(artifact => new Dependency(artifact, Dependency.ABSENT_STATE));

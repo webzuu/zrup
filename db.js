@@ -1,9 +1,6 @@
-import sqlite3 from "sqlite3";
 import Database from "better-sqlite3";
 const {Statement} = Database;
-//import { open, Database, Statement } from "sqlite";
 import sleep from "simple-async-sleep";
-import fs from "fs/promises";
 import fsi from "fs";
 import path from "path";
 import {performance} from "perf_hooks"
@@ -125,16 +122,9 @@ class Statements
 }
 
 for (let queryName of Object.getOwnPropertyNames(sql)) {
-
-    class x {
-        #prepared;
-        #db;
-        get [queryName]() {
-        }
-    }
-    const getter = x.prototype[queryName];
     Object.defineProperty(Statements.prototype, queryName, {
         get: function() {
+            // noinspection JSUnresolvedVariable
             return (
                 this.__db[queryName]
                 || (this.__prepared[queryName] = this.__db.prepare(sql[queryName])
@@ -181,32 +171,32 @@ export class Db {
         return this.#stmt;
     }
 
-    async has(targetId)
+    has(targetId)
     {
-        const queryResult = await this.get('has', {
+        const queryResult = this.get('has', {
             target: targetId
         });
         // noinspection JSUnresolvedVariable
         return queryResult.c > 0;
     }
-    async hasVersion(targetId, version)
+    hasVersion(targetId, version)
     {
-        const countResponse = await this.get('hasVersion',{
+        const countResponse = this.get('hasVersion',{
             target: targetId,
             version
         });
         // noinspection JSUnresolvedVariable
         return countResponse.c > 0;
     }
-    async listVersions(targetId)
+    listVersions(targetId)
     {
-        return await this.all('listVersions',{
+        return this.all('listVersions',{
             target: targetId
         });
     }
-    async listVersionSources(targetId, version)
+    listVersionSources(targetId, version)
     {
-        return await this.all('listVersionSources',{
+        return this.all('listVersionSources',{
             target: targetId,
             version
         });
@@ -219,11 +209,11 @@ export class Db {
      * @param {string} ruleKey
      * @param {string} sourceId
      * @param {string} sourceVersion
-     * @return {Promise<*>}
+     * @return {*}
      */
-    async record(targetId, targetVersion, ruleKey, sourceId, sourceVersion)
+    record(targetId, targetVersion, ruleKey, sourceId, sourceVersion)
     {
-        return await this.run('record', {
+        return this.run('record', {
             target: targetId,
             targetVersion,
             rule: ruleKey,
@@ -231,44 +221,44 @@ export class Db {
             sourceVersion
         });
     }
-    async retract(targetId, targetVersion)
+    retract(targetId, targetVersion)
     {
-        return await this.run('retract', {
+        return this.run('retract', {
             target: targetId,
             version: targetVersion
         });
     }
-    async retractTarget(targetId)
+    retractTarget(targetId)
     {
-        return await this.run('retractTarget',{
+        return this.run('retractTarget',{
             target: targetId
         });
     }
-    async retractRule(ruleKey)
+    retractRule(ruleKey)
     {
-        return await this.run('retractRule',{
+        return this.run('retractRule',{
             rule: ruleKey
         });
     }
 
     /**
      * @param {string} ruleKey
-     * @return {Promise<object[]>}
+     * @return {Object}
      */
-    async listRuleSources(ruleKey)
+    listRuleSources(ruleKey)
     {
-        return await this.all('listRuleSources', {
+        return this.all('listRuleSources', {
             rule: ruleKey
         });
     }
 
     /**
      * @param {string} ruleKey
-     * @return {Promise<object[]>}
+     * @return {object[]}
      */
-    async listRuleTargets(ruleKey)
+    listRuleTargets(ruleKey)
     {
-        return await this.all('listRuleTargets',{
+        return this.all('listRuleTargets',{
             rule: ruleKey
         });
     }
@@ -279,29 +269,29 @@ export class Db {
      * @param {string} version
      * @return {Promise<string|null>}
      */
-    async getProducingRule(target, version)
+    getProducingRule(target, version)
     {
         /** @type {object|null} */
-        const result = await this.get('getProducingRule',{target, version});
+        const result = this.get('getProducingRule',{target, version});
         return result && result.rule;
     }
 
-    async recordArtifact(key, type, identity)
+    recordArtifact(key, type, identity)
     {
-        return await this.run('recordArtifact', {key, type, identity});
+        return this.run('recordArtifact', {key, type, identity});
     }
 
     /**
      * @param key
      * @return {Promise<Db~ArtifactRecord|null>}
      */
-    async getArtifact(key)
+    getArtifact(key)
     {
-        return await this.get('getArtifact',{key}) || null;
+        return this.get('getArtifact',{key}) || null;
     }
 
-    async pruneArtifacts() {
-        await this.run('pruneArtifacts',{});
+    pruneArtifacts() {
+        this.run('pruneArtifacts',{});
     }
 
     async close() {
@@ -326,7 +316,7 @@ export class Db {
         this.#stmt = null;
     }
 
-    async query(verb, statementKey, data)
+    query(verb, statementKey, data)
     {
         const statements = this.stmt;
         const prepared = statements[statementKey];
@@ -334,6 +324,9 @@ export class Db {
         try {
             start = performance.now();
             result = prepared[verb](data);
+        }
+        catch(e) {
+            throw e;
         }
         finally {
             this.queryTime += performance.now()-start;
@@ -345,26 +338,26 @@ export class Db {
     /**
      * @param statementKey
      * @param data
-     * @return {Promise<Object>|null}
+     * @return {(Object|null)}
      */
-    async get(statementKey, data)
+    get(statementKey, data)
     {
-        return await this.query('get', statementKey, data);
+        return this.query('get', statementKey, data);
     }
 
-    async run(statementKey, data)
+    run(statementKey, data)
     {
-        return await this.query('run', statementKey, data);
+        return this.query('run', statementKey, data);
     }
 
     /**
      * @param statementKey
      * @param data
-     * @return {Promise<Object[]>}
+     * @return {Object[]}
      */
-    async all(statementKey, data)
+    all(statementKey, data)
     {
-        return await this.query('all', statementKey, data);
+        return this.query('all', statementKey, data);
     }
 }
 
