@@ -19,8 +19,9 @@ async function openDb(filename)
     catch(e) {
         throw e;
     }
-    await db.exec("PRAGMA journal_mode = WAL");
     await ensureSchema(db);
+    await db.exec("PRAGMA journal_mode = MEMORY");
+    await db.exec("PRAGMA synchronous = OFF");
     return db;
 }
 

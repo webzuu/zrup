@@ -159,6 +159,7 @@ export class CommandRecipe extends Recipe
         const out = [];
         const err = [];
         const combined = [];
+        let always = false;
 
         const resolve = resolveArtifacts.bind(null,job,false);
         const resolveExceptStrings = resolveArtifacts.bind(null,job,true);
@@ -177,6 +178,7 @@ export class CommandRecipe extends Recipe
             out: sink => { out.push(makeOutputSink(job, sink)); },
             err: sink => { err.push(makeOutputSink(job, sink)); },
             combined: sink => { combined.push(makeOutputSink(job, sink)); },
+            always: () => { always = true; },
             resolve,
             T: reassemble.bind(null, ref => resolveArtifacts(job, false, ref)[0])
         }

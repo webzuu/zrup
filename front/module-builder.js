@@ -17,6 +17,7 @@
  * @property {RuleBuilder~artifactNominator} depends
  * @property {RuleBuilder~artifactNominator} produces
  * @property {RuleBuilder~ruleNominator} after
+ * @property {RuleBuilder~flagSetter} always
  */
 
 import {CommandRecipe} from "../build/recipe/command.js";
@@ -94,7 +95,8 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
             depends: this.#ruleBuilder.depends,
             produces: this.#ruleBuilder.produces,
             after: this.#ruleBuilder.after,
-            to: this.to.bind(this, module)
+            to: this.to.bind(this, module),
+            always: this.#ruleBuilder.always
         };
     }
 
@@ -121,7 +123,7 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
                 if ('args' in descriptor) {
                     C.args(...(Array.isArray(descriptor.args) ? descriptor.args : [descriptor.args]))
                 }
-                for(let key of ['args','cwd','out','err','combined']) {
+                for(let key of ['args','cwd','out','err','combined','always']) {
                     if (!(key in descriptor)) continue;
                     for (let item of (Array.isArray(descriptor[key]) ? descriptor[key] : [descriptor[key]])) {
                         C[key](item);
@@ -157,13 +159,15 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
 
         const resolvable = DT(Artifact, AID, Dependency);
         const outputListener = DT(resolvable, Function);
+        const opt = {optional: true};
         return DT({
             cmd: DT(resolvable, String, [DT(resolvable, String)]),
-            args: DT(resolvable, String, [DT(resolvable, String)], {optional: true}),
-            cwd: DT(resolvable, {optional: true}),
-            out: DT(outputListener, [outputListener], {optional: true}),
-            err: DT(outputListener, [outputListener], {optional: true}),
-            combined: DT(outputListener, [outputListener], {optional: true})
+            args: DT(resolvable, String, [DT(resolvable, String)], opt),
+            cwd: DT(resolvable, opt),
+            out: DT(outputListener, [outputListener], opt),
+            err: DT(outputListener, [outputListener], opt),
+            combined: DT(outputListener, [outputListener], opt),
+            always: DT(Boolean, opt)
         });
     }
 

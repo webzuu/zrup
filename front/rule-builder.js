@@ -35,6 +35,11 @@ import {Dependency} from "../graph/dependency.js";
  */
 
 /**
+ * @callback RuleBuilder~flagSetter
+ * @param {boolean} [value]
+ */
+
+/**
  * @callback RuleBuilder~boundDefiner
  * @return {Recipe}
  */
@@ -179,6 +184,10 @@ export class RuleBuilder extends EventEmitter
         const dependentRule = this.requireCurrentRule('after'), module = dependentRule.module;
         this.#afterEdges[dependentRule.key] = (this.#afterEdges[dependentRule.key] || []).concat(prerequisiteRuleRefs);
         for(let ref of prerequisiteRuleRefs) this.emit('after', module, dependentRule, ref);
+    }
+
+    always = (value) => {
+        this.requireCurrentRule('always').always = true === value;
     }
 
     /**

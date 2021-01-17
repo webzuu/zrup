@@ -37,6 +37,8 @@ export class Job {
         this.outputs = [];
         this.dynamicOutputs = [];
         this.error = null;
+        /** @type {(Job|null)} */
+        this.requestedBy = null;
         this.dependencies = [
             new Dependency(RecipeArtifact.makeFor(this), Dependency.ABSENT_VIOLATION)
         ];
@@ -125,6 +127,7 @@ export class Job {
         await this.collectDependencies();
     }
 
+    //TODO: test this mechanism!
     async detectRewritesAfterUse()
     {
         const rewritesAfterUse = (
@@ -183,6 +186,7 @@ export class Job {
         const buildJob = await this.build.getJobForArtifact(artifact);
         const rule = buildJob ? buildJob.rule : null;
         if (buildJob) {
+            if (!buildJob.requestedBy) buildJob.requestedBy = this;
             await buildJob.run(); //May throw, will be handled up the call chain
         }
         if (
