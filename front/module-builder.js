@@ -26,6 +26,7 @@ import {Dependency} from "../graph/dependency.js";
 import {Module} from "../module.js";
 import * as path from "path";
 import DT from "ducktype";
+import recursive from "../util/ducktype-recursive.js";
 
 /**
  * @callback ModuleBuilder~includeNominator
@@ -100,6 +101,7 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
         };
     }
 
+
     to(module, ruleName, descriptorProvider)
     {
         this.#ruleBuilder.acceptDefiner(
@@ -159,10 +161,12 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
 
         const resolvable = DT(Artifact, AID, Dependency);
         const outputListener = DT(resolvable, Function);
+        const segment = DT(resolvable, String);
+        const segments = recursive(segments => DT(segment, [segments]));
         const opt = {optional: true};
         return DT({
-            cmd: DT(resolvable, String, [DT(resolvable, String)]),
-            args: DT(resolvable, String, [DT(resolvable, String)], opt),
+            cmd: segments,
+            args: DT(segments, opt),
             cwd: DT(resolvable, opt),
             out: DT(outputListener, [outputListener], opt),
             err: DT(outputListener, [outputListener], opt),

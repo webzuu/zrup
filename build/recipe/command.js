@@ -56,6 +56,27 @@
  */
 
 /**
+ * @typedef {(Artifact|AID|Dependency)} CommandRecipe~Resolvable
+ */
+
+/**
+ * @typedef {(CommandRecipe~Resolvable|Function)} CommandRecipe~OutputSink
+ */
+
+/**
+ * @typedef {(CommandRecipe~Resolvable|string)} CommandRecipe~CommandSegment
+ */
+
+/**
+ * @typedef {(CommandRecipe~CommandSegment|Array.<CommandRecipe~CommandSegments>)} CommandRecipe~CommandSegments
+ */
+
+/**
+ * @typedef {Object.<string,*>} CommandRecipe~SimpleDescriptor
+ * @property
+ */
+
+/**
  * @callback CommandRecipe~builder
  * @param {CommandRecipe~BuilderParams} params
  */
