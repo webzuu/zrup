@@ -10,6 +10,7 @@
   "type": "module",
   "dependencies": {
     "better-path-resolve": "^1.0.0",
+    "better-sqlite3": "^7.1.2",
     "commander": "^6.2.1",
     "ducktype": "^1.2.2",
     "execa": "^5.0.0",

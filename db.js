@@ -1,33 +1,36 @@
 import sqlite3 from "sqlite3";
-import { open, Database, Statement } from "sqlite";
+import Database from "better-sqlite3";
+const {Statement} = Database;
+//import { open, Database, Statement } from "sqlite";
 import sleep from "simple-async-sleep";
 import fs from "fs/promises";
+import fsi from "fs";
 import path from "path";
 import {performance} from "perf_hooks"
 
 /**
- * @typedef {Promise<Database<sqlite3.Database,sqlite3.Statement>>} DbPromise
+ * @param {string} filename
+ * @return {Database}
  */
-
-async function openDb(filename)
+function openDb(filename)
 {
     let db
     try {
-        await fs.mkdir(path.dirname(filename),{mode: 0o755, recursive:true});
-        db = await open({ filename, driver: sqlite3.Database });
+        fsi.mkdirSync(path.dirname(filename),{mode: 0o755, recursive:true});
+        db = new Database(filename);
     }
     catch(e) {
         throw e;
     }
-    await ensureSchema(db);
-    await db.exec("PRAGMA journal_mode = MEMORY");
-    await db.exec("PRAGMA synchronous = OFF");
+    ensureSchema(db);
+    db.exec("PRAGMA journal_mode = MEMORY");
+    db.exec("PRAGMA synchronous = OFF");
     return db;
 }
 
-async function ensureSchema(db)
+function ensureSchema(db)
 {
-    await db.exec(
+    db.exec(
         `CREATE TABLE IF NOT EXISTS states (
             target CHAR(32),
             target_version CHAR(32),
@@ -36,19 +39,19 @@ async function ensureSchema(db)
             source_version CHAR(32)
         )`
     );
-    await db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS target_version_source ON states(target, target_version, source)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS source ON states(source)`)
-    await db.exec(`CREATE INDEX IF NOT EXISTS target ON states(target)`)
-    await db.exec(`CREATE INDEX IF NOT EXISTS rule ON states(rule)`);
-    await db.exec(
+    db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS target_version_source ON states(target, target_version, source)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS source ON states(source)`)
+    db.exec(`CREATE INDEX IF NOT EXISTS target ON states(target)`)
+    db.exec(`CREATE INDEX IF NOT EXISTS rule ON states(rule)`);
+    db.exec(
         `CREATE TABLE IF NOT EXISTS artifacts (
             key CHAR(32) PRIMARY KEY,
             artifact_type VARCHAR(96),
             identity VARCHAR(1024)
         )`
     );
-    await db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS artifact_type_identity ON artifacts(artifact_type, identity)`);
-    await db.exec(
+    db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS artifact_type_identity ON artifacts(artifact_type, identity)`);
+    db.exec(
         'CREATE TRIGGER IF NOT EXISTS multiple_generating_rules_check ' +
         'BEFORE INSERT ON states ' +
         'BEGIN\n' +
@@ -61,70 +64,92 @@ async function ensureSchema(db)
     );
 }
 
-/**
- *
- * @param {Database} db
- * @return {Promise<object>}
- */
-async function prepareStatements(db)
+const sql = {
+    has:
+        'SELECT COUNT(*) AS c FROM states WHERE target = @target',
+    hasVersion:
+        'SELECT COUNT(*) AS c FROM states WHERE target = @target AND target_version = @version',
+    listVersions:
+        'SELECT target_version AS version FROM states WHERE target = @target',
+    listVersionSources:
+        'SELECT source, source_version AS version FROM states WHERE target = @target AND target_version = @version',
+    record:
+        'INSERT INTO states (target, target_version, rule, source, source_version)'
+        + ' VALUES (@target, @targetVersion, @rule, @source, @sourceVersion)'
+        + ' ON CONFLICT(target,target_version,source) DO'
+        + ' UPDATE SET source_version = @sourceVersion',
+    retract:
+        'DELETE FROM states WHERE target = @target AND target_version = @version',
+    retractTarget:
+        'DELETE FROM states WHERE target = @target',
+    retractRule:
+        'DELETE FROM states WHERE rule = @rule',
+    listRuleSources:
+        'SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity' +
+        ' FROM states' +
+        ' INNER JOIN artifacts' +
+        ' ON artifacts.key = states.source' +
+        ' WHERE states.rule = @rule',
+    listRuleTargets:
+        'SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity' +
+        ' FROM states' +
+        ' INNER JOIN artifacts' +
+        ' ON artifacts.key = states.target' +
+        ' WHERE states.rule = @rule',
+    getProducingRule:
+        `SELECT DISTINCT rule FROM states WHERE target=@target AND target_version=@version`,
+    recordArtifact:
+        'INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)'
+        + ' VALUES (@key, @type, @identity)',
+    getArtifact:
+        'SELECT key, artifact_type AS type, identity FROM artifacts WHERE key = @key',
+    pruneArtifacts:
+        'DELETE FROM artifacts'
+        +' WHERE NOT EXISTS ('
+        +'    SELECT 1 FROM states WHERE states.source = artifacts.key OR states.target = artifacts.key'
+        +' )'
+}
+
+class Statements
 {
-    const statements = {
-        has:
-            'SELECT COUNT(*) AS c FROM states WHERE target = @target',
-        hasVersion:
-            'SELECT COUNT(*) AS c FROM states WHERE target = @target AND target_version = @version',
-        listVersions:
-            'SELECT target_version AS version FROM states WHERE target = @target',
-        listVersionSources:
-            'SELECT source, source_version AS version FROM states WHERE target = @target AND target_version = @version',
-        record:
-            'INSERT INTO states (target, target_version, rule, source, source_version)'
-            + ' VALUES (@target, @targetVersion, @rule, @source, @sourceVersion)'
-            + ' ON CONFLICT(target,target_version,source) DO'
-            + ' UPDATE SET source_version = @sourceVersion',
-        retract:
-            'DELETE FROM states WHERE target = @target AND target_version = @version',
-        retractTarget:
-            'DELETE FROM states WHERE target = @target',
-        retractRule:
-            'DELETE FROM states WHERE rule = @rule',
-        listRuleSources:
-            'SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity' +
-            ' FROM states' +
-            ' INNER JOIN artifacts' +
-            ' ON artifacts.key = states.source' +
-            ' WHERE states.rule = @rule',
-        listRuleTargets:
-            'SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity' +
-            ' FROM states' +
-            ' INNER JOIN artifacts' +
-            ' ON artifacts.key = states.target' +
-            ' WHERE states.rule = @rule',
-        getProducingRule:
-            `SELECT DISTINCT rule FROM states WHERE target=@target AND target_version=@version`,
-        recordArtifact:
-            'INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)'
-            + ' VALUES (@key, @type, @identity)',
-        getArtifact:
-            'SELECT key, artifact_type AS type, identity FROM artifacts WHERE key = @key',
-        pruneArtifacts:
-            'DELETE FROM artifacts'
-            +' WHERE NOT EXISTS ('
-            +'    SELECT 1 FROM states WHERE states.source = artifacts.key OR states.target = artifacts.key'
-            +' )'
-    };
-    await Promise.all(Object.getOwnPropertyNames(statements).map(async stmt => {
-         statements[stmt] = await db.prepare(statements[stmt]);
-    }));
-    return statements;
+    /** @type {Database} */
+    __db;
+
+    __prepared = {};
+
+    /** @param {Database} db */
+    constructor(db)
+    {
+        this.__db=db;
+    }
+}
+
+for (let queryName of Object.getOwnPropertyNames(sql)) {
+
+    class x {
+        #prepared;
+        #db;
+        get [queryName]() {
+        }
+    }
+    const getter = x.prototype[queryName];
+    Object.defineProperty(Statements.prototype, queryName, {
+        get: function() {
+            return (
+                this.__db[queryName]
+                || (this.__prepared[queryName] = this.__db.prepare(sql[queryName])
+                )
+            );
+        }
+    })
 }
 
 export class Db {
 
-    /** @type {DbPromise} */
+    /** @type {Database} */
     #db;
 
-    /** @type {Promise<Object>} */
+    /** @type {Statements} */
     #stmt;
 
     constructor(dbFilePath)
@@ -136,36 +161,30 @@ export class Db {
         this.queryTime = 0;
     }
 
-    /**
-     * @return {Promise<Database>}
-     */
+    /** @return {Database} */
     get db()
     {
-        const asyncGetter = async _ => {
-            if (!this.#db) {
-                this.#db = openDb(this.dbFilePath);
-            }
-            return (await this.#db);
+        if (!this.#db) {
+            this.#db = openDb(this.dbFilePath);
+            this.#stmt = new Statements(this.#db);
         }
-        return asyncGetter();
+        return this.#db;
     }
 
+    /** @return {Statements} */
     get stmt()
     {
-        const asyncGetter = async () => {
-            const db = await this.db;
-            if (!this.#stmt) {
-                this.#stmt = prepareStatements(db);
-            }
-            return (await this.#stmt);
+        if (!this.#db) {
+            this.#db = openDb(this.dbFilePath);
+            this.#stmt = new Statements(this.#db);
         }
-        return asyncGetter();
+        return this.#stmt;
     }
 
     async has(targetId)
     {
         const queryResult = await this.get('has', {
-            '@target': targetId
+            target: targetId
         });
         // noinspection JSUnresolvedVariable
         return queryResult.c > 0;
@@ -173,8 +192,8 @@ export class Db {
     async hasVersion(targetId, version)
     {
         const countResponse = await this.get('hasVersion',{
-            '@target': targetId,
-            '@version': version
+            target: targetId,
+            version
         });
         // noinspection JSUnresolvedVariable
         return countResponse.c > 0;
@@ -182,14 +201,14 @@ export class Db {
     async listVersions(targetId)
     {
         return await this.all('listVersions',{
-            '@target': targetId
+            target: targetId
         });
     }
     async listVersionSources(targetId, version)
     {
         return await this.all('listVersionSources',{
-            '@target': targetId,
-            '@version': version
+            target: targetId,
+            version
         });
     }
 
@@ -205,30 +224,30 @@ export class Db {
     async record(targetId, targetVersion, ruleKey, sourceId, sourceVersion)
     {
         return await this.run('record', {
-            '@target': targetId,
-            '@targetVersion': targetVersion,
-            '@rule': ruleKey,
-            '@source': sourceId,
-            '@sourceVersion': sourceVersion
+            target: targetId,
+            targetVersion,
+            rule: ruleKey,
+            source: sourceId,
+            sourceVersion
         });
     }
     async retract(targetId, targetVersion)
     {
         return await this.run('retract', {
-            '@target': targetId,
-            '@version': targetVersion
+            target: targetId,
+            version: targetVersion
         });
     }
     async retractTarget(targetId)
     {
         return await this.run('retractTarget',{
-            '@target': targetId
+            target: targetId
         });
     }
     async retractRule(ruleKey)
     {
         return await this.run('retractRule',{
-            '@rule': ruleKey
+            rule: ruleKey
         });
     }
 
@@ -239,7 +258,7 @@ export class Db {
     async listRuleSources(ruleKey)
     {
         return await this.all('listRuleSources', {
-            '@rule': ruleKey
+            rule: ruleKey
         });
     }
 
@@ -250,7 +269,7 @@ export class Db {
     async listRuleTargets(ruleKey)
     {
         return await this.all('listRuleTargets',{
-            '@rule': ruleKey
+            rule: ruleKey
         });
     }
 
@@ -263,20 +282,13 @@ export class Db {
     async getProducingRule(target, version)
     {
         /** @type {object|null} */
-        const result = await this.get('getProducingRule',{
-            '@target': target,
-            '@version': version
-        });
+        const result = await this.get('getProducingRule',{target, version});
         return result && result.rule;
     }
 
     async recordArtifact(key, type, identity)
     {
-        return await this.run('recordArtifact',{
-            '@key': key,
-            '@type': type,
-            '@identity': identity
-        });
+        return await this.run('recordArtifact', {key, type, identity});
     }
 
     /**
@@ -285,22 +297,16 @@ export class Db {
      */
     async getArtifact(key)
     {
-        return await this.get('getArtifact',{
-            '@key': key
-        }) || null;
+        return await this.get('getArtifact',{key}) || null;
     }
 
     async pruneArtifacts() {
-        await (await this.stmt).pruneArtifacts.run();
+        await this.run('pruneArtifacts',{});
     }
 
     async close() {
         if (!this.#db) return;
-        const statements = await this.#stmt;
-        if (statements) for (let stmt of Object.getOwnPropertyNames(statements)) {
-            await statements[stmt].finalize();
-        }
-        const dbObj = await this.#db;
+        const dbObj = this.#db;
         let success=false;
         for(let i=5; i; --i) {
             try {
@@ -317,16 +323,17 @@ export class Db {
             await dbObj.close();
         }
         this.#db = null;
+        this.#stmt = null;
     }
 
     async query(verb, statementKey, data)
     {
-        const statements = await this.stmt;
+        const statements = this.stmt;
         const prepared = statements[statementKey];
         let result, start;
         try {
             start = performance.now();
-            result = await prepared[verb](data);
+            result = prepared[verb](data);
         }
         finally {
             this.queryTime += performance.now()-start;

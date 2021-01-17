@@ -57,7 +57,7 @@ export class DbTesting
     constructor(tmpDir)
     {
         this.#tmpDir = new TempDir(tmpDir);
-        this.#dbFile = path.join(this.#tmpDir.toString(),"db/state.sqlite");
+        this.#dbFile = path.join(this.#tmpDir.toString(),"__db/state.sqlite");
         this.#db=null;
     }
 
