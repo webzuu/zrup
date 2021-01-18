@@ -63,9 +63,7 @@ const test = function test({rule,produces,depends}) {
             depends('src/input1.txt', 'src/input2.txt')
         ];
 
-        debugger;
         return new CommandRecipe(({shell, out,T}) => {
-            debugger;
             shell(T`
                 cat ${inputs[0]} ${'src/input2.txt'} \
                     | bash -c "exit 173" \

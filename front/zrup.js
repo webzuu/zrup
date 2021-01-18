@@ -114,6 +114,10 @@ export const Zrup = class Zrup
                 console.log(`${job.rule.module.name}+${job.rule.name}: > ${outputFilePath}`);
             });
 
+            build.on('spawning.command', (job, rawExec, args, child) =>{
+                console.log(`${job.rule.module.name}+${job.rule.name}: spawning ${rawExec} ${[args].flat().join(' ')}`)
+            });
+
             build.on(
                 'spawned.command',
                 (job,child) => {

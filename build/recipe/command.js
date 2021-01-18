@@ -146,6 +146,7 @@ export const CommandError = class CommandError extends Error
     {
         let msg = `${job.rule.label} recipe exited with code ${code}`;
         if (signal) msg += ` (${signal})`;
+        msg+="\ncommand: "+cmd;
         return msg;
     }
 }
@@ -312,13 +313,24 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
             return new CommandRecipe(C => {
 
                 CommandRecipe.#validateCommandDescriptorSchema(descriptor);
-                C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd : [descriptor.cmd]));
+                C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd.flat() : [descriptor.cmd]));
                 if ('args' in descriptor) {
-                    C.args(...(Array.isArray(descriptor.args) ? descriptor.args : [descriptor.args]))
+                    C.args(...(Array.isArray(descriptor.args) ? descriptor.args.flat() : [descriptor.args]))
                 }
-                for (let key of ['args', 'cwd', 'out', 'err', 'combined', 'always']) {
+                if ('cwd' in descriptor) {
+                    let cwd = descriptor.cwd;
+                    if (Array.isArray(cwd)) {
+                        if (cwd.length !== 1) {
+                            //TODO: InvalidSpecification
+                            throw new Error("Invalid specification: cwd must be a single item")
+                        }
+                        cwd = cwd[0];
+                    }
+                    C.cwd(cwd.toString())
+                }
+                for (let key of ['out', 'err', 'combined', 'always']) {
                     if (!(key in descriptor)) continue;
-                    for (let item of (Array.isArray(descriptor[key]) ? descriptor[key] : [descriptor[key]])) {
+                    for (let item of (Array.isArray(descriptor[key]) ? descriptor[key].flat() : [descriptor[key]])) {
                         C[key](item);
                     }
                 }
@@ -329,7 +341,8 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
 
     static #validateCommandDescriptorSchema(descriptor)
     {
-        CommandRecipe.#createDescriptorValidator(ducktype(String,AID,Artifact,Dependency)).validate(descriptor);
+        const itemType = ducktype(String,AID,Artifact,Dependency,ducktype({artifact: Artifact}));
+        CommandRecipe.#createDescriptorValidator(itemType).validate(descriptor);
     }
 
     static #createDescriptorValidator(itemType)
@@ -342,7 +355,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
             {
                 cmd: items,
                 args: ducktype(items, opt),
-                cwd: ducktype(itemType, opt),
+                cwd: ducktype(itemType, [itemType], opt),
                 env: dictionary(items, opt),
                 out: ducktype(sinks, opt),
                 err: ducktype(sinks, opt),
