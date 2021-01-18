@@ -117,7 +117,7 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
     async loadModule(parentModule, subpath)
     {
         const definer = ModuleBuilder.#normalizeDefiner(await this.#import(this.#resolveModuleBase(parentModule, subpath)));
-        await this.define(parentModule, definer.name, subpath, definer.definer);
+        await this.define(parentModule, subpath, definer.name, definer.definer);
     }
 
     async loadRootModule()
