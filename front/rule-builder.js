@@ -146,15 +146,13 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
      */
     #bindDefinerArgs(module, rule)
     {
-        const resolve = resolveArtifacts.bind(null, this.#artifactManager, module);
-        const T = reassemble.bind(null, resolve);
         return {
             rule,
             depends: this.depends,
             produces: this.produces,
             after: this.after,
-            resolve,
-            T
+            resolve: this.resolve,
+            T: reassemble.bind(null, this.resolve)
         }
     }
 
@@ -196,6 +194,15 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
 
     always = (value) => {
         this.requireCurrentRule('always').always = true === value;
+    }
+
+    /**
+     * @param {Artifact~Resolvables} items
+     * @return [string]
+     */
+    resolve = (...items) => {
+        const rule = this.requireCurrentRule('resolve'), module = rule.module;
+        return resolveArtifacts(this.#artifactManager, module, false, ...items);
     }
 
     /**

@@ -94,7 +94,8 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
             produces: this.#ruleBuilder.produces,
             after: this.#ruleBuilder.after,
             to: CommandRecipe.to.bind(null, this.#ruleBuilder, module),
-            always: this.#ruleBuilder.always
+            always: this.#ruleBuilder.always,
+            resolve: this.#ruleBuilder.resolve
         };
     }
 
