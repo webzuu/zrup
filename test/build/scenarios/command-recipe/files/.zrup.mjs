@@ -87,6 +87,7 @@ const test = function test({rule,produces,depends}) {
         });
     });
 
+    debugger;
     rule(function internals() {
 
         const [target] = produces('internal:foo/bar/handle-command-newlines.txt');

@@ -17,16 +17,13 @@
  * @property {RuleBuilder~artifactNominator} depends
  * @property {RuleBuilder~artifactNominator} produces
  * @property {RuleBuilder~ruleNominator} after
+ * @property {CommandRecipe~simpleDescriptorBuilderAcceptor} to
  * @property {RuleBuilder~flagSetter} always
  */
 
 import {CommandRecipe} from "../build/recipe/command.js";
-import {AID, Artifact} from "../graph/artifact.js";
-import {Dependency} from "../graph/dependency.js";
 import {Module} from "../module.js";
 import * as path from "path";
-import DT from "ducktype";
-import recursive from "../util/ducktype-recursive.js";
 
 /**
  * @callback ModuleBuilder~includeNominator
@@ -96,85 +93,10 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
             depends: this.#ruleBuilder.depends,
             produces: this.#ruleBuilder.produces,
             after: this.#ruleBuilder.after,
-            to: this.to.bind(this, module),
+            to: CommandRecipe.to.bind(null, this.#ruleBuilder, module),
             always: this.#ruleBuilder.always
         };
     }
-
-
-    to(module, ruleName, descriptorProvider)
-    {
-        this.#ruleBuilder.acceptDefiner(
-            module,
-            ruleName,
-            this.createShellCommandRuleDefiner(descriptorProvider)
-        )
-    }
-
-    /** @return {RuleBuilder~definer} */
-    createShellCommandRuleDefiner(descriptorProvider)
-    {
-        // noinspection UnnecessaryLocalVariableJS
-        /** @type {RuleBuilder~definer} */
-        const definer = (R) => {
-            const descriptor = descriptorProvider(R);
-            self.validateCommandDescriptorSchema(descriptor);
-            return new CommandRecipe(C => {
-
-                C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd : [descriptor.cmd]));
-                if ('args' in descriptor) {
-                    C.args(...(Array.isArray(descriptor.args) ? descriptor.args : [descriptor.args]))
-                }
-                for(let key of ['args','cwd','out','err','combined','always']) {
-                    if (!(key in descriptor)) continue;
-                    for (let item of (Array.isArray(descriptor[key]) ? descriptor[key] : [descriptor[key]])) {
-                        C[key](item);
-                    }
-                }
-            });
-        };
-        return definer;
-    }
-
-    static validateCommandDescriptorSchema(descriptor) {
-
-        for(let key of Object.keys(descriptor)) {
-            if (Array.isArray(descriptor[key])) {
-                descriptor[key] = [...descriptor[key].flat()];
-            }
-        }
-        self.commandDescriptorSchema.validate(descriptor);
-    }
-
-    static #commandDescriptorSchema;
-
-    static get commandDescriptorSchema()
-    {
-        return (
-            self.#commandDescriptorSchema
-            ||
-            (self.#commandDescriptorSchema = self.#buildCommandDescriptorSchema())
-        );
-    }
-
-    static #buildCommandDescriptorSchema() {
-
-        const resolvable = DT(Artifact, AID, Dependency);
-        const outputListener = DT(resolvable, Function);
-        const segment = DT(resolvable, String);
-        const segments = recursive(segments => DT(segment, [segments]));
-        const opt = {optional: true};
-        return DT({
-            cmd: segments,
-            args: DT(segments, opt),
-            cwd: DT(resolvable, opt),
-            out: DT(outputListener, [outputListener], opt),
-            err: DT(outputListener, [outputListener], opt),
-            combined: DT(outputListener, [outputListener], opt),
-            always: DT(Boolean, opt)
-        });
-    }
-
 
     /**
      *

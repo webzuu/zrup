@@ -1,4 +1,5 @@
 import ducktype from "ducktype";
+const DuckType = ducktype(Boolean).constructor
 
 /**
  * @param callback
@@ -36,9 +37,6 @@ function indirectTest(object) {
     return this.that.test(object);
 }
 
-const dt = ducktype(Boolean);
-const DuckType = dt.constructor;
-
 function createIndirect() {
     const indirection = {};
     return {
@@ -50,3 +48,27 @@ function createIndirect() {
     };
 }
 
+const objectValidator = ducktype(Object);
+export function dictionary(...args)
+{
+    if (args.length===0) return ducktype({});
+    let types = args.slice(0,args.length-1);
+
+    let options = args[args.length-1];
+    if (options.constructor !== Object) {
+        types.push(options);
+        options = null;
+    }
+    const itemArrayValidator = ducktype(types.length > 0 ? [types] : []);
+    const constructorOptions = {
+        name: `dictionary<${types.map(_ => _.name).join('|')}>`,
+        test: function(obj) {
+            if (null===obj) return options ? !!options.nullable : false;
+            if ('undefined'===typeof obj) return options ? !!options.optional : false;
+            return objectValidator.test(obj) && itemArrayValidator.test(Object.values(obj));
+        }
+    }
+    if (true===options.nullable) constructorOptions.nullable=true;
+    if (true===options.optional) constructorOptions.optional=true;
+    return new DuckType(constructorOptions);
+}

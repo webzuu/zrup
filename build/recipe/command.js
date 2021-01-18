@@ -56,11 +56,20 @@
  */
 
 /**
+ * @typedef CommandRecipe~Descriptor
+ * @property
+ */
+
+/**
  * @typedef {(Artifact|AID|Dependency)} CommandRecipe~Resolvable
  */
 
 /**
  * @typedef {(CommandRecipe~Resolvable|Function)} CommandRecipe~OutputSink
+ */
+
+/**
+ * @typedef {(CommandRecipe~OutputSink|Array.<CommandRecipe~OutputSinks>)} CommandRecipe~OutputSinks
  */
 
 /**
@@ -73,7 +82,15 @@
 
 /**
  * @typedef {Object.<string,*>} CommandRecipe~SimpleDescriptor
- * @property
+ * @property {CommandRecipe~CommandSegments}                    cmd
+ * @property {CommandRecipe~CommandSegments}                    [args]
+ * @property {CommandRecipe~CommandSegment}                     [cwd]
+ * @property {Object.<string,CommandRecipe~CommandSegments>}    [env]
+ * @property {boolean|string}                                   [shell]
+ * @property {CommandRecipe~OutputSinks}                        [out]
+ * @property {CommandRecipe~OutputSinks}                        [err]
+ * @property {CommandRecipe~OutputSinks}                        [combined]
+ * @property {boolean}                                          [always]
  */
 
 /**
@@ -81,6 +98,21 @@
  * @param {CommandRecipe~BuilderParams} params
  */
 
+/**
+ * @callback CommandRecipe~simpleDescriptorBuilder
+ * @param {CommandRecipe~BuilderParams} params
+ * @return {CommandRecipe~SimpleDescriptor}
+ */
+
+/**
+ * @callback CommandRecipe~simpleDescriptorBuilderAcceptor
+ * @param {string} ruleName
+ * @param {CommandRecipe~simpleDescriptorBuilder} descriptorProvider
+ */
+
+import ducktype from "ducktype";
+const DuckType = ducktype(Boolean).constructor;
+import recursive, {dictionary} from "../../util/ducktype.js";
 import {Recipe} from "../recipe.js";
 import {spawn} from "child_process";
 import fs from "fs";
@@ -149,7 +181,7 @@ export class CommandRecipe extends Recipe
         if (shell) exec = `set -euo pipefail; ${exec}`;
         job.build.emit('spawning.command',job,rawExec,args,options);
         const child = spawn(exec, args, options);
-        job.build.emit('spawned.command',job, child);
+        job.build.emit('spawned.command',job,rawExec,args,child);
 
         for(let listener of out) addDataListenerToStreams(listener, child, child.stdout);
         for(let listener of err) addDataListenerToStreams(listener, child, child.stderr);
@@ -239,6 +271,69 @@ export class CommandRecipe extends Recipe
             );
             return sink.toString();
         }
+    }
+
+    /**
+     * @param {RuleBuilder} ruleBuilder
+     * @param {Module} module
+     * @param {string} ruleName
+     * @param {Function} descriptorProvider
+     */
+    static to(ruleBuilder, module, ruleName, descriptorProvider)
+    {
+        ruleBuilder.acceptDefiner(
+            module,
+            ruleName,
+            CommandRecipe.#createShellCommandRuleDefiner(descriptorProvider)
+        )
+    }
+
+    static #createShellCommandRuleDefiner(descriptorProvider)
+    {
+        // noinspection UnnecessaryLocalVariableJS
+        /** @type {RuleBuilder~definer} */
+        const definer = (R) => {
+            const descriptor = descriptorProvider(R);
+            CommandRecipe.#validateCommandDescriptorSchema(descriptor);
+            return new CommandRecipe(C => {
+
+                C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd : [descriptor.cmd]));
+                if ('args' in descriptor) {
+                    C.args(...(Array.isArray(descriptor.args) ? descriptor.args : [descriptor.args]))
+                }
+                for(let key of ['args','cwd','out','err','combined','always']) {
+                    if (!(key in descriptor)) continue;
+                    for (let item of (Array.isArray(descriptor[key]) ? descriptor[key] : [descriptor[key]])) {
+                        C[key](item);
+                    }
+                }
+            });
+        };
+        return definer;
+    }
+
+    static #validateCommandDescriptorSchema(descriptor)
+    {
+        CommandRecipe.#createDescriptorValidator(ducktype(String,AID,Artifact,Dependency)).validate(descriptor);
+    }
+
+    static #createDescriptorValidator(itemType)
+    {
+        const items = recursive(items => ducktype(itemType, [items]));
+        const sink = ducktype(itemType, Function);
+        const sinks = recursive(sinks => ducktype(sink, [sinks]));
+        const opt = { optional: true };
+        return ducktype(
+            {
+                cmd: items,
+                args: ducktype(items, opt),
+                cwd: ducktype(itemType, opt),
+                env: dictionary(items, opt),
+                out: ducktype(sinks, opt),
+                err: ducktype(sinks, opt),
+                combined: ducktype(sinks, opt)
+            }
+        )
     }
 }
 
