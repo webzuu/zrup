@@ -1,6 +1,7 @@
 import {uniqueAdd} from "./util/indexing.js";
 
-export class Graph
+export const Graph = class Graph
+
 {
     constructor()
     {

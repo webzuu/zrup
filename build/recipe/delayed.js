@@ -1,6 +1,7 @@
 import {Recipe} from "../recipe.js";
 
-export class DelayedRecipe extends Recipe
+export const DelayedRecipe = class DelayedRecipe extends Recipe
+
 {
     /** @type {Recipe} */
     #recipe;

@@ -14,7 +14,7 @@ import {Build} from "../build.js";
  * @property {Artifact[]} dynamicOutputs
  * @property {Error} error
  */
-export class Job {
+export const Job = class Job  {
 
     #prepared = false;
 

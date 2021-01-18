@@ -13,7 +13,7 @@ import {UnimplementedAbstract} from "../error/unimplemented-abstract.js";
  */
 
 /***/
-export class Artifact {
+export const Artifact = class Artifact  {
 
     /** @type {string} */
     #identity;
@@ -96,7 +96,8 @@ export class Artifact {
 }
 
 /***/
-export class AID
+export const AID = class AID
+
 {
     /** @type {string|undefined} */
     #type;
@@ -217,7 +218,8 @@ export class AID
 }
 
 /***/
-export class ArtifactManager
+export const ArtifactManager = class ArtifactManager
+
 {
     #index = {
         factory: {
@@ -343,7 +345,8 @@ export class ArtifactManager
 /**
  * @abstract
  */
-export class ArtifactResolver
+export const ArtifactResolver = class ArtifactResolver
+
 {
     /**
      * @param {AID} aid
@@ -375,7 +378,8 @@ export class ArtifactResolver
 
 }
 
-export class ArtifactFactory
+export const ArtifactFactory = class ArtifactFactory
+
 {
     /** @type {ArtifactManager} */
     #manager;

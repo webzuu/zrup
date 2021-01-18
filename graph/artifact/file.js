@@ -6,7 +6,7 @@ import {Module} from "../../module.js";
 import * as pathUtils from "path";
 import isSubdir from "is-subdir";
 
-export class FileArtifact extends Artifact {
+export const FileArtifact = class FileArtifact extends Artifact  {
 
     /** @type {string} */
     #resolvedPath;
@@ -94,7 +94,8 @@ export class FileArtifact extends Artifact {
     }
 }
 
-export class FileArtifactResolver extends ArtifactResolver
+export const FileArtifactResolver = class FileArtifactResolver extends ArtifactResolver
+
 {
     /** @type {Project} */
     #project
@@ -273,7 +274,8 @@ export class FileArtifactResolver extends ArtifactResolver
 /**
  * @property {FileArtifactResolver} resolver
  */
-export class FileArtifactFactory extends ArtifactFactory
+export const FileArtifactFactory = class FileArtifactFactory extends ArtifactFactory
+
 {
     /** @type {Project} */
     #project;

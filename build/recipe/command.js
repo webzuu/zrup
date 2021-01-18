@@ -56,11 +56,6 @@
  */
 
 /**
- * @typedef CommandRecipe~Descriptor
- * @property
- */
-
-/**
  * @typedef {(Artifact|AID|Dependency)} CommandRecipe~Resolvable
  */
 
@@ -110,6 +105,7 @@
  * @param {CommandRecipe~simpleDescriptorBuilder} descriptorProvider
  */
 
+/***/
 import ducktype from "ducktype";
 const DuckType = ducktype(Boolean).constructor;
 import recursive, {dictionary} from "../../util/ducktype.js";
@@ -122,8 +118,11 @@ import {AID, Artifact} from "../../graph/artifact.js";
 import {Readable} from "stream";
 import {Dependency} from "../../graph/dependency.js";
 import {reassemble} from "../../util/tagged-template.js";
+import {Module} from "../../module.js";
 
-export class CommandError extends Error
+/***/
+export const CommandError = class CommandError extends Error
+
 {
     /**
      * @param {Job} job
@@ -150,7 +149,8 @@ export class CommandError extends Error
     }
 }
 
-export class CommandRecipe extends Recipe
+let self
+export const CommandRecipe = self = class CommandRecipe extends Recipe
 {
     /** @type {CommandRecipe~builder} */
     #commandBuilder;
@@ -214,8 +214,8 @@ export class CommandRecipe extends Recipe
         const combined = [];
         let always = false;
 
-        const resolve = resolveArtifacts.bind(null,job,false);
-        const resolveExceptStrings = resolveArtifacts.bind(null,job,true);
+        const resolve = resolveArtifacts.bind(null,job.build.artifactManager,job.rule.module,false);
+        const resolveExceptStrings = resolveArtifacts.bind(null,job.build.artifactManager,job.rule.module,true);
 
         const builderParams = {
             exec: (cmdString, ...argItems) => {
@@ -233,7 +233,15 @@ export class CommandRecipe extends Recipe
             combined: sink => { combined.push(makeOutputSink(job, sink)); },
             always: () => { always = true; },
             resolve,
-            T: reassemble.bind(null, ref => resolveArtifacts(job, false, ref)[0])
+            T: reassemble.bind(
+                null,
+                ref => resolveArtifacts(
+                    job.build.artifactManager,
+                    job.rule.module,
+                    false,
+                    ref
+                )[0]
+            )
         }
 
         this.#commandBuilder(builderParams);
@@ -293,10 +301,10 @@ export class CommandRecipe extends Recipe
         // noinspection UnnecessaryLocalVariableJS
         /** @type {RuleBuilder~definer} */
         const definer = (R) => {
-            const descriptor = descriptorProvider(R);
-            CommandRecipe.#validateCommandDescriptorSchema(descriptor);
             return new CommandRecipe(C => {
 
+                const descriptor = descriptorProvider(Object.assign({},R,{T: C.T}));
+                CommandRecipe.#validateCommandDescriptorSchema(descriptor);
                 C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd : [descriptor.cmd]));
                 if ('args' in descriptor) {
                     C.args(...(Array.isArray(descriptor.args) ? descriptor.args : [descriptor.args]))
@@ -417,16 +425,26 @@ function obtainArtifactReferenceFrom(artifactLike)
 }
 
 /**
- * @param {Job} job
+ * @param {ArtifactManager} artifactManager
+ * @param {Module} module,
  * @param {boolean} skipStrings
- * @param {...(Artifact|AID|Dependency|string)} refs
+ * @param {...(CommandRecipe~CommandSegment)} refs
  * @return {(string|{toString: function(): string})[]}
  */
-function resolveArtifacts(job, skipStrings, ...refs) {
+export function resolveArtifacts(
+    artifactManager,
+    module,
+    skipStrings,
+    ...refs
+)
+{
     return refs.map(ref => {
         if (skipStrings && 'string' === typeof ref) return ref;
-        const artifact = job.build.artifactManager.get(obtainArtifactReferenceFrom(ref));
-        const externalIdentifier = job.build.artifactManager.resolveToExternalIdentifier(artifact.identity);
+
+        const artifact = artifactManager.get(
+            new AID(obtainArtifactReferenceFrom(ref)).withDefaults({module: module.name})
+        );
+        const externalIdentifier = artifactManager.resolveToExternalIdentifier(artifact.identity);
         const result = { toString: () => externalIdentifier };
         Object.defineProperty(result, "artifact", { get: () => artifact });
         return result;

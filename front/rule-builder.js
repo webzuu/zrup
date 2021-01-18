@@ -1,8 +1,10 @@
 import EventEmitter from "events";
+import {resolveArtifacts} from "../build/recipe/command.js";
 import {Rule} from "../graph/rule.js";
 import {Module} from "../module.js";
 import {AID} from "../graph/artifact.js";
 import {Dependency} from "../graph/dependency.js";
+import {reassemble} from "../util/tagged-template.js";
 
 /**
  * @callback RuleBuilder~definerAcceptor
@@ -22,6 +24,7 @@ import {Dependency} from "../graph/dependency.js";
  * @property {RuleBuilder~artifactNominator} depends
  * @property {RuleBuilder~artifactNominator} produces
  * @property {RuleBuilder~ruleNominator} after
+ *
  */
 
 /**
@@ -52,7 +55,8 @@ import {Dependency} from "../graph/dependency.js";
  */
 
 /***/
-export class RuleBuilder extends EventEmitter
+export const RuleBuilder = class RuleBuilder extends EventEmitter
+
 {
     /** @type {Project} */
     #project;

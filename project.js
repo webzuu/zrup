@@ -5,7 +5,8 @@ import {Graph} from "./graph.js";
 /**
  * @callback
  */
-export class Project
+export const Project = class Project
+
 {
     #index = {
         module: {

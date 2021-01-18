@@ -22,7 +22,8 @@
 
 import {NopRecipe, Recipe} from "../recipe.js";
 
-export class WrapperRecipe extends Recipe
+export const WrapperRecipe = class WrapperRecipe extends Recipe
+
 {
     /** @type {WrapperRecipe~Parameters} */
     #params;

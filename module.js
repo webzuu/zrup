@@ -1,7 +1,8 @@
 import fsPath from "path";
 import {AID} from "./graph/artifact.js";
 
-export class Module
+export const Module = class Module
+
 {
     /** @type {Project} */
     #project;

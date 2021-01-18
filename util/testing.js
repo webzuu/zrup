@@ -12,7 +12,8 @@ import {ArtifactManager} from "../graph/artifact.js";
 import {FileArtifactFactory} from "../graph/artifact/file.js";
 import {Recipe} from "../build/recipe.js";
 
-export class TempDir
+export const TempDir = class TempDir
+
 {
     /** @type {string} */
     #tmpDir;
@@ -47,7 +48,8 @@ export class TempDir
     }
 }
 
-export class DbTesting
+export const DbTesting = class DbTesting
+
 {
     /** @type {TempDir} */
     #tmpDir;
@@ -95,7 +97,8 @@ export class DbTesting
     get tmpDir() { return this.#tmpDir; }
 }
 
-export class ModuleTesting
+export const ModuleTesting = class ModuleTesting
+
 {
     /** @type {TempDir} */
     #tmpDir;
@@ -139,7 +142,8 @@ export class ModuleTesting
  * @property {boolean} [createRootModule]
  */
 
-export class ProjectTesting
+export const ProjectTesting = class ProjectTesting
+
 {
     /** @type {TempDir} */
     tmpDir;
@@ -190,7 +194,8 @@ export class ProjectTesting
     };
 }
 
-export class DummyRecipe extends Recipe
+export const DummyRecipe = class DummyRecipe extends Recipe
+
 {
     async executeFor(job,spec) {
         return undefined;

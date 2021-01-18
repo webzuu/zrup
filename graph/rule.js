@@ -15,7 +15,7 @@ import {Dependency} from "./dependency.js";
  * @property {Object.<string,Rule>} after - Rules that are order-only dependencies
  * @property {boolean} always
  */
-export class Rule {
+export const Rule = class Rule  {
 
     /** @type {Module} */
     #module;

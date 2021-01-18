@@ -1,7 +1,8 @@
 import {UnimplementedAbstract} from "../error/unimplemented-abstract.js";
 import hash from "object-hash";
 
-export class Recipe
+export const Recipe = class Recipe
+
 {
     /**
      * @param {Job} job
@@ -44,7 +45,8 @@ export class Recipe
     }
 }
 
-export class NopRecipe extends Recipe
+export const NopRecipe = class NopRecipe extends Recipe
+
 {
     async executeFor(job, spec)
     {

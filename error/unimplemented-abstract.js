@@ -1,4 +1,5 @@
-export class UnimplementedAbstract extends Error
+export const UnimplementedAbstract = class UnimplementedAbstract extends Error
+
 {
     constructor()
     {

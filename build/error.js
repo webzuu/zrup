@@ -1,6 +1,7 @@
 const inspect = Symbol.for('nodejs.util.inspect.custom');
 
-export class BuildError extends Error
+export const BuildError = class BuildError extends Error
+
 {
     /**
      * @param {string} message
@@ -36,7 +37,8 @@ export class BuildError extends Error
     }
 }
 
-export class TargetCollision extends Error
+export const TargetCollision = class TargetCollision extends Error
+
 {
     artifact;
     previousRule;

@@ -134,7 +134,7 @@ for (let queryName of Object.getOwnPropertyNames(sql)) {
     })
 }
 
-export class Db {
+export const Db = class Db  {
 
     /** @type {Database} */
     #db;

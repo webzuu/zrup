@@ -1,7 +1,8 @@
 import {Artifact} from "../artifact.js";
 import md5 from "md5";
 
-export class ArtifactList extends Artifact
+export const ArtifactList = class ArtifactList extends Artifact
+
 {
     /**
      * @type {Artifact[]}

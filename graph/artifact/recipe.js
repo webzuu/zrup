@@ -1,7 +1,8 @@
 import {AID, Artifact, ArtifactFactory, ArtifactResolver} from "../artifact.js";
 import {Rule} from "../rule.js";
 
-export class RecipeArtifact extends Artifact
+export const RecipeArtifact = class RecipeArtifact extends Artifact
+
 {
     #specPromise;
     #versionPromise;
@@ -63,7 +64,8 @@ export class RecipeArtifact extends Artifact
     }
 }
 
-export class RecipeArtifactResolver extends ArtifactResolver
+export const RecipeArtifactResolver = class RecipeArtifactResolver extends ArtifactResolver
+
 {
     /**
      * @param {AID} aid
@@ -78,7 +80,8 @@ export class RecipeArtifactResolver extends ArtifactResolver
     }
 }
 
-export class RecipeArtifactFactory extends ArtifactFactory
+export const RecipeArtifactFactory = class RecipeArtifactFactory extends ArtifactFactory
+
 {
     /** @type {Project} */
     #project;

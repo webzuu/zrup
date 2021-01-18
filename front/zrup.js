@@ -25,7 +25,8 @@ import {ChildProcess} from "child_process";
  */
 
 /***/
-export class Zrup
+export const Zrup = class Zrup
+
 {
     /** @type {string} */
     #projectRoot

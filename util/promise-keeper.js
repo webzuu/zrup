@@ -9,7 +9,7 @@
  * @property {Error|null} error
  */
 
-export class PromiseKeeper {
+export const PromiseKeeper = class PromiseKeeper  {
 
     #descriptors = {};
 

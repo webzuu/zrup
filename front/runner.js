@@ -14,6 +14,8 @@ import {Zrup} from "./zrup.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+import {CommandRecipe} from "../build/recipe/command.js";
+
 async function main(argv)
 {
     const cli = await parseCommandLine();

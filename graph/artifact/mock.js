@@ -3,7 +3,8 @@ import {PromiseKeeper} from "../../util/promise-keeper.js";
 import * as path from "path";
 import {FileArtifactFactory, FileArtifactResolver} from "./file.js";
 
-export class MockArtifact extends Artifact
+export const MockArtifact = class MockArtifact extends Artifact
+
 {
     /** @type {PromiseKeeper} */
     #pk;
@@ -64,7 +65,8 @@ export class MockArtifact extends Artifact
     }
 }
 
-export class MockFileFactory extends ArtifactFactory
+export const MockFileFactory = class MockFileFactory extends ArtifactFactory
+
 {
     /** @type {Project} */
     #project

@@ -1,4 +1,5 @@
-export class Dependency
+export const Dependency = class Dependency
+
 {
     /** @type {Artifact} */
     #artifact;

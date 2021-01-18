@@ -4,7 +4,7 @@ import {BuildError} from "./build/error.js";
 import {Dependency} from "./graph/dependency.js";
 import EventEmitter from "events";
 
-export class Build extends EventEmitter {
+export const Build = class Build extends EventEmitter  {
 
     #built;
     #whichRulesReliedOnArtifactVersion = {};
