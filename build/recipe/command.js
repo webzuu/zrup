@@ -41,7 +41,7 @@
  * @property {CommandRecipe~outputListenerAcceptor} out
  * @property {CommandRecipe~outputListenerAcceptor} err
  * @property {CommandRecipe~outputListenerAcceptor} combined
- * @property {CommandRecipe~templateTransformer} T
+ * @property {templateStringTag} T
  */
 
 /**
@@ -77,10 +77,10 @@
 
 /**
  * @typedef {Object.<string,*>} CommandRecipe~SimpleDescriptor
- * @property {CommandRecipe~CommandSegments}                    cmd
- * @property {CommandRecipe~CommandSegments}                    [args]
- * @property {CommandRecipe~CommandSegment}                     [cwd]
- * @property {Object.<string,CommandRecipe~CommandSegments>}    [env]
+ * @property {Artifact~Resolvables}                    cmd
+ * @property {Artifact~Resolvables}                    [args]
+ * @property {Artifact~Resolvable}                     [cwd]
+ * @property {Object.<string,Artifact~Resolvables>}    [env]
  * @property {boolean|string}                                   [shell]
  * @property {CommandRecipe~OutputSinks}                        [out]
  * @property {CommandRecipe~OutputSinks}                        [err]
@@ -105,20 +105,21 @@
  * @param {CommandRecipe~simpleDescriptorBuilder} descriptorProvider
  */
 
+import {spawn} from "child_process";
 /***/
 import ducktype from "ducktype";
-const DuckType = ducktype(Boolean).constructor;
-import recursive, {dictionary} from "../../util/ducktype.js";
-import {Recipe} from "../recipe.js";
-import {spawn} from "child_process";
 import fs from "fs";
 import * as path from "path";
-import {FileArtifact} from "../../graph/artifact/file.js";
-import {AID, Artifact} from "../../graph/artifact.js";
 import {Readable} from "stream";
+import {AID, Artifact} from "../../graph/artifact.js";
+import {FileArtifact} from "../../graph/artifact/file.js";
 import {Dependency} from "../../graph/dependency.js";
+import {Module, resolveArtifacts} from "../../module.js";
+import recursive, {dictionary} from "../../util/ducktype.js";
 import {reassemble} from "../../util/tagged-template.js";
-import {Module} from "../../module.js";
+import {Recipe} from "../recipe.js";
+
+const DuckType = ducktype(Boolean).constructor;
 
 /***/
 export const CommandError = class CommandError extends Error
@@ -292,24 +293,30 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         ruleBuilder.acceptDefiner(
             module,
             ruleName,
-            CommandRecipe.#createShellCommandRuleDefiner(descriptorProvider)
+            CommandRecipe.#createShellCommandRuleDefiner(ruleBuilder, module, descriptorProvider)
         )
     }
 
-    static #createShellCommandRuleDefiner(descriptorProvider)
+    /**
+     * @param {RuleBuilder} ruleBuilder
+     * @param {Module} module
+     * @param {CommandRecipe~simpleDescriptorBuilder} descriptorProvider
+     */
+    static #createShellCommandRuleDefiner(ruleBuilder, module, descriptorProvider)
     {
         // noinspection UnnecessaryLocalVariableJS
         /** @type {RuleBuilder~definer} */
         const definer = (R) => {
+
+            const descriptor = descriptorProvider(R);
             return new CommandRecipe(C => {
 
-                const descriptor = descriptorProvider(Object.assign({},R,{T: C.T}));
                 CommandRecipe.#validateCommandDescriptorSchema(descriptor);
                 C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd : [descriptor.cmd]));
                 if ('args' in descriptor) {
                     C.args(...(Array.isArray(descriptor.args) ? descriptor.args : [descriptor.args]))
                 }
-                for(let key of ['args','cwd','out','err','combined','always']) {
+                for (let key of ['args', 'cwd', 'out', 'err', 'combined', 'always']) {
                     if (!(key in descriptor)) continue;
                     for (let item of (Array.isArray(descriptor[key]) ? descriptor[key] : [descriptor[key]])) {
                         C[key](item);
@@ -411,42 +418,3 @@ function addDataListenerToStreams(listener, child, ...streams)
     child.on('exit', () => { listener(''); });
 }
 
-/**
- * @param {(Artifact|AID|Dependency|string)} artifactLike
- * @return {string}
- */
-function obtainArtifactReferenceFrom(artifactLike)
-{
-    if ("string" === typeof artifactLike) return artifactLike;
-    if (artifactLike instanceof Artifact) return artifactLike.identity;
-    if (artifactLike instanceof Dependency) return artifactLike.artifact.identity;
-    if (artifactLike instanceof AID) return artifactLike.toString();
-    throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
-}
-
-/**
- * @param {ArtifactManager} artifactManager
- * @param {Module} module,
- * @param {boolean} skipStrings
- * @param {...(CommandRecipe~CommandSegment)} refs
- * @return {(string|{toString: function(): string})[]}
- */
-export function resolveArtifacts(
-    artifactManager,
-    module,
-    skipStrings,
-    ...refs
-)
-{
-    return refs.map(ref => {
-        if (skipStrings && 'string' === typeof ref) return ref;
-
-        const artifact = artifactManager.get(
-            new AID(obtainArtifactReferenceFrom(ref)).withDefaults({module: module.name})
-        );
-        const externalIdentifier = artifactManager.resolveToExternalIdentifier(artifact.identity);
-        const result = { toString: () => externalIdentifier };
-        Object.defineProperty(result, "artifact", { get: () => artifact });
-        return result;
-    });
-}

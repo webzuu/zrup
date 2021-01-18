@@ -16,3 +16,10 @@ export function reassemble(variableCallback, strings, ...variables)
     for (let i=0; i<mapped.length; ++i) result.push(mapped[i]+strings[i+1]);
     return result.join('');
 }
+
+/**
+ * @callback templateStringTag
+ * @param {string[]} strings,
+ * @param {...*} variables
+ */
+

@@ -1,5 +1,6 @@
 import fsPath from "path";
-import {AID} from "./graph/artifact.js";
+import {AID, Artifact} from "./graph/artifact.js";
+import {Dependency} from "./graph/dependency.js";
 
 export const Module = class Module
 
@@ -79,4 +80,42 @@ export const Module = class Module
 
 /** @param {ModuleBuilder~definer} definer */
 export function module(definer) {
+}
+
+/**
+ * @param {Artifact~Resolvable} resolvable
+ * @return {string}
+ */
+function obtainArtifactReferenceFrom(resolvable) {
+    if ("string" === typeof resolvable) return resolvable;
+    if (resolvable instanceof Artifact) return resolvable.identity;
+    if (resolvable instanceof Dependency) return resolvable.artifact.identity;
+    if (resolvable instanceof AID) return resolvable.toString();
+    throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
+}
+
+/**
+ * @param {ArtifactManager} artifactManager
+ * @param {Module} module,
+ * @param {boolean} skipStrings
+ * @param {...(Artifact~Resolvable)} refs
+ * @return {(string|{toString: function(): string})[]}
+ */
+export function resolveArtifacts(
+    artifactManager,
+    module,
+    skipStrings,
+    ...refs
+) {
+    return refs.flat().map(ref => {
+        if (skipStrings && 'string' === typeof ref) return ref;
+
+        const artifact = artifactManager.get(
+            new AID(obtainArtifactReferenceFrom(ref)).withDefaults({module: module.name})
+        );
+        const externalIdentifier = artifactManager.resolveToExternalIdentifier(artifact.identity);
+        const result = {toString: () => externalIdentifier};
+        Object.defineProperty(result, "artifact", {get: () => artifact});
+        return result;
+    });
 }

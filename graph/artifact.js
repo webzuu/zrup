@@ -495,7 +495,7 @@ export const ArtifactFactory = class ArtifactFactory
 }
 
 /**
- * @typedef {string|AID} Artifact~Reference
+ * @typedef {(string|AID)} Artifact~Reference
  */
 
 /**
@@ -505,3 +505,10 @@ export const ArtifactFactory = class ArtifactFactory
  * @property {string|undefined} [ref]
  */
 
+/**
+ * @typedef {(Artifact~Reference|Artifact|Dependency)} Artifact~Resolvable
+ */
+
+/**
+ * @typedef {(Artifact~Resolvable|Artifact~Resolvables[])} Artifact~Resolvables
+ */
