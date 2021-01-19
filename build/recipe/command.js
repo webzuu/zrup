@@ -396,6 +396,7 @@ export function captureTo(artifactRef,job)
 class OutputSinkIsArray extends Error {}
 
 function makeOutputSink(job, sink) {
+    const resolve = job.build.artifactManager.resolveToExternalIdentifier.bind(job.build.artifactManager);
     if (Array.isArray(sink)) {
         throw new OutputSinkIsArray();
     }
@@ -403,17 +404,16 @@ function makeOutputSink(job, sink) {
         return sink;
     }
     if (sink instanceof FileArtifact) {
-        return captureTo(job.build.artifactManager.resolveToExternalIdentifier(sink.identity),job);
+        return captureTo(resolve(sink.identity),job);
     }
     if ('object' === typeof sink && 'function' === typeof sink.toString) {
-        sink = sink.toString();
+        sink = sink.artifact || sink.toString();
     }
     if (('string'===typeof sink) || (sink instanceof AID)) {
         sink = job.build.artifactManager.get(sink);
     }
     if (sink instanceof FileArtifact) {
-        const resolved = job.build.artifactManager.resolveToExternalIdentifier(sink.identity);
-        return captureTo(resolved,job);
+        return captureTo(resolve(sink.identity),job);
     }
     throw new Error("Output sink must be an artifact reference or a callback");
 }
