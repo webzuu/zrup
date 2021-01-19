@@ -41,10 +41,10 @@ export const Verbosity = class Verbosity {
     /** @param {Build} build */
     hookBuild(build)
     {
+        build.on('invoking.recipe',rule => {
+            console.log(`Invoking recipe for rule ${rule.module.name}+${rule.name}`);
+        });
         if (this.#verbose) {
-            build.on('invoking.recipe',rule => {
-                console.log(`Invoking recipe for rule ${rule.module.name}+${rule.name}`);
-            });
             build.on('capturing.output',(job, outputFilePath) => {
                 console.log(`${job.rule.module.name}+${job.rule.name}: > ${outputFilePath}`);
             });
