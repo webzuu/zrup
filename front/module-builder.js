@@ -103,22 +103,23 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
      *
      * @param {Module} parentModule
      * @param {...string} subpaths
-     * @return {Promise<void>}
+     * @return {Promise<string[]>}
      */
     async includeMany(parentModule, ...subpaths)
     {
-        await Promise.all(subpaths.map(this.loadModule.bind(this,parentModule)));
+        return await Promise.all(subpaths.map(this.loadModule.bind(this,parentModule)));
     }
 
     /**
      * @param {Module} parentModule
      * @param {string} subpath
-     * @return {Promise<void>}
+     * @return {Promise<string>}
      */
     async loadModule(parentModule, subpath)
     {
         const definer = ModuleBuilder.#normalizeDefiner(await this.#import(this.#resolveModuleBase(parentModule, subpath)));
         await this.define(parentModule, subpath, definer.name, definer.definer);
+        return definer.name;
     }
 
     async loadRootModule()
