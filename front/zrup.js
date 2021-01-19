@@ -10,13 +10,25 @@ import {ModuleBuilder} from "./module-builder.js";
 import path from "path";
 import {Build} from "../build.js";
 import * as util from "util";
-import {ChildProcess} from "child_process";
+import {Verbosity} from "./verbosity.js";
 
 /**
  * @typedef {Object.<string,*>} Zrup~Config
  * @property {string} zrupDir
  * @property {string} dataDir
  * @property {Object.<string, string>} channels
+ */
+
+/**
+ * @typedef {Object.<string,*>} Zrup~RequestOptions
+ * @property {boolean} init
+ * @property {boolean} verbose
+ */
+
+/**
+ * @typedef {Object.<string,*>} Zrup~Request
+ * @property {string[]} goals
+ * @property {Zrup~RequestOptions} options
  */
 
 /**
@@ -28,32 +40,40 @@ import {ChildProcess} from "child_process";
 export const Zrup = class Zrup
 
 {
+    /** @type {Zrup~Request} */
+    #request;
+
     /** @type {string} */
-    #projectRoot
+    #projectRoot;
 
     /** @type {Zrup~Config} */
     #config;
 
     /** @type {Project} */
-    #project
+    #project;
 
     /** @type {Db} */
-    #db
+    #db;
 
     /** @type {ArtifactManager} */
-    #artifactManager
+    #artifactManager;
 
     /** @type {RuleBuilder} */
-    #ruleBuilder
+    #ruleBuilder;
 
     /** @type {ModuleBuilder} */
-    #moduleBuilder
+    #moduleBuilder;
+
+    /** @type {Verbosity} */
+    #verbosity;
 
     /**
      * @param {string} projectRoot
      * @param {Zrup~Config} config
+     * @param {Zrup~Request} request
      */
-    constructor(projectRoot, config) {
+    constructor(projectRoot, config, request) {
+        this.#request = request;
         this.#projectRoot = projectRoot;
         const {zrupDir, dataDir, channels} = this.#config = config;
         this.#project = new Project(projectRoot);
@@ -73,67 +93,26 @@ export const Zrup = class Zrup
                 (infix || '').replace(/<zrupDir>/, zrupDir)
             )
         }
-        this.#ruleBuilder = new RuleBuilder(this.#project, this.#artifactManager);
-        this.#moduleBuilder = new ModuleBuilder(this.#project, this.#ruleBuilder);
-
-        this.#moduleBuilder.on('defined.module', (module, path, name) => {
-            console.log(`Defining ${name} ${path}`);
-        });
-
-        this.#ruleBuilder.on('defining.rule', (module, rule) => {
-            console.log(`Rule ${module.name}+${rule.name}`);
-        });
-
-        this.#ruleBuilder.on('depends',(module,rule,dependency) => {
-            console.log(`Depends on ${this.#artifactManager.resolveToExternalIdentifier(dependency.artifact.identity)}`);
-        });
-
-        this.#ruleBuilder.on('produces',(module,rule,artifact) => {
-            console.log(`Produces ${this.#artifactManager.resolveToExternalIdentifier(artifact.identity)}`);
-        })
+        this.#verbosity = new Verbosity(!!request.options.verbose);
+        this.#verbosity.hookRuleBuilder(
+            this.#ruleBuilder = new RuleBuilder(this.#project, this.#artifactManager),
+            this.#artifactManager
+        );
+        this.#verbosity.hookModuleBuilder(
+            this.#moduleBuilder = new ModuleBuilder(this.#project, this.#ruleBuilder)
+        );
     }
 
-
-    /**
-     * @param {Zrup~Options} options
-     * @return {Promise<void>}
-     */
-    async run(options) {
+    async run() {
 
         try {
             console.log("Loading graph");
             await this.#moduleBuilder.loadRootModule();
             this.#ruleBuilder.finalize();
             const build = new Build(this.#project.graph, this.#db, this.#artifactManager);
-
-            build.on('invoking.recipe',rule => {
-                console.log(`Invoking recipe for rule ${rule.module.name}+${rule.name}`);
-            });
-
-            build.on('capturing.output',(job, outputFilePath) => {
-                console.log(`${job.rule.module.name}+${job.rule.name}: > ${outputFilePath}`);
-            });
-
-            build.on('spawning.command', (job, rawExec, args, child) =>{
-                console.log(`${job.rule.module.name}+${job.rule.name}: spawning ${rawExec} ${[args].flat().join(' ')}`)
-            });
-
-            build.on(
-                'spawned.command',
-                (job,child) => {
-                    console.log(`${job.rule.module.name}+${job.rule.name}: spawned ${child.spawnfile} ${child.spawnargs}`);
-                }
-            );
-
-            build.on(
-                'completed.command',
-                (job,child) => {
-                    console.log(`${job.rule.module.name}+${job.rule.name}: completed ${child.spawnfile} ${child.spawnargs}`);
-                }
-            );
-
+            this.#verbosity.hookBuild(build);
             console.log("Resolving artifacts");
-            const requestedArtifacts = options.goals.map(ref => this.#artifactManager.get(ref));
+            const requestedArtifacts = this.#request.goals.map(ref => this.#artifactManager.get(ref));
             console.log("Creating top level build jobs");
             const jobsPromise = Promise.all(requestedArtifacts.map(async artifact => await build.getJobForArtifact(artifact)));
             console.log("Running build jobs");

@@ -8,13 +8,10 @@ import * as path from "path";
 
 import {fileURLToPath} from 'url';
 import {dirname} from 'path';
-import * as util from "util";
 import {Zrup} from "./zrup.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-import {CommandRecipe} from "../build/recipe/command.js";
 
 async function main(argv)
 {
@@ -24,10 +21,12 @@ async function main(argv)
         return;
     }
     const there = await Zrup.locateRoot(process.cwd());
-    const zrup = new Zrup(there, await Zrup.loadConfig(there));
-    await zrup.run({
-        goals: cli.args
-    });
+    const request = {
+        goals:          cli.args,
+        options:        cli.opts()
+    }
+    const zrup = new Zrup(there, await Zrup.loadConfig(there), request);
+    await zrup.run();
 }
 
 /**
@@ -38,6 +37,7 @@ async function parseCommandLine()
     program.version(await getVersion());
     program
         .option('-i, --init', 'Initialize a zrup build system in current directory')
+        .option('-v, --verbose', 'Log tons of debug info to console')
     program.parse(process.argv);
     return program;
 }

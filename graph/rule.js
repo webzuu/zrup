@@ -36,8 +36,8 @@ export const Rule = class Rule  {
     constructor(module, name)
     {
         this.#module = module;
-        this.#name = name;
-        this.#label = `${name}`;
+        this.#name = name.replace(/\W/g, '-');
+        this.#label = name;
         this.#recipe = null;
         this.outputs = {};
         this.dependencies = {};
