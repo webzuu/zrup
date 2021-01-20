@@ -193,21 +193,25 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         job.build.emit('spawning.command',job,rawExec,args,options);
         const child = spawn(exec, args, options);
         job.build.emit('spawned.command',job,rawExec,args,child);
+        
+        this.hookStreams(child, out, err, combined);
 
+        return child;
+    }
+
+    hookStreams(child, out, err, combined) {
         const listen = dest => _ => dest.push(_);
 
         this.#stdout = [];
         this.#stderr = [];
         this.#combined = [];
 
-        if (0===out.length) out = [listen(this.#stdout)];
-        if (0===err.length) err = [listen(this.#stderr)];
-        if (1===out.length && 1===err.length && 0===combined.length) combined = [listen(this.#combined)];
-        for(let listener of out) addDataListenerToStreams(listener, child, child.stdout);
-        for(let listener of err) addDataListenerToStreams(listener, child, child.stderr);
-        for(let listener of combined) addDataListenerToStreams(listener, child, child.stdout, child.stderr);
-
-        return child;
+        if (0 === out.length) out = [listen(this.#stdout)];
+        if (0 === err.length) err = [listen(this.#stderr)];
+        if (1 === out.length && 1 === err.length && 0 === combined.length) combined = [listen(this.#combined)];
+        for (let listener of out) addDataListenerToStreams(listener, child, child.stdout);
+        for (let listener of err) addDataListenerToStreams(listener, child, child.stderr);
+        for (let listener of combined) addDataListenerToStreams(listener, child, child.stdout, child.stderr);
     }
 
     /** @return {string} */
