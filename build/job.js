@@ -88,7 +88,12 @@ export const Job = class Job  {
             const recipeArtifact = this.build.artifactManager.get(`recipe:${this.rule.module.name}+${this.rule.name}`);
             this.build.emit('invoking.recipe',this.rule);
             this.recipeInvoked = true;
-            await this.rule.recipe.executeFor(this, await recipeArtifact.spec);
+            try {
+                await this.rule.recipe.executeFor(this, await recipeArtifact.spec);
+            }
+            finally {
+                process.stdout.write(this.rule.recipe.consoleOutput);
+            }
             this.build.emit('invoked.recipe',this.rule);
             await this.detectRewritesAfterUse();
             await this.build.recordVersionInfo(this);

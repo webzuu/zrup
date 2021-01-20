@@ -43,6 +43,14 @@ export const Recipe = class Recipe
     {
         return spec;
     }
+
+    /**
+     * @return {string}
+     */
+    get consoleOutput()
+    {
+        return "";
+    }
 }
 
 export const NopRecipe = class NopRecipe extends Recipe

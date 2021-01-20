@@ -157,6 +157,15 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
     /** @type {CommandRecipe~builder} */
     #commandBuilder;
 
+    /** @type {string[]} */
+    #stdout = [];
+
+    /** @type {string[]} */
+    #stderr = [];
+
+    /** @type {string[]} */
+    #combined = [];
+
     /** @param {CommandRecipe~builder} commandBuilder */
     constructor(commandBuilder)
     {
@@ -185,10 +194,39 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         const child = spawn(exec, args, options);
         job.build.emit('spawned.command',job,rawExec,args,child);
 
+        const listen = dest => _ => dest.push(_);
+
+        this.#stdout = [];
+        this.#stderr = [];
+        this.#combined = [];
+
+        if (0===out.length) out = [listen(this.#stdout)];
+        if (0===err.length) err = [listen(this.#stderr)];
+        if (1===out.length && 1===err.length && 0===combined.length) combined = [listen(this.#combined)];
         for(let listener of out) addDataListenerToStreams(listener, child, child.stdout);
         for(let listener of err) addDataListenerToStreams(listener, child, child.stderr);
         for(let listener of combined) addDataListenerToStreams(listener, child, child.stdout, child.stderr);
+
         return child;
+    }
+
+    /** @return {string} */
+    get stdout() {
+        return this.#stdout.join('');
+    }
+
+    /** @return {string} */
+    get stderr() {
+        return this.#stderr.join('');
+    }
+
+    /** @return {string} */
+    get combined() {
+        return this.#combined.join('');
+    }
+
+    get consoleOutput() {
+        return this.#combined.length ? this.combined : this.stdout + this.stderr;
     }
 
     createCompletionPromise(child, job, config)
