@@ -151,7 +151,7 @@ export const CommandError = class CommandError extends Error
     }
 }
 
-let self
+let self;
 export const CommandRecipe = self = class CommandRecipe extends Recipe
 {
     /** @type {CommandRecipe~builder} */

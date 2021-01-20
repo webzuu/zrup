@@ -10,10 +10,10 @@ import inspect from "object-inspect";
 export function uniqueAdd(map, key, value, indexName)
 {
     if (map.has(key)) {
-        throw [
+        throw new Error([
             `Unique violation adding key ${key} to ${indexName || 'index'}`,
             `Value being added:\n ${inspect(value)}`
-        ].join("\n");
+        ].join("\n"));
     }
     map.set(key, value);
 }

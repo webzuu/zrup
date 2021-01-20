@@ -114,8 +114,9 @@ export function resolveArtifacts(
     ...refs
 ) {
     return refs.flat().map(ref => {
-        if (skipStrings && 'string' === typeof ref) return ref;
-
+        if ('string'===typeof ref) {
+            if (skipStrings) return ref;
+        }
         const artifact = artifactManager.get(
             new AID(obtainArtifactReferenceFrom(ref)).withDefaults({module: module.name})
         );
