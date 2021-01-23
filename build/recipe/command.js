@@ -193,7 +193,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         job.build.emit('spawning.command',job,rawExec,args,options);
         const child = spawn(exec, args, options);
         job.build.emit('spawned.command',job,rawExec,args,child);
-        
+
         this.hookStreams(child, out, err, combined);
 
         return child;

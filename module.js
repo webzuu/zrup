@@ -20,6 +20,8 @@ export const Module = class Module
     /** @type {string} */
     #absolutePath;
 
+    #exports = {};
+
     /**
      *
      * @param {Module|null} parent
@@ -61,6 +63,19 @@ export const Module = class Module
             return this.project.getModuleByName(aid.module,true).resolve(aid.withModule((_=>_)()));
         }
         return fsPath.resolve(this.#absolutePath, aid.ref);
+    }
+
+    /**
+     * @param {Object.<string,*>} exports
+     */
+    export(exports)
+    {
+        this.#exports = Object.assign({}, this.#exports, exports);
+    }
+
+    get exports()
+    {
+        return Object.assign({}, this.#exports);
     }
 
     /**
