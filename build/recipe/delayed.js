@@ -33,7 +33,7 @@ export const DelayedRecipe = class DelayedRecipe extends Recipe
     describeSpec(spec) {
         return {
             recipe: spec.recipeHash,
-            delayed_milliseconds: spec.delay_milliseconds
+            delay_milliseconds: spec.delay_milliseconds
         };
     }
 

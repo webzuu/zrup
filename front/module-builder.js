@@ -19,8 +19,15 @@
  * @property {RuleBuilder~ruleNominator} after
  * @property {CommandRecipe~simpleDescriptorBuilderAcceptor} to
  * @property {RuleBuilder~flagSetter} always
+ * @property {RuleBuilder~resolve} resolve
  */
 
+/**
+ * @callback ModuleBuilder~resolve
+ * @param {string}
+ */
+
+/***/
 import {CommandRecipe} from "../build/recipe/command.js";
 import {Module} from "../module.js";
 import * as path from "path";

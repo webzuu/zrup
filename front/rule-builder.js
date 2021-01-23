@@ -54,6 +54,13 @@ import {reassemble} from "../util/tagged-template.js";
  * @property {RuleBuilder~boundDefiner} boundDefiner
  */
 
+/**
+ * @callback RuleBuilder~resolve
+ * @param {Artifact~Resolvables} items
+ * @return [string]
+ */
+
+
 /***/
 export const RuleBuilder = class RuleBuilder extends EventEmitter
 

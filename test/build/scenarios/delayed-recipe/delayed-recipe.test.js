@@ -30,8 +30,9 @@ function setup()
     })
 }
 
-describe("DelayedRecipe", async() => {
+describe("DelayedRecipe", async function() {
 
+    this.timeout(5000);
     setup();
 
     it("executes a wrapped recipe after delay", async() => {
