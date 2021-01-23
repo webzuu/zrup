@@ -3,6 +3,7 @@ import {BuildError} from "./error.js";
 import {Dependency} from "../graph/dependency.js";
 import {AID} from "../graph/artifact.js";
 import {Build} from "../build.js";
+import typeOf from "typeof--";
 
 /**
  * @property {Build} build
@@ -29,8 +30,8 @@ export const Job = class Job  {
         /** @type {Rule} */
         this.rule = rule;
         this.recipeInvoked = false;
-        /** @type {Object|null} */
-        this.recipeSpec = null;
+        /** @type {RecipeArtifact|null} */
+        this.recipeArtifact = null;
         this.promise = null;
         this.finished = false;
         this.recipeInvoked = false;
@@ -40,7 +41,7 @@ export const Job = class Job  {
         /** @type {(Job|null)} */
         this.requestedBy = null;
         this.dependencies = [
-            new Dependency(RecipeArtifact.makeFor(this), Dependency.ABSENT_VIOLATION)
+            new Dependency(this.recipeArtifact = RecipeArtifact.makeFor(this), Dependency.ABSENT_VIOLATION)
         ];
         this.recordedDependencies = [];
     }
@@ -83,13 +84,13 @@ export const Job = class Job  {
     async #work()
     {
         this.prepare();
+        const spec = await this.recipeArtifact.spec;
         await Promise.all(this.getMergedDependencies().map(async dependency => await this.ensureDependency(dependency)));
         if (!await this.build.isUpToDate(this)) {
-            const recipeArtifact = this.build.artifactManager.get(`recipe:${this.rule.module.name}+${this.rule.name}`);
             this.build.emit('invoking.recipe',this.rule);
             this.recipeInvoked = true;
             try {
-                await this.rule.recipe.executeFor(this, await recipeArtifact.spec);
+                await this.rule.recipe.executeFor(this, spec);
             }
             finally {
                 process.stdout.write(this.rule.recipe.consoleOutput);

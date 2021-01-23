@@ -55,7 +55,6 @@ describe("CommandRecipe", async() => {
             return job;
         }
 
-
         //build fresh
         expect((await runNewJob()).recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
@@ -193,5 +192,25 @@ describe("CommandRecipe", async() => {
 
         expect((await runNewJob()).recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
+    });
+    // internal:foo/bar/handle-always.txt
+
+    it('always runs a rule specified with always flag', async() => {
+        const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+
+        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
+        ruleBuilder.finalize();
+
+        const actual = d.artifactManager.get('internal:foo/bar/handle-always.txt');
+
+        let job = null;
+        async function runNewJob() {
+            const job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual);
+            await job.run();
+            return job;
+        }
+
+        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect((await runNewJob()).recipeInvoked).to.be.true;
     });
 })

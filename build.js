@@ -183,9 +183,9 @@ export const Build = class Build extends EventEmitter  {
      */
     async isUpToDate(job)
     {
+        job.prepare();
         const rule = job.rule;
         if (rule.always) return false;
-        job.prepare();
         const outputs = job.outputs;
         const allOutputsExist =
             (await Promise.all(outputs.map(artifact => artifact.exists)))

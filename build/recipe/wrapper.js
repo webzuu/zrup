@@ -45,9 +45,9 @@ export const WrapperRecipe = class WrapperRecipe extends Recipe
         if (!this.#params.recipe) this.#params.recipe = new NopRecipe();
     }
 
-    async resolveSpecFor(job) {
+    async concretizeSpecFor(job) {
         const descriptor = {};
-        descriptor.recipeSpec = await this.#params.recipe.resolveSpecFor(job);
+        descriptor.recipeSpec = await this.#params.recipe.concretizeSpecFor(job);
         descriptor.recipeHash = await this.#params.recipe.hashSpec(descriptor.recipeSpec);
         return Object.assign({},this.#params,descriptor);
     }

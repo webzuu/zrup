@@ -20,9 +20,9 @@ export const DelayedRecipe = class DelayedRecipe extends Recipe
         this.#delay_milliseconds = delay_milliseconds;
     }
 
-    async resolveSpecFor(job) {
+    async concretizeSpecFor(job) {
         const descriptor = {}
-        descriptor.recipeSpec = await this.#recipe.resolveSpecFor(job);
+        descriptor.recipeSpec = await this.#recipe.concretizeSpecFor(job);
         descriptor.recipeHash = await this.#recipe.hashSpec(descriptor.recipeSpec);
         return Object.assign(descriptor,{
             recipe: this.#recipe,

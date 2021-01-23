@@ -1,7 +1,9 @@
 import {CommandRecipe} from "../../../../../build/recipe/command.js";
 
 /** @type {ModuleBuilder~definer} */
-const test = function test({rule,produces,depends}) {
+const test = function test(R) {
+
+    const {rule, produces, depends, always} = R;
 
     rule(function fromEmpty() {
 
@@ -99,6 +101,17 @@ const test = function test({rule,produces,depends}) {
                 echo "bar"
             `);
         });
+    })
+
+    rule(function do_always() {
+
+        always();
+        const [target] = produces('internal:foo/bar/handle-always.txt');
+
+        return new CommandRecipe(({shell, out,always}) => {
+            out(target);
+            shell("echo whatevs");
+        })
     })
 
 };

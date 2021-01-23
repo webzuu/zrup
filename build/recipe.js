@@ -9,7 +9,7 @@ export const Recipe = class Recipe
      * @return {Promise<Object>}
      * @abstract
      */
-    async resolveSpecFor(job)
+    async concretizeSpecFor(job)
     {
         throw new UnimplementedAbstract();
     }
@@ -61,7 +61,7 @@ export const NopRecipe = class NopRecipe extends Recipe
         //well, this is a NOP
     }
 
-    async resolveSpecFor(job)
+    async concretizeSpecFor(job)
     {
         return {};
     }

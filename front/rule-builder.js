@@ -23,6 +23,7 @@ import {reassemble} from "../util/tagged-template.js";
  * @property {RuleBuilder~artifactNominator} depends
  * @property {RuleBuilder~artifactNominator} produces
  * @property {RuleBuilder~ruleNominator} after
+ * @property {RuleBuilder~flagSetter} always
  * @property {templateStringTag} T
  *
  */
@@ -158,6 +159,7 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
             depends: this.depends,
             produces: this.produces,
             after: this.after,
+            always: this.always,
             resolve: this.resolve,
             T: reassemble.bind(null, this.resolve)
         }
@@ -200,7 +202,7 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
     }
 
     always = (value) => {
-        this.requireCurrentRule('always').always = true === value;
+        this.requireCurrentRule('always').always = false !== value;
     }
 
     /**

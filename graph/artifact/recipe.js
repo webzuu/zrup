@@ -29,8 +29,9 @@ export const RecipeArtifact = class RecipeArtifact extends Artifact
             (
                 this.#specPromise
                 =
-                (async () => { return await this.job.rule.recipe.resolveSpecFor(this.job)})()
+                this.job.rule.recipe.concretizeSpecFor(this.job)
             )
+
         );
     }
 

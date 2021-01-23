@@ -41,7 +41,6 @@
  * @property {CommandRecipe~outputListenerAcceptor} out
  * @property {CommandRecipe~outputListenerAcceptor} err
  * @property {CommandRecipe~outputListenerAcceptor} combined
- * @property {CommandRecipe~flagSetter} always
  * @property {templateStringTag} T
  */
 
@@ -54,7 +53,6 @@
  * @property {CommandRecipe~outputListener[]} out
  * @property {CommandRecipe~outputListener[]} err
  * @property {CommandRecipe~outputListener[]} combined
- * @property {boolean} always
  */
 
 /**
@@ -87,7 +85,6 @@
  * @property {CommandRecipe~OutputSinks}                        [out]
  * @property {CommandRecipe~OutputSinks}                        [err]
  * @property {CommandRecipe~OutputSinks}                        [combined]
- * @property {boolean}                                          [always]
  */
 
 /**
@@ -212,9 +209,13 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         this.#stderr = [];
         this.#combined = [];
 
-        if (0 === out.length) out = [listen(this.#stdout)];
-        if (0 === err.length) err = [listen(this.#stderr)];
-        if (1 === out.length && 1 === err.length && 0 === combined.length) combined = [listen(this.#combined)];
+        let stdoutRedirected = out.length > 0,
+            stderrRedirected = err.length > 0,
+            combinedRedirected = stdoutRedirected || stderrRedirected || combined.length > 0;
+
+        if (!stdoutRedirected) out = [listen(this.#stdout)];
+        if (!stderrRedirected) err = [listen(this.#stderr)];
+        if (!combinedRedirected) combined = [listen(this.#combined)];
         for (let listener of out) addDataListenerToStreams(listener, child, child.stdout);
         for (let listener of err) addDataListenerToStreams(listener, child, child.stderr);
         for (let listener of combined) addDataListenerToStreams(listener, child, child.stdout, child.stderr);
@@ -254,34 +255,40 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         });
     }
 
-    async resolveSpecFor(job) {
-        let exec = "";
-        let shell = false;
-        const args = [];
-        let cwd = undefined;
-        const out = [];
-        const err = [];
-        const combined = [];
-        let always = false;
+    /**
+     * @param job
+     * @return {Promise<*>}
+     */
+    async concretizeSpecFor(job) {
+
+        const spec = {
+            job,
+            exec: "",
+            shell: false,
+            args: [],
+            cwd: undefined,
+            out: [],
+            err: [],
+            combined: []
+        };
 
         const resolve = resolveArtifacts.bind(null,job.build.artifactManager,job.rule.module,false);
         const resolveExceptStrings = resolveArtifacts.bind(null,job.build.artifactManager,job.rule.module,true);
 
         const builderParams = {
             exec: (cmdString, ...argItems) => {
-                exec = cmdString;
-                args.push(...resolveExceptStrings(...argItems.flat()).map(_ => ''+_));
+                spec.exec = cmdString;
+                spec.args.push(...resolveExceptStrings(...argItems.flat()).map(_ => ''+_));
             },
             shell: (...argItems) => {
-                exec = resolveExceptStrings(...argItems.flat()).map(_ => ''+_).join(" ");
-                shell = true;
+                spec.exec = resolveExceptStrings(...argItems.flat()).map(_ => ''+_).join(" ");
+                spec.shell = true;
             },
-            args: (...argItems) => { args.push(...resolveExceptStrings(...argItems.flat()).map(_ => ''+_)); },
-            cwd: cwdValue => { cwd = cwdValue; },
-            out: sink => { out.push(makeOutputSink(job, sink)); },
-            err: sink => { err.push(makeOutputSink(job, sink)); },
-            combined: sink => { combined.push(makeOutputSink(job, sink)); },
-            always: () => { always = true; },
+            args: (...argItems) => { spec.args.push(...resolveExceptStrings(...argItems.flat()).map(_ => ''+_)); },
+            cwd: cwdValue => { spec.cwd = cwdValue; },
+            out: sink => { spec.out.push(makeOutputSink(job, sink)); },
+            err: sink => { spec.err.push(makeOutputSink(job, sink)); },
+            combined: sink => { spec.combined.push(makeOutputSink(job, sink)); },
             resolve,
             T: reassemble.bind(
                 null,
@@ -296,7 +303,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
 
         this.#commandBuilder(builderParams);
 
-        return {job, exec, shell, args, cwd, out, err, combined, resolve};
+        return spec;
     }
 
     async executeFor(job, spec) {
@@ -313,7 +320,6 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         result.out = spec.out.map(this.#makeSinkDescriber("stdout", spec));
         result.err = spec.err.map(this.#makeSinkDescriber("stderr", spec));
         result.combined = spec.combined.map(this.#makeSinkDescriber("combined", spec));
-        result.always = spec.always
         return result;
     }
 
@@ -383,7 +389,6 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
                         C[key](item);
                     }
                 }
-                if (true === descriptor.always) C.always();
             });
         };
         return definer;
@@ -409,8 +414,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
                 env: dictionary(items, opt),
                 out: ducktype(sinks, opt),
                 err: ducktype(sinks, opt),
-                combined: ducktype(sinks, opt),
-                always: ducktype(Boolean, opt)
+                combined: ducktype(sinks, opt)
             }
         )
     }

@@ -58,7 +58,7 @@ class MakeItExistRecipe extends Recipe
         this.#pk.set(key, "version", hash);
     }
 
-    async resolveSpecFor(job) {
+    async concretizeSpecFor(job) {
         return {};
     }
 }
