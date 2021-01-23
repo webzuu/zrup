@@ -41,6 +41,7 @@
  * @property {CommandRecipe~outputListenerAcceptor} out
  * @property {CommandRecipe~outputListenerAcceptor} err
  * @property {CommandRecipe~outputListenerAcceptor} combined
+ * @property {CommandRecipe~flagSetter} always
  * @property {templateStringTag} T
  */
 
@@ -53,6 +54,7 @@
  * @property {CommandRecipe~outputListener[]} out
  * @property {CommandRecipe~outputListener[]} err
  * @property {CommandRecipe~outputListener[]} combined
+ * @property {boolean} always
  */
 
 /**
@@ -105,8 +107,12 @@
  * @param {CommandRecipe~simpleDescriptorBuilder} descriptorProvider
  */
 
-import {spawn} from "child_process";
+/**
+ * @callback CommandRecipe~flagSetter
+ */
+
 /***/
+import {spawn} from "child_process";
 import ducktype from "ducktype";
 import fs from "fs";
 import * as path from "path";
@@ -307,6 +313,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         result.out = spec.out.map(this.#makeSinkDescriber("stdout", spec));
         result.err = spec.err.map(this.#makeSinkDescriber("stderr", spec));
         result.combined = spec.combined.map(this.#makeSinkDescriber("combined", spec));
+        result.always = spec.always
         return result;
     }
 
@@ -370,12 +377,13 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
                     }
                     C.cwd(cwd.toString())
                 }
-                for (let key of ['out', 'err', 'combined', 'always']) {
+                for (let key of ['out', 'err', 'combined']) {
                     if (!(key in descriptor)) continue;
                     for (let item of (Array.isArray(descriptor[key]) ? descriptor[key].flat() : [descriptor[key]])) {
                         C[key](item);
                     }
                 }
+                if (true === descriptor.always) C.always();
             });
         };
         return definer;
@@ -401,7 +409,8 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
                 env: dictionary(items, opt),
                 out: ducktype(sinks, opt),
                 err: ducktype(sinks, opt),
-                combined: ducktype(sinks, opt)
+                combined: ducktype(sinks, opt),
+                always: ducktype(Boolean, opt)
             }
         )
     }
