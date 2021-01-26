@@ -41,6 +41,7 @@ export const Rule = class Rule  {
         this.#recipe = null;
         this.outputs = {};
         this.dependencies = {};
+        this.also = {};
         this.after = {};
         this.always = false;
     }
@@ -131,6 +132,14 @@ export const Rule = class Rule  {
             );
         }
         return dependency;
+    }
+
+    /**
+     * @param {Artifact} artifact
+     */
+    addAlso(artifact)
+    {
+        this.also[artifact.key] = artifact;
     }
 
     /**

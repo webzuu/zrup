@@ -49,26 +49,26 @@ describe("CommandRecipe", async() => {
         const actual = d.artifactManager.get('actual.txt');
         const expected = d.artifactManager.get('expected.txt');
 
-        let job = null;
+        let jobs = null;
         async function runNewJob() {
-            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
         }
 
         //build fresh
-        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect((await runNewJob()).job.recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
 
         //don't rebuild if dependencies unchanged
-        expect((await runNewJob()).recipeInvoked).to.be.false;
+        expect((await runNewJob()).job.recipeInvoked).to.be.false;
 
         //rebuild if dependency changed
         fs.appendFileSync(path.join(d.tmpDir.toString(),'src/input2.txt'),"Some more input added\n");
-        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect((await runNewJob()).job.recipeInvoked).to.be.true;
         expect(await actual.version).to.not.equal(await expected.version);
 
         //don't rebuild if dependencies unchanged again
-        expect((await runNewJob()).recipeInvoked).to.be.false;
+        expect((await runNewJob()).job.recipeInvoked).to.be.false;
     });
 
     it('captures empty output', async() => {
@@ -79,13 +79,13 @@ describe("CommandRecipe", async() => {
 
         const target = d.artifactManager.get('shouldBeEmpty.txt');
 
-        let job = null;
+        let jobs = null;
         async function runNewJob() {
-            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(target)).run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(target)).run();
+            return jobs;
         }
 
-        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect((await runNewJob()).job.recipeInvoked).to.be.true;
         expect(await target.exists).to.be.true;
         expect(await target.contents).to.equal("");
     });
@@ -99,15 +99,15 @@ describe("CommandRecipe", async() => {
         const actual = d.artifactManager.get('transformed.txt');
         const expected = d.artifactManager.get('expected-tr-i-o.txt');
 
-        let job = null;
+        let jobs = null;
         async function runNewJob() {
-            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
         }
 
 
         //build fresh
-        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect((await runNewJob()).job.recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
     });
 
@@ -121,14 +121,14 @@ describe("CommandRecipe", async() => {
         const actual = d.artifactManager.get('viaTemplateString.txt');
         const expected = d.artifactManager.get('expected-tr-i-o.txt');
 
-        let job = null;
+        let jobs = null;
         async function runNewJob() {
-            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
         }
 
         //build fresh
-        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect((await runNewJob()).job.recipeInvoked).to.be.true;
         expect(await actual.contents).to.equal(await expected.contents);
     });
 
@@ -140,10 +140,10 @@ describe("CommandRecipe", async() => {
 
         const actual = d.artifactManager.get('pipeFail.txt');
 
-        let job = null;
+        let jobs = null;
         async function runNewJob() {
-            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
         }
 
         try {
@@ -165,13 +165,13 @@ describe("CommandRecipe", async() => {
         const actual = d.artifactManager.get('handle-command-newlines.txt');
         const expected = d.artifactManager.get('expected-handle-command-newlines.txt');
 
-        let job = null;
+        let jobs = null;
         async function runNewJob() {
-            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
         }
 
-        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect((await runNewJob()).job.recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
     });
 
@@ -184,13 +184,13 @@ describe("CommandRecipe", async() => {
         const actual = d.artifactManager.get('internal:foo/bar/handle-command-newlines.txt');
         const expected = d.artifactManager.get('expected-handle-command-newlines.txt');
 
-        let job = null;
+        let jobs = null;
         async function runNewJob() {
-            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
         }
 
-        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect((await runNewJob()).job.recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
     });
     // internal:foo/bar/handle-always.txt
@@ -203,14 +203,13 @@ describe("CommandRecipe", async() => {
 
         const actual = d.artifactManager.get('internal:foo/bar/handle-always.txt');
 
-        let job = null;
+        let jobs = null;
         async function runNewJob() {
-            const job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual);
-            await job.run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
         }
 
-        expect((await runNewJob()).recipeInvoked).to.be.true;
-        expect((await runNewJob()).recipeInvoked).to.be.true;
+        expect((await runNewJob()).job.recipeInvoked).to.be.true;
+        expect((await runNewJob()).job.recipeInvoked).to.be.true;
     });
 })

@@ -32,7 +32,7 @@ function setup()
     })
 }
 
-describe("WrapperRecipe", async() => {
+describe("WrapperRecipe", function () {
 
     setup();
 
@@ -48,15 +48,15 @@ describe("WrapperRecipe", async() => {
         const actualLog = d.artifactManager.get('log.txt');
         const expectedLog = d.artifactManager.get('expected-log.txt');
 
-        /** @type {(Job|null)} */
-        let job = null;
+        /** @type {(JobSet|null)} */
+        let jobs = null;
         async function runNewJob() {
-            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
         }
 
         await runNewJob();
-        expect(job.recipeInvoked).to.be.true;
+        expect(jobs.job.recipeInvoked).to.be.true;
         expect(await actual.exists).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
         expect(await actualLog.exists).to.be.true;

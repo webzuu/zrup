@@ -1,4 +1,5 @@
 import md5 from "md5";
+import {JobSet} from "./build/job-set.js";
 import {Job} from "./build/job.js";
 import {BuildError} from "./build/error.js";
 import {Dependency} from "./graph/dependency.js";
@@ -23,7 +24,8 @@ export const Build = class Build extends EventEmitter  {
         this.artifactManager = artifactManager;
         this.index = {
             rule: {
-                job: new Map()
+                job: new Map(),
+                jobSet: new Map()
             }
         }
         this.#built = {};
@@ -36,7 +38,16 @@ export const Build = class Build extends EventEmitter  {
      */
     async getJobFor(dependency)
     {
-        return this.getJobForArtifact(dependency.artifact);
+        return await this.getJobForArtifact(dependency.artifact);
+    }
+
+    /**
+     * @param {Dependency} dependency
+     * @return {Promise<(JobSet|null)>}
+     */
+    async getJobSetFor(dependency)
+    {
+        return await this.getJobSetForArtifact(dependency.artifact);
     }
 
     /**
@@ -49,7 +60,15 @@ export const Build = class Build extends EventEmitter  {
     }
 
     /**
-     *
+     * @param {Artifact} artifact
+     * @return {Promise<(JobSet|null)>}
+     */
+    async getJobSetForArtifact(artifact)
+    {
+        return await this.getJobSetForRule(await this.getRuleForArtifact(artifact));
+    }
+
+    /**
      * @param {string|null} ruleKey
      * @return {Job|null}
      */
@@ -65,6 +84,26 @@ export const Build = class Build extends EventEmitter  {
             );
         }
         return this.index.rule.job.get(ruleKey);
+    }
+
+    /**
+     * @param {string|null} ruleKey
+     * @return {Promise<JobSet | null>}
+     */
+    async getJobSetForRule(ruleKey)
+    {
+        if (!ruleKey) return null;
+        const mainJob = this.getJobForRule(ruleKey);
+        if (!mainJob) return null;
+        const jobSet = new JobSet();
+        jobSet.add(mainJob);
+        const rule = this.graph.index.rule.key.get(ruleKey);
+        await Promise.all(
+            Object.values(rule.also || {}).map(
+                async artifact => jobSet.merge(await this.getJobSetForArtifact(artifact))
+            )
+        );
+        return jobSet;
     }
 
     /**

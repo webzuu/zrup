@@ -160,8 +160,9 @@ describe("Build", () => {
     it("gets build job for target", async () => {
         // noinspection JSUnusedLocalSymbols
         const {pk,g,target,source,makeTarget,rule,build} = simple();
-        const job = await build.getJobForArtifact(target);
-        expect(job).to.be.object();
+        const jobSet = await build.getJobSetForArtifact(target);
+        expect(jobSet).to.be.object();
+        const job = jobSet.jobs[0];
         expect(job.build).to.equal(build);
         expect(job.rule).to.equal(rule);
     });
@@ -173,8 +174,8 @@ describe("Build", () => {
             [target.key]: [false],
             [source.key]: [true,"857142"]
         })
-        const job = await build.getJobForArtifact(target);
-        await job.run();
+        const jobSet = await build.getJobSetForArtifact(target);
+        await jobSet.run();
         expect(await target.exists).to.be.true;
         expect(await target.version).to.not.be.null;
     });
@@ -186,13 +187,14 @@ describe("Build", () => {
             [target.key]: [false],
             [source.key]: [true,"857142"]
         })
-        const job = await build.getJobForArtifact(target);
-        await job.run();
+        const jobSet = await build.getJobSetForArtifact(target);
+        await jobSet.run();
+        const job = jobSet.jobs[0];
         expect(job.finished).to.be.true;
         expect(job.recipeInvoked).to.be.true;
         const build2 = new Build(g, build.db,build.artifactManager);
-        const job2 = await build2.getJobForArtifact(target);
-        const isUpToDate = await build2.isUpToDate(job2)
+        const jobSet2 = await build2.getJobSetForArtifact(target);
+        const isUpToDate = await build2.isUpToDate(jobSet2.jobs[0])
         expect(isUpToDate).to.be.true;
     });
 
@@ -203,15 +205,15 @@ describe("Build", () => {
             [target.key]: [false],
             [source.key]: [true,"857142"]
         })
-        const job = await build.getJobForArtifact(target);
-        await job.run();
-        expect(job.finished).to.be.true;
-        expect(await build.isUpToDate(job)).to.be.true;
+        const jobs = await build.getJobSetForArtifact(target);
+        await jobs.run();
+        expect(jobs.job.finished).to.be.true;
+        expect(await build.isUpToDate(jobs.job)).to.be.true;
         build = new Build(g,build.db,build.artifactManager);
-        const job2 = await build.getJobForArtifact(target);
-        await job2.run();
-        expect(job2.finished).to.be.true;
-        expect(job2.recipeInvoked).to.be.false;
+        const jobs2 = await build.getJobSetForArtifact(target);
+        await jobs2.run();
+        expect(jobs2.job.finished).to.be.true;
+        expect(jobs2.job.recipeInvoked).to.be.false;
     });
 
     it("rebuilds target if a dependency changes", async () => {
@@ -221,17 +223,17 @@ describe("Build", () => {
             [target.key]: [false],
             [source.key]: [true,"857142"]
         })
-        const job = await build.getJobForArtifact(target);
-        await job.run();
-        expect(job.finished).to.be.true;
-        expect(await build.isUpToDate(job)).to.be.true;
+        const jobs = await build.getJobSetForArtifact(target);
+        await jobs.run();
+        expect(jobs.job.finished).to.be.true;
+        expect(await build.isUpToDate(jobs.job)).to.be.true;
         answers(pk,{[source.key]: [nil,"123456"]});
-        expect(await build.isUpToDate(job)).to.be.false;
+        expect(await build.isUpToDate(jobs.job)).to.be.false;
         build = new Build(g,build.db,build.artifactManager);
-        const job2 = await build.getJobForArtifact(target);
-        await job2.run();
-        expect(job2.finished).to.be.true;
-        expect(job2.recipeInvoked).to.be.true;
+        const jobs2 = await build.getJobSetForArtifact(target);
+        await jobs2.run();
+        expect(jobs2.job.finished).to.be.true;
+        expect(jobs2.job.recipeInvoked).to.be.true;
     });
 
     it("always rebuilds a target of an always-rule", async() => {
@@ -241,17 +243,17 @@ describe("Build", () => {
             [target.key]: [false],
             [source.key]: [true,"857142"]
         });
-        let job = await build.getJobForArtifact(target);
-        await job.run();
-        expect(job.recipeInvoked).to.be.true;
+        let jobs = await build.getJobSetForArtifact(target);
+        await jobs.run();
+        expect(jobs.job.recipeInvoked).to.be.true;
         expect(await target.exists).to.be.true;
-        expect(await build.isUpToDate(job)).to.be.false;
+        expect(await build.isUpToDate(jobs.job)).to.be.false;
         build = new Build(build.graph, build.db, build.artifactManager);
-        job = await build.getJobForArtifact(target);
-        expect(job.recipeInvoked).to.be.false;
-        await job.run();
-        expect(job.recipeInvoked).to.be.true;
-        expect(await build.isUpToDate(job)).to.be.false;
+        jobs = await build.getJobSetForArtifact(target);
+        expect(jobs.job.recipeInvoked).to.be.false;
+        await jobs.job.run();
+        expect(jobs.job.recipeInvoked).to.be.true;
+        expect(await build.isUpToDate(jobs.job)).to.be.false;
     })
 
     it("gets actual version info for target with nonexistent source", async() => {
@@ -273,8 +275,8 @@ describe("Build", () => {
             [source.key]: [false]
         });
         const targetDep = new Dependency(target);
-        const job = await build.getJobFor(targetDep);
-        expect(await build.isUpToDate(job)).to.be.false;
+        const jobs = await build.getJobSetFor(targetDep);
+        expect(await build.isUpToDate(jobs.job)).to.be.false;
     });
 
     it("fails with minimally useful error message if source not found", async()=> {
@@ -286,7 +288,7 @@ describe("Build", () => {
         })
         let err = null;
         try {
-            const job = await build.getJobForArtifact(target);
+            const job = await build.getJobSetForArtifact(target);
             await job.run();
         }
         catch(e) {
@@ -310,7 +312,7 @@ describe("Build", () => {
             [target.key]: [false,nil],
             [source.key]: [true,"123456"]
         });
-        const job = await build.getJobForArtifact(target);
+        const job = await build.getJobSetForArtifact(target);
         await job.run();
         /** @type {Db~ArtifactRecord|null} */
         let targetInfo = await build.db.getArtifact(target.key);

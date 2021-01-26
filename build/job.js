@@ -189,7 +189,7 @@ export const Job = class Job  {
     {
         const artifact = dependency.artifact;
         /** @type {Job|null} */
-        const buildJob = await this.build.getJobForArtifact(artifact);
+        const buildJob = await this.build.getJobSetForArtifact(artifact);
         const rule = buildJob ? buildJob.rule : null;
         if (buildJob) {
             if (!buildJob.requestedBy) buildJob.requestedBy = this;

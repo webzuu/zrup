@@ -499,6 +499,10 @@ export const ArtifactFactory = class ArtifactFactory
  */
 
 /**
+ * @typedef {(Artifact~Reference|Artifact~References[])} Artifact~References
+ */
+
+/**
  * @typedef {Object} Artifact~Descriptor
  * @property {string|undefined} [type]
  * @property {string|undefined} [module]

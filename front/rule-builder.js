@@ -30,7 +30,7 @@ import {reassemble} from "../util/tagged-template.js";
 
 /**
  * @callback RuleBuilder~artifactNominator
- * @param {...Artifact~Reference} artifactRefs
+ * @param {...Artifact~References} artifactRefs
  */
 
 /**

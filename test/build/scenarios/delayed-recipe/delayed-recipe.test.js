@@ -30,7 +30,7 @@ function setup()
     })
 }
 
-describe("DelayedRecipe", async function() {
+describe("DelayedRecipe", function() {
 
     this.timeout(5000);
     setup();
@@ -45,17 +45,17 @@ describe("DelayedRecipe", async function() {
         const actual = d.artifactManager.get('actual.txt');
         const expected = d.artifactManager.get('expected.txt');
 
-        /** @type {(Job|null)} */
-        let job = null;
+        /** @type {(JobSet|null)} */
+        let jobs = null;
         async function runNewJob() {
-            await (job = await new Build(d.project.graph, db, d.artifactManager).getJobForArtifact(actual)).run();
-            return job;
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
         }
 
         let t = process.hrtime.bigint();
         await runNewJob();
         expect(Number(process.hrtime.bigint()-t)/1000000).to.not.be.lessThan(300);
-        expect(job.recipeInvoked).to.be.true;
+        expect(jobs.job.recipeInvoked).to.be.true;
         expect(await actual.exists).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
     });

@@ -27,6 +27,10 @@
 4) Late autotargets for rule R:
 
     - as in 3), except hoisting won't be possible
+   
+### `also` edges
+
+Artifacts nominated with the `also` nominator will have their build jobs enqueued for building in parallel with the build job for the current rule, and they will be awaited together. The order in which they will build in relation to the build job for the current rule will be determined by regular `depends` edges in the graph. At a higher level, autodependencies and autotargets can be implemented in such a way that processing the generated filelists into DB records will wait until the build job for the current rule is completed, but generating the filelists themselves may be done beforehand or in parallel.
 
 ### Artifact aliasing
 

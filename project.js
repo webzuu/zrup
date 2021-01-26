@@ -33,6 +33,7 @@ export const Project = class Project
         this.#graph = new Graph();
     }
 
+    /** @return {Graph} */
     get graph()
     {
         return this.#graph;

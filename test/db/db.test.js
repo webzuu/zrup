@@ -27,11 +27,11 @@ describe('Db async accessors', () => {
     });
 });
 
-describe('Db', () => {
+describe('Db', function () {
 
     t.setup();
 
-    it('records dependencies', async() => {
+    it('records dependencies', async function() {
         const ruleKey='whatever';
         expect(t.db.has('A')).to.be.false;
         t.db.record('A','B',ruleKey,'C','D');
