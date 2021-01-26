@@ -29,7 +29,6 @@ export const Build = class Build extends EventEmitter  {
             }
         }
         this.#built = {};
-        this.#whichRulesReliedOnArtifactVersion = {};
     }
 
     /**
@@ -155,20 +154,21 @@ export const Build = class Build extends EventEmitter  {
     /**
      *
      * @param {Job} job
+     * @param {Dependency[]} dependencies
+     * @param {Artifact[]} outputs
      * @return {Promise<void>}
      */
-    async recordVersionInfo(job)
+    async recordVersionInfo(job, dependencies,outputs)
     {
-        const outputInfos = await Promise.all([...job.outputs, ...job.dynamicOutputs].map(async output => ({
+        const outputInfos = await Promise.all(outputs.map(async output => ({
             output,
             version: await output.version
         })));
         const transaction = this.db.db.transaction(() => {
-            this.recordArtifacts(job);
+            this.recordArtifacts([...outputs, ...dependencies.map(_ => _.artifact)]);
             for (let info of outputInfos) {
-                this.db.retractTarget(info.output.key);
                 const outputVersion = info.version;
-                for (let dep of job.dependencies) {
+                for (let dep of dependencies) {
                     this.db.record(
                         info.output.key,
                         outputVersion,
@@ -183,14 +183,18 @@ export const Build = class Build extends EventEmitter  {
         transaction();
     }
 
-    /** @param {Job} job */
-    recordArtifacts(job)
+    async recordStandardVersionInfo(job)
     {
-        const artifacts = [
-            ...job.outputs,
-            ...job.dynamicOutputs,
-            ...job.dependencies.map(dep => dep.artifact)
-        ];
+        await this.recordVersionInfo(
+            job,
+            [...job.dependencies],
+            [...job.outputs,...job.dynamicOutputs]
+        );
+    }
+
+    /** @param {Artifact[]} artifacts */
+    recordArtifacts(artifacts)
+    {
         for (let artifact of artifacts) this.db.recordArtifact(
             artifact.key, artifact.type, artifact.identity
         );

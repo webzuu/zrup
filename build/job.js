@@ -44,6 +44,7 @@ export const Job = class Job  {
             new Dependency(this.recipeArtifact = RecipeArtifact.makeFor(this), Dependency.ABSENT_VIOLATION)
         ];
         this.recordedDependencies = [];
+        this.dependencyQueue = [];
     }
 
     async run()
@@ -85,10 +86,11 @@ export const Job = class Job  {
     {
         this.prepare();
         const spec = await this.recipeArtifact.spec;
-        await Promise.all(this.getMergedDependencies().map(async dependency => await this.ensureDependency(dependency)));
+        await this.ensureDependencies();
         if (!await this.build.isUpToDate(this)) {
             this.build.emit('invoking.recipe',this.rule);
             this.recipeInvoked = true;
+            this.build.db.retractRule(this.rule.key);
             try {
                 await this.rule.recipe.executeFor(this, spec);
             }
@@ -97,7 +99,17 @@ export const Job = class Job  {
             }
             this.build.emit('invoked.recipe',this.rule);
             await this.detectRewritesAfterUse();
-            await this.build.recordVersionInfo(this);
+            await this.build.recordStandardVersionInfo(this);
+        }
+    }
+
+    async ensureDependencies()
+    {
+        this.dependencyQueue = this.getMergedDependencies();
+        while(this.dependencyQueue.length) {
+            const dependencies = this.dependencyQueue;
+            this.dependencyQueue = [];
+            await Promise.all(dependencies.map(async dependency => await this.ensureDependency(dependency)));
         }
     }
 
@@ -244,6 +256,15 @@ export const Job = class Job  {
    artifactFromRecord(record)
    {
        return this.build.artifactManager.get(new AID(record.identity).withType(record.type));
+   }
+
+   get artifacts()
+   {
+       return [
+           ...this.outputs,
+           ...this.dynamicOutputs,
+           ...this.dependencies.map(_ => _.artifact)
+       ];
    }
 
    preCollectOutputs()

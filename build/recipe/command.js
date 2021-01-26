@@ -365,33 +365,41 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         const definer = (R) => {
 
             const descriptor = descriptorProvider(R);
-            return new CommandRecipe(C => {
-
-                CommandRecipe.#validateCommandDescriptorSchema(descriptor);
-                C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd.flat() : [descriptor.cmd]));
-                if ('args' in descriptor) {
-                    C.args(...(Array.isArray(descriptor.args) ? descriptor.args.flat() : [descriptor.args]))
-                }
-                if ('cwd' in descriptor) {
-                    let cwd = descriptor.cwd;
-                    if (Array.isArray(cwd)) {
-                        if (cwd.length !== 1) {
-                            //TODO: InvalidSpecification
-                            throw new Error("Invalid specification: cwd must be a single item")
-                        }
-                        cwd = cwd[0];
-                    }
-                    C.cwd(cwd.toString())
-                }
-                for (let key of ['out', 'err', 'combined']) {
-                    if (!(key in descriptor)) continue;
-                    for (let item of (Array.isArray(descriptor[key]) ? descriptor[key].flat() : [descriptor[key]])) {
-                        C[key](item);
-                    }
-                }
-            });
+            return CommandRecipe.fromSimpleDescriptor(descriptorProvider(R));
         };
         return definer;
+    }
+
+    /**
+     * @param {CommandRecipe~SimpleDescriptor} descriptor
+     */
+    static fromSimpleDescriptor(descriptor)
+    {
+        return new CommandRecipe(C => {
+
+            CommandRecipe.#validateCommandDescriptorSchema(descriptor);
+            C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd.flat() : [descriptor.cmd]));
+            if ('args' in descriptor) {
+                C.args(...(Array.isArray(descriptor.args) ? descriptor.args.flat() : [descriptor.args]))
+            }
+            if ('cwd' in descriptor) {
+                let cwd = descriptor.cwd;
+                if (Array.isArray(cwd)) {
+                    if (cwd.length !== 1) {
+                        //TODO: InvalidSpecification
+                        throw new Error("Invalid specification: cwd must be a single item")
+                    }
+                    cwd = cwd[0];
+                }
+                C.cwd(cwd.toString())
+            }
+            for (let key of ['out', 'err', 'combined']) {
+                if (!(key in descriptor)) continue;
+                for (let item of (Array.isArray(descriptor[key]) ? descriptor[key].flat() : [descriptor[key]])) {
+                    C[key](item);
+                }
+            }
+        });
     }
 
     static #validateCommandDescriptorSchema(descriptor)
@@ -456,7 +464,11 @@ function makeOutputSink(job, sink) {
         throw new OutputSinkIsArray();
     }
     if ('function'===typeof sink) {
-        return sink;
+        return (
+            sink.length > 1
+                ? function(chunk, ...rest) { sink(job, chunk, ...rest); }
+                : sink
+        );
     }
     if (sink instanceof FileArtifact) {
         return captureTo(resolve(sink.identity),job);

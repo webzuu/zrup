@@ -1,25 +1,19 @@
 import {Artifact} from "../artifact.js";
-import md5 from "md5";
+
+import hash from "object-hash";
 
 export const ArtifactList = class ArtifactList extends Artifact
 
 {
-    /**
-     * @type {Artifact[]}
-     */
+    /** @type {Artifact[]} */
     #items;
-    /**
-     * @type {string}
-     */
-    #identity;
 
     /**
      * @param {string} identity
      */
     constructor(identity)
     {
-        super();
-        this.#identity = identity;
+        super(identity);
         this.#items = [];
     }
 
@@ -28,17 +22,17 @@ export const ArtifactList = class ArtifactList extends Artifact
         return "artifact-list";
     }
 
-    get identity()
+    /** @return {Artifact[]} */
+    get items()
     {
-        return this.#identity;
+        return this.#items.slice();
     }
 
-    get items() { return this.#items; }
-
-    /**
-     * @param {Artifact[]} items
-     */
-    set items(items) { this.#items = items; }
+    /** @param {Artifact[]} items */
+    set items(items)
+    {
+        this.#items = items;
+    }
 
     get version()
     {
@@ -47,12 +41,14 @@ export const ArtifactList = class ArtifactList extends Artifact
 
     async #computeVersion()
     {
-        const itemVersions =
-            await Promise.all(this.#items
-                .slice()
-                .sort((lhs, rhs) => lhs.key.localeCompare(rhs.key))
-                .map(_ => (async () => [["key",_.key],["version",await _.version]])())
-            );
-        return md5(JSON.stringify(itemVersions));
+        const itemVersions = {};
+        await Promise.all(
+            this.items.map(async (_) => { itemVersions[_.key] = await _.version })
+        );
+        return hash.MD5(itemVersions);
+    }
+
+    get exists() {
+        return Promise.resolve(false);
     }
 }
