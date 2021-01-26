@@ -35,7 +35,7 @@ function setup()
     })
 }
 
-describe("CommandRecipe", async() => {
+describe("CommandRecipe", () => {
 
     setup();
 

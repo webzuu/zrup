@@ -99,7 +99,7 @@ export const Build = class Build extends EventEmitter  {
         const rule = this.graph.index.rule.key.get(ruleKey);
         await Promise.all(
             Object.values(rule.also || {}).map(
-                async artifact => jobSet.merge(await this.getJobSetForArtifact(artifact))
+                async rule => jobSet.merge(await this.getJobSetForRule(rule))
             )
         );
         return jobSet;

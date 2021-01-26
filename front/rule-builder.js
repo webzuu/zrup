@@ -7,7 +7,8 @@ import {reassemble} from "../util/tagged-template.js";
 
 /**
  * @callback RuleBuilder~definerAcceptor
- * @param {RuleBuilder~definer} definer
+ * @param {(string|RuleBuilder~definer)} nameOrDefiner
+ * @param {RuleBuilder~definer} [definerIfNameGiven]
  */
 
 /**
@@ -108,7 +109,7 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
 
     /**
      * @param {Module} module
-     * @param {RuleBuilder~definer|string} nameOrDefiner
+     * @param {(RuleBuilder~definer|string)} nameOrDefiner
      * @param {RuleBuilder~definer|undefined} [definerWhenNameGiven]
      */
     acceptDefiner(module, nameOrDefiner, definerWhenNameGiven)
@@ -258,30 +259,76 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
     }
 
     /**
-     *
      * @param {Rule} dependentRule
      * @param {string} prerequisiteRuleRef
      */
     addPrerequisiteRule(dependentRule, prerequisiteRuleRef)
     {
+        const prerequisiteRule = this.requireRule(
+            dependentRule,
+            prerequisiteRuleRef,
+            '{1} required as prerequisite for {2} was not found in the graph'
+        )
+        dependentRule.after[prerequisiteRule.key]=prerequisiteRule;
+    }
+
+
+    /**
+     * @param {Rule} inducingRule
+     * @param {string} inducedRuleRef
+     */
+    addAlsoRule(inducingRule, inducedRuleRef)
+    {
+        const inducedRule = this.requireRule(
+            inducingRule,
+            inducedRuleRef,
+            '{1} required as also-rule for {2} was not found in the graph'
+        );
+        inducingRule.addAlso(inducedRule);
+    }
+
+    /**
+     * @typedef RuleBuilder~LocateResult
+     * @extends {Object}
+     * @property {(Rule|null)} rule,
+     * @property {string} resolvedRef
+     */
+
+    /**
+     * @param {Rule} referentRule
+     * @param {string} anotherRuleRef
+     * @return {RuleBuilder~LocateResult}
+     */
+    locateRule(referentRule, anotherRuleRef)
+    {
         const parsedResolvedRef = Object.assign(
             {
-                module: dependentRule.module.name,
-                ref: (u=>u)()
+                module: referentRule.module.name,
+                ref: undefined
             },
-            AID.parse(prerequisiteRuleRef),
+            AID.parse(anotherRuleRef),
             {
                 type: "rule"
             }
         );
-        const resolvedRefString = AID.descriptorToString(parsedResolvedRef);
-        const prerequisiteRuleKey = Rule.computeKey(resolvedRefString);
-        const prerequisiteRule = this.project.graph.index.rule.key.get(prerequisiteRuleKey);
-        if (!prerequisiteRule) {
-            throw new Error(
-                `${resolvedRefString} required as prerequisite for ${dependentRule.identity} was not found in the graph`
-            );
+        const resolvedRef = AID.descriptorToString(parsedResolvedRef);
+        const ruleKey = Rule.computeKey(resolvedRef);
+        const rule = this.project.graph.index.rule.key.get(ruleKey) || null;
+        return {rule, resolvedRef};
+    }
+
+    /**
+     * @param {Rule} referentRule
+     * @param {string} anotherRuleRef
+     * @param {string} errorMessage
+     * @return {Rule}
+     */
+    requireRule(referentRule, anotherRuleRef, errorMessage)
+    {
+        const {rule, resolvedRef} = this.locateRule(referentRule, anotherRuleRef);
+        if (null === rule) {
+            throw new Error(errorMessage.replace('{requested}', resolvedRef).replace('{referring}', referentRule.identity));
         }
-        dependentRule.after[prerequisiteRuleKey]=prerequisiteRule;
+        return rule;
     }
 }

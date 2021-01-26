@@ -19,6 +19,7 @@
  * @property {RuleBuilder~ruleNominator} after
  * @property {CommandRecipe~simpleDescriptorBuilderAcceptor} to
  * @property {RuleBuilder~flagSetter} always
+ * @property {RuleBuilder~ruleNominator} also
  * @property {RuleBuilder~resolve} resolve
  */
 

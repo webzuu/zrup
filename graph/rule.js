@@ -135,11 +135,11 @@ export const Rule = class Rule  {
     }
 
     /**
-     * @param {Artifact} artifact
+     * @param {Rule} rule
      */
-    addAlso(artifact)
+    addAlso(rule)
     {
-        this.also[artifact.key] = artifact;
+        this.also[rule.key] = rule;
     }
 
     /**
