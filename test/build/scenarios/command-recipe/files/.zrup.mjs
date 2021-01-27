@@ -1,4 +1,4 @@
-import {CommandRecipe} from "../../../../../build/recipe/command.js";
+import {CommandRecipe} from "../../../../../src/build/recipe/command.js";
 
 /** @type {ModuleBuilder~definer} */
 const test = function test(R) {

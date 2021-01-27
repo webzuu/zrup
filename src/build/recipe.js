@@ -1,4 +1,5 @@
 import {UnimplementedAbstract} from "../error/unimplemented-abstract.js";
+import {Job} from "./job.js";
 import hash from "object-hash";
 
 export const Recipe = class Recipe

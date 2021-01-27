@@ -1,5 +1,6 @@
-export const Dependency = class Dependency
+import {Artifact} from "./artifact.js";
 
+export const Dependency = class Dependency
 {
     /** @type {Artifact} */
     #artifact;

@@ -3,7 +3,9 @@ import {BuildError} from "./error.js";
 import {Dependency} from "../graph/dependency.js";
 import {AID} from "../graph/artifact.js";
 import {Build} from "../build.js";
-import typeOf from "typeof--";
+import {FileArtifact} from "../graph/artifact/file.js";
+import {Artifact} from "../graph/artifact.js";
+import {JobSet} from "./job-set.js";
 
 /**
  * @property {Build} build
@@ -61,22 +63,26 @@ export const Job = class Job  {
     async #guardedWork() {
         try {
             await this.#work();
-            this.dependencies.push(
-                new Dependency(
-                    this.build.artifactManager.get(`recipe:${this.rule.module.name}+${this.rule.name}`),
-                    Dependency.ABSENT_STATE
-                )
-            );
+            this.finished = true;
+            await this.#also();
+            this.promise = null;
         }
         catch(e) {
             throw new BuildError(BuildError.formatRuleFailure(this.rule, e), e);
         }
         finally {
-            this.promise = null;
-            this.finished = true;
         }
         return this;
     }
+
+    async #also() {
+        const alsoJobSet = this.build.getAlsoJobSetForRuleKey(this.rule.key);
+        if (alsoJobSet.jobs.length > 0) {
+            await alsoJobSet.run();
+        }
+    }
+
+
 
     /**
      * The main build algorithm
@@ -86,7 +92,14 @@ export const Job = class Job  {
     {
         this.prepare();
         const spec = await this.recipeArtifact.spec;
-        await this.ensureDependencies();
+        await this.build.recordReliance(this.rule, this.recipeArtifact);
+        const jobSet = await this.#getPrerequisiteJobSet();
+        await jobSet.run();
+        const mergedDependencies = this.#getMergedDependencies();
+        await Promise.all(mergedDependencies.map(this.verifyBuiltDependency));
+        await Promise.all(mergedDependencies.map(
+            async dependency => await this.build.recordReliance(this.rule, dependency.artifact)
+        ));
         if (!await this.build.isUpToDate(this)) {
             this.build.emit('invoking.recipe',this.rule);
             this.recipeInvoked = true;
@@ -103,19 +116,68 @@ export const Job = class Job  {
         }
     }
 
-    async ensureDependencies()
+    verifyBuiltDependency = async dependency =>
     {
-        this.dependencyQueue = this.getMergedDependencies();
-        while(this.dependencyQueue.length) {
-            const dependencies = this.dependencyQueue;
-            this.dependencyQueue = [];
-            await Promise.all(dependencies.map(async dependency => await this.ensureDependency(dependency)));
+        const ruleKey = await this.build.getRuleKeyForArtifact(dependency.artifact);
+        const rule = ruleKey ? this.build.graph.index.rule.key.get(ruleKey) : null;
+        if (!(await dependency.artifact.exists)) {
+            if (rule) {
+                throw new BuildError(
+                    `${rule.identity} silently failed to build ${dependency.artifact.identity}`
+                )
+            }
+            else if (dependency.whenAbsent === Dependency.ABSENT_VIOLATION) {
+                throw new BuildError(
+                    `No rule to build required ${dependency.artifact.identity}`
+                );
+            }
         }
     }
 
-    getMergedDependencies() {
+    /**
+     * @returns {Promise<Object.<string,string>>}
+     */
+    async #getPrerequisiteRuleKeysToDependencyType() {
+        const result = {};
+
+        const mergedDeps = this.#getMergedDependencies();
+
+        const dependencyRuleKeys = (await Promise.all(
+            mergedDeps.map(async dep => await this.build.getRuleKeyForArtifact(dep.artifact))
+        )).filter(_ => null !== _);
+
+        const afterRuleKeys = Object.keys(this.rule.after || {});
+
+        for(let ruleKey of dependencyRuleKeys) result[ruleKey] = "dependency";
+        for(let ruleKey of afterRuleKeys) result[ruleKey] = "after"
+        return result;
+    }
+
+    /**
+     * @returns {Promise<JobSet>}
+     */
+    async #getPrerequisiteJobSet() {
+        let jobSet = new JobSet();
+        const ruleKeysToDependencyType = await this.#getPrerequisiteRuleKeysToDependencyType();
+        for(let ruleKey of Object.keys(ruleKeysToDependencyType)) {
+            jobSet = jobSet.union(
+                ruleKeysToDependencyType[ruleKey] === "dependency"
+                    ? this.build.getJobSetForRuleKey(ruleKey)
+                    : new JobSet(this.build.getJobForRuleKey(ruleKey))
+            );
+        }
+        return jobSet;//.difference(new JobSet(this));
+    }
+
+    /**
+     * @returns {Dependency[]}
+     */
+    #getMergedDependencies() {
         const merged = {};
-        for(let dep of [...this.recordedDependencies, ...this.dependencies]) {
+        for(let dep of [
+            ...this.recordedDependencies,
+            ...this.dependencies
+        ]) {
             const key = dep.artifact.key;
             if (merged.hasOwnProperty(key)) {
                 if (merged[key] === dep) {
@@ -193,38 +255,6 @@ export const Job = class Job  {
         return null;
     }
 
-    /**
-     * @param {Dependency} dependency
-     * @return {Promise<void>}
-     */
-    async ensureDependency(dependency)
-    {
-        const artifact = dependency.artifact;
-        /** @type {Job|null} */
-        const buildJob = await this.build.getJobSetForArtifact(artifact);
-        const rule = buildJob ? buildJob.rule : null;
-        if (buildJob) {
-            if (!buildJob.requestedBy) buildJob.requestedBy = this;
-            await buildJob.run(); //May throw, will be handled up the call chain
-        }
-        if (
-            dependency.whenAbsent === Dependency.ABSENT_VIOLATION
-            && !await artifact.exists
-        ) {
-            if (buildJob) {
-                throw new BuildError(
-                    `Rule "${rule.label}" silently failed to build required ${artifact.identity}`
-                );
-            }
-            else {
-                throw new BuildError(
-                    `No rule to build required ${artifact.identity}`
-                );
-            }
-        }
-        await this.build.recordReliance(this.rule, dependency.artifact);
-    }
-
     collectDependencies()
     {
         const
@@ -270,5 +300,60 @@ export const Job = class Job  {
    preCollectOutputs()
    {
        this.outputs = Object.values(this.rule.outputs);
+   }
+
+    /**
+     * @param {Artifact~Reference} ref
+     * @returns {Promise<Object[]>}
+     */
+   async readAutoDependenciesFile(ref)
+   {
+       return await Promise.all(
+           (await this.readVersionFileList(ref))
+               .map(async ([version, ref]) => ({
+                   version,
+                   dependency: new Dependency(this.build.artifactManager.get(ref), Dependency.ABSENT_STATE)
+               }))
+       );
+   }
+
+    /**
+     * @param {Artifact~Reference} ref
+     * @returns {Promise<Object[]>}
+     */
+   async readAutoOutputsFile(ref)
+   {
+       return await Promise.all(
+           (await this.readVersionFileList(ref))
+               .map(async ([version, ref]) => ({
+                   version,
+                   output: this.build.artifactManager.get(ref)
+               }))
+       );
+   }
+
+   async readVersionFileList(ref, artifactType="file")
+   {
+       const artifact = this.build.artifactManager.get(ref);
+       if (!(artifact instanceof FileArtifact)) {
+           throw new Error(`${ref} does not refer to a file artifact`);
+       }
+       // noinspection UnnecessaryLocalVariableJS
+       const debugResult = (
+           (await artifact.contents)
+               .trim()
+               .split("\n")
+               .map(_ => _.trim())
+               .filter(_ => _ !== '')
+               .map(_ => {
+                   let [version, ...ref] = _.split(' ');
+                   ref = ref.join(' ').trim();
+                   return [
+                       version,
+                       `${artifactType}:${this.rule.module.name}+${ref}`
+                   ];
+               })
+       );
+       return debugResult;
    }
 }

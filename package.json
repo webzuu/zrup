@@ -1,8 +1,8 @@
 {
   "name": "zrup",
-  "version": "0.8.3",
+  "version": "0.8.8",
   "description": "Build system experiment",
-  "main": "front/runner.js",
+  "main": "src/front/runner.js",
   "repository": "git@github.com:/rulatir/zrup.git",
   "author": "Szczepan Hołyszewski <rulatir@wp.pl>",
   "license": "MIT",
@@ -42,5 +42,6 @@
   "scripts": {
     "test": "mocha"
   },
-  "bin": "bin/zrup"
+  "bin": "bin/zrup",
+  "types": "dist/types.d.ts"
 }

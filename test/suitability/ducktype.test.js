@@ -1,8 +1,8 @@
-import {CommandRecipe} from "../../build/recipe/command.js";
-import {AID, Artifact} from "../../graph/artifact.js";
-import {FileArtifact} from "../../graph/artifact/file.js";
+import {CommandRecipe} from "../../src/build/recipe/command.js";
+import {AID, Artifact} from "../../src/graph/artifact.js";
+import {FileArtifact} from "../../src/graph/artifact/file.js";
 import ducktype from "ducktype";
-import {Dependency} from "../../graph/dependency.js";
+import {Dependency} from "../../src/graph/dependency.js";
 const DuckType = ducktype(Boolean).constructor;
 import chai from "chai";
 const {expect} = chai;

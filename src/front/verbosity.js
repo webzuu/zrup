@@ -1,3 +1,5 @@
+import {Build} from "../build.js";
+
 export const Verbosity = class Verbosity {
 
     /** @type {boolean} */

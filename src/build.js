@@ -4,6 +4,8 @@ import {Job} from "./build/job.js";
 import {BuildError} from "./build/error.js";
 import {Dependency} from "./graph/dependency.js";
 import EventEmitter from "events";
+import {Db} from "./db.js";
+import {Artifact,ArtifactManager} from "./graph/artifact.js";
 
 export const Build = class Build extends EventEmitter  {
 
@@ -55,7 +57,7 @@ export const Build = class Build extends EventEmitter  {
      */
     async getJobForArtifact(artifact)
     {
-        return this.getJobForRule(await this.getRuleForArtifact(artifact));
+        return this.getJobForRuleKey(await this.getRuleKeyForArtifact(artifact));
     }
 
     /**
@@ -64,14 +66,14 @@ export const Build = class Build extends EventEmitter  {
      */
     async getJobSetForArtifact(artifact)
     {
-        return await this.getJobSetForRule(await this.getRuleForArtifact(artifact));
+        return this.getJobSetForRuleKey(await this.getRuleKeyForArtifact(artifact));
     }
 
     /**
      * @param {string|null} ruleKey
      * @return {Job|null}
      */
-    getJobForRule(ruleKey)
+    getJobForRuleKey(ruleKey)
     {
         if (!ruleKey) return null;
         if (!this.index.rule.job.has(ruleKey)) {
@@ -87,21 +89,24 @@ export const Build = class Build extends EventEmitter  {
 
     /**
      * @param {string|null} ruleKey
-     * @return {Promise<JobSet | null>}
+     * @return {(JobSet | null)}
      */
-    async getJobSetForRule(ruleKey)
+    getJobSetForRuleKey(ruleKey)
     {
         if (!ruleKey) return null;
-        const mainJob = this.getJobForRule(ruleKey);
+        const mainJob = this.getJobForRuleKey(ruleKey);
         if (!mainJob) return null;
-        const jobSet = new JobSet();
-        jobSet.add(mainJob);
+        return new JobSet(mainJob);
+    }
+
+    getAlsoJobSetForRuleKey(ruleKey)
+    {
+        if (!ruleKey) return null;
         const rule = this.graph.index.rule.key.get(ruleKey);
-        await Promise.all(
-            Object.values(rule.also || {}).map(
-                async rule => jobSet.merge(await this.getJobSetForRule(rule))
-            )
-        );
+        let jobSet = new JobSet();
+        for (let alsoRule of Object.values(rule.also || {})) {
+            jobSet = jobSet.union(this.getJobSetForRuleKey(alsoRule.key));
+        }
         return jobSet;
     }
 
@@ -111,7 +116,7 @@ export const Build = class Build extends EventEmitter  {
      * @param {string|null|undefined} [version]
      * @return {Promise<string|null>}
      */
-    async getRuleForArtifact(artifact, version)
+    async getRuleKeyForArtifact(artifact, version)
     {
         if(false === artifact.caps.canBuild) return null
         //TODO: either utilize sqlite caching or centralize this through ArtifactManager
@@ -160,27 +165,42 @@ export const Build = class Build extends EventEmitter  {
      */
     async recordVersionInfo(job, dependencies,outputs)
     {
+        const depInfos = dependencies.map((dependency) => ({
+           dependency: dependency,
+            version: this.getVersionReliedOn(job.rule, dependency.artifact, true)
+        }));
         const outputInfos = await Promise.all(outputs.map(async output => ({
             output,
             version: await output.version
         })));
-        const transaction = this.db.db.transaction(() => {
-            this.recordArtifacts([...outputs, ...dependencies.map(_ => _.artifact)]);
-            for (let info of outputInfos) {
-                const outputVersion = info.version;
-                for (let dep of dependencies) {
+        const transaction = this.createRecordVersionInfoTransaction(outputInfos, depInfos, job);
+        transaction();
+    }
+
+    /**
+     * @param {{output: ZrupAPI.Artifact, version: string}[]} outputInfos
+     * @param {{dependency: Dependency, version: string}[]} depInfos
+     * @param {Job} job
+     */
+    createRecordVersionInfoTransaction(outputInfos, depInfos, job) {
+        return this.db.db.transaction(() => {
+            this.recordArtifacts([
+                ...outputInfos.map(_ => _.output),
+                ...depInfos.map(_ => _.dependency.artifact)
+            ]);
+            for (let outputInfo of outputInfos) {
+                const outputVersion = outputInfo.version;
+                for (let depInfo of depInfos) {
                     this.db.record(
-                        info.output.key,
+                        outputInfo.output.key,
                         outputVersion,
                         job.rule.key,
-                        dep.artifact.key,
-                        this.getVersionReliedOn(job.rule, dep.artifact, true)
+                        depInfo.dependency.artifact.key,
+                        depInfo.version
                     );
                 }
             }
         });
-        // noinspection JSValidateTypes
-        transaction();
     }
 
     async recordStandardVersionInfo(job)

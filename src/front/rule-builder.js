@@ -1,9 +1,10 @@
 import EventEmitter from "events";
 import {Rule} from "../graph/rule.js";
 import {Module, resolveArtifacts} from "../module.js";
-import {AID} from "../graph/artifact.js";
+import {AID, Artifact} from "../graph/artifact.js";
 import {Dependency} from "../graph/dependency.js";
 import {reassemble} from "../util/tagged-template.js";
+import {ArtifactManager} from "../graph/artifact.js";
 
 /**
  * @callback RuleBuilder~definerAcceptor
@@ -63,9 +64,8 @@ import {reassemble} from "../util/tagged-template.js";
  */
 
 
-/***/
+/** */
 export const RuleBuilder = class RuleBuilder extends EventEmitter
-
 {
     /** @type {Project} */
     #project;
@@ -76,8 +76,11 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
     /** @type {RuleBuilder~Declaration[]} */
     #declarations = [];
 
-    /** @type {{ [string]: string[]}} */
+    /** @type {Object.<string,string[]>} */
     #afterEdges = {};
+
+    /** @type {Object.<string,string[]>} */
+    #alsoEdges = {};
 
     /** @type {(Rule|null)} */
     #currentRule;
@@ -202,14 +205,20 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
         for(let ref of prerequisiteRuleRefs) this.emit('after', module, dependentRule, ref);
     }
 
+    /** @type {RuleBuilder~ruleNominator} */
+    also = (...peerRuleRefs) => {
+        const thisRule = this.requireCurrentRule('also'), module = thisRule.module;
+        this.#alsoEdges[thisRule.key] = (this.#afterEdges[thisRule.key] || []).concat(peerRuleRefs);
+        for(let ref of peerRuleRefs) this.emit('also', module, thisRule, ref);
+    }
+
+
+    /** @type {RuleBuilder~flagSetter} */
     always = (value) => {
         this.requireCurrentRule('always').always = false !== value;
     }
 
-    /**
-     * @param {Artifact~Resolvables} items
-     * @return [string]
-     */
+    /** @type {RuleBuilder~resolve} */
     resolve = (...items) => {
         const rule = this.requireCurrentRule('resolve'), module = rule.module;
         return resolveArtifacts(this.#artifactManager, module, false, ...items);
@@ -232,6 +241,14 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
 
     finalize()
     {
+        this.#defineRules();
+        this.#indexRules();
+        this.#addRuleEdges(this.#afterEdges, 'addPrerequisiteRule');
+        this.#addRuleEdges(this.#alsoEdges, 'addAlsoRule');
+    }
+
+    #defineRules()
+    {
         for(let {rule, boundDefiner, module} of this.#declarations) {
             this.emit('defining.rule',module,rule);
             this.#currentRule = rule;
@@ -243,17 +260,30 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
                 this.#currentRule = null;
             }
         }
+    }
+
+    #indexRules()
+    {
         for(let {rule} of this.#declarations) {
             this.project.graph.indexRule(rule);
         }
-        for(let ruleKey in this.#afterEdges) {
-            const dependentRule = this.project.graph.index.rule.key.get(ruleKey);
-            if (!dependentRule) {
+    }
+
+    /**
+     *
+     * @param {Object.<string,string[]>} graphlet
+     * @param edgeAdderFunctionName
+     */
+    #addRuleEdges(graphlet, edgeAdderFunctionName)
+    {
+        for(let ruleKey of Object.getOwnPropertyNames(graphlet)) {
+            const thisRule = this.project.graph.index.rule.key.get(ruleKey);
+            if (!thisRule) {
                 //TODO: throw something meaningful instead of ignoring silently, this shouldn't happen!
                 continue;
             }
-            for(let prerequisiteRuleRef of this.#afterEdges[ruleKey]) {
-                this.addPrerequisiteRule(dependentRule, prerequisiteRuleRef)
+            for(let otherRuleRef of graphlet[ruleKey]) {
+                this[edgeAdderFunctionName](thisRule, otherRuleRef);
             }
         }
     }

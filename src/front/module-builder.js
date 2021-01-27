@@ -10,7 +10,7 @@
  */
 
 /**
- * @typedef {Object.<string,*>} ModuleBuilder~DefinerParams
+ * @typedef ModuleBuilder~DefinerParams
  * @property {Module} module
  * @property {ModuleBuilder~includeNominator} include
  * @property {RuleBuilder~definerAcceptor} rule
@@ -21,6 +21,7 @@
  * @property {RuleBuilder~flagSetter} always
  * @property {RuleBuilder~ruleNominator} also
  * @property {RuleBuilder~resolve} resolve
+ * @property {ZrupAPI} API
  */
 
 /**
@@ -46,6 +47,7 @@ import * as path from "path";
  */
 
 import EventEmitter from "events";
+import {ZrupAPI} from "./zrup.js";
 
 let self;
 export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
@@ -96,14 +98,19 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
     {
         return {
             module,
+            /** @type {ModuleBuilder~includeNominator} */
             include: this.includeMany.bind(this, module),
+            /** @type {RuleBuilder~definerAcceptor} */
             rule: this.#ruleBuilder.bindDefinerAcceptor(module),
             depends: this.#ruleBuilder.depends,
             produces: this.#ruleBuilder.produces,
             after: this.#ruleBuilder.after,
+            /** @type {CommandRecipe~simpleDescriptorBuilderAcceptor} */
             to: CommandRecipe.to.bind(null, this.#ruleBuilder, module),
             always: this.#ruleBuilder.always,
-            resolve: this.#ruleBuilder.resolve
+            resolve: this.#ruleBuilder.resolve,
+            also: this.#ruleBuilder.also,
+            API: new ZrupAPI()
         };
     }
 

@@ -1,4 +1,4 @@
-import {AID, Artifact, ArtifactFactory, ArtifactResolver} from "../artifact.js";
+import {AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver} from "../artifact.js";
 import md5File from "md5-file";
 import fs from "fs";
 const fsp = fs.promises;

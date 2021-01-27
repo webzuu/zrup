@@ -1,10 +1,17 @@
 import findUp from "find-up";
 import fs from "fs/promises";
-import {RecipeArtifactFactory} from "../graph/artifact/recipe.js";
+import {JobSet} from "../build/job-set.js";
+import {Job} from "../build/job.js";
+import {NopRecipe, Recipe} from "../build/recipe.js";
+import {CommandRecipe} from "../build/recipe/command.js";
+import {DelayedRecipe} from "../build/recipe/delayed.js";
+import {WrapperRecipe} from "../build/recipe/wrapper.js";
+import {MockArtifact, MockFileFactory} from "../graph/artifact/mock.js";
+import {RecipeArtifact, RecipeArtifactFactory, RecipeArtifactResolver} from "../graph/artifact/recipe.js";
 import {Project} from "../project.js";
 import {Db} from "../db.js";
-import {ArtifactManager} from "../graph/artifact.js";
-import {FileArtifactFactory} from "../graph/artifact/file.js";
+import {AID, Artifact, ArtifactFactory, ArtifactManager} from "../graph/artifact.js";
+import {FileArtifact, FileArtifactFactory, FileArtifactResolver} from "../graph/artifact/file.js";
 import {RuleBuilder} from "./rule-builder.js";
 import {ModuleBuilder} from "./module-builder.js";
 import path from "path";
@@ -174,3 +181,35 @@ export const Zrup = class Zrup
     }
 }
 
+export class ZrupAPI
+{
+    Artifact = Artifact;
+        AID = AID;
+        FileArtifact = FileArtifact;
+        RecipeArtifact = RecipeArtifact;
+        MockArtifact = MockArtifact
+
+    ArtifactManager = ArtifactManager;
+
+    ArtifactFactory = ArtifactFactory;
+        FileArtifactFactory = FileArtifactFactory;
+            FileArtifactResolver = FileArtifactResolver;
+        RecipeArtifactFactory = RecipeArtifactFactory;
+            RecipeArtifactResolver = RecipeArtifactResolver;
+        MockFileFactory = MockFileFactory;
+
+    Db = Db;
+
+    Build = Build;
+        Job = Job;
+        JobSet = JobSet;
+        Recipe = Recipe;
+            NopRecipe = NopRecipe;
+            CommandRecipe = CommandRecipe;
+            WrapperRecipe = WrapperRecipe;
+            DelayedRecipe = DelayedRecipe;
+
+    ModuleBuilder = ModuleBuilder;
+    RuleBuilder = RuleBuilder;
+    Zrup = Zrup;
+}

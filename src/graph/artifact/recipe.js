@@ -1,4 +1,4 @@
-import {AID, Artifact, ArtifactFactory, ArtifactResolver} from "../artifact.js";
+import {AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver} from "../artifact.js";
 import {Rule} from "../rule.js";
 
 export const RecipeArtifact = class RecipeArtifact extends Artifact

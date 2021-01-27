@@ -1,5 +1,5 @@
 import fsPath from "path";
-import {AID, Artifact} from "./graph/artifact.js";
+import {AID, Artifact, ArtifactManager} from "./graph/artifact.js";
 import {Dependency} from "./graph/dependency.js";
 
 export const Module = class Module
