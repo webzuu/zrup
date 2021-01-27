@@ -177,7 +177,12 @@ export const Zrup = class Zrup
      */
     static async locateRoot(cwd)
     {
-        return path.dirname(await findUp('.zrup.json', {cwd, type: 'file'}));
+        const foundUp = await findUp('.zrup.json', {cwd, type: 'file'});
+        if (!foundUp) {
+            console.error(`Couldn't locate .zrup.json in current working directory or its parents`);
+            process.exit(1);
+        }
+        return path.dirname(foundUp);
     }
 }
 

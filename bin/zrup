@@ -2,5 +2,5 @@
 
 HERE="$(dirname "$(readlink -f "$0")")"
 #HERE="$( cd "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
-RUNNER="$( realpath "${HERE}"/../front/runner.js )"
+RUNNER="$( realpath "${HERE}"/../src/front/runner.js )"
 node "${RUNNER}" "$@"
