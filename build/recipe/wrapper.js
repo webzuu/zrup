@@ -20,8 +20,24 @@
  * @property {WrapperRecipe~parachronousCallback} [after]
  */
 
+/**
+ * @typedef {WrapperRecipe~Parameters} WrapperRecipe~Spec
+ * @property {Object} recipeSpec
+ * @property {string} recipeHash
+ */
+
+/**
+ * @typedef {Object.<string,string>} WrapperRecipe~SpecDescription
+ * @property {string} recipe
+ * @property {string} before
+ * @property {string} around
+ * @property {string} after
+ */
+
+/***/
 import {NopRecipe, Recipe} from "../recipe.js";
 
+/***/
 export const WrapperRecipe = class WrapperRecipe extends Recipe
 
 {
@@ -45,25 +61,36 @@ export const WrapperRecipe = class WrapperRecipe extends Recipe
         if (!this.#params.recipe) this.#params.recipe = new NopRecipe();
     }
 
+    /**
+     * @param {Job} job
+     * @return {Promise<WrapperRecipe~Spec>}
+     */
     async concretizeSpecFor(job) {
-        const descriptor = {};
-        descriptor.recipeSpec = await this.#params.recipe.concretizeSpecFor(job);
-        descriptor.recipeHash = await this.#params.recipe.hashSpec(descriptor.recipeSpec);
-        return Object.assign({},this.#params,descriptor);
+        const spec = {};
+        spec.recipeSpec = await this.#params.recipe.concretizeSpecFor(job);
+        spec.recipeHash = await this.#params.recipe.hashSpec(spec.recipeSpec);
+        return {
+            ...this.#params,
+            ...spec
+        }
     }
 
-    describeSpec(state) {
+    /**
+     * @param {WrapperRecipe~Spec} spec
+     * @return {WrapperRecipe~SpecDescription}
+     */
+    describeSpec(spec) {
         return {
-            recipe: state.recipeHash,
-            before: state.before.descriptor || state.before.toString(),
-            around: state.around.descriptor || state.around.toString(),
-            after: state.after.descriptor || state.after.toString()
+            recipe: spec.recipeHash,
+            before: spec.before.descriptor || spec.before.toString(),
+            around: spec.around.descriptor || spec.around.toString(),
+            after: spec.after.descriptor || spec.after.toString()
         }
     }
 
     /**
      * @param {Job} job
-     * @param {WrapperRecipe~Parameters} spec
+     * @param {WrapperRecipe~Spec} spec
      * @return {Promise<void>}
      */
     async executeFor(job, spec) {
