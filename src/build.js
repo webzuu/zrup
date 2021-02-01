@@ -119,7 +119,6 @@ export const Build = class Build extends EventEmitter  {
     async getRuleKeyForArtifact(artifact, version)
     {
         if(false === artifact.caps.canBuild) return null
-        //TODO: either utilize sqlite caching or centralize this through ArtifactManager
         const key = artifact.key;
         let ruleKey = this.graph.index.output.rule.get(key);
         if (ruleKey) return ruleKey;

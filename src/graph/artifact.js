@@ -219,7 +219,6 @@ export const AID = class AID
 
 /***/
 export const ArtifactManager = class ArtifactManager
-
 {
     #index = {
         factory: {

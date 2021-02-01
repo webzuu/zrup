@@ -382,7 +382,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
                 let cwd = descriptor.cwd;
                 if (Array.isArray(cwd)) {
                     if (cwd.length !== 1) {
-                        //TODO: InvalidSpecification
+                        //TODO: throw InvalidSpecification
                         throw new Error("Invalid specification: cwd must be a single item")
                     }
                     cwd = cwd[0];
