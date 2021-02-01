@@ -1,5 +1,3 @@
-import fs from "fs";
-const fsp = fs.promises;
 import chai from "chai";
 const expect = chai.expect;
 
@@ -233,7 +231,7 @@ describe("Build", () => {
     });
 
     it("always rebuilds a target of an always-rule", async() => {
-        let {pk,g,db,target,source,makeTarget,rule,build} = simple();
+        let {pk,target,source,rule,build} = simple();
         rule.always = true;
         answers(pk,{
             [target.key]: [false],

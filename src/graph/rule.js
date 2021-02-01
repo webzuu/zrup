@@ -2,6 +2,7 @@ import md5 from "md5";
 import {Module} from "../module.js";
 import {Dependency} from "./dependency.js";
 import {Artifact} from "./artifact.js";
+import {Recipe} from "../build/recipe.js";
 
 /**
  * @callback BuilderCallback
