@@ -12,8 +12,6 @@ import {Module} from "../src/module.js";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 import {mkdir as fsMkDir}  from "fs/promises";
-import {FileArtifactFactory} from "../src/graph/artifact/file.js";
-import {ArtifactManager} from "../src/graph/artifact.js";
 
 async function mkdir(path) {
     await fsMkDir(path, { mode: 0o755, recursive: true });

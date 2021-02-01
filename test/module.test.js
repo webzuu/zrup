@@ -1,4 +1,3 @@
-import {Project} from "../src/project.js";
 import {fileURLToPath} from "url";
 import path, {dirname} from "path";
 
@@ -11,11 +10,6 @@ import {ModuleTesting} from "../src/util/testing.js";
 import {Module} from "../src/module.js";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
-import {mkdir as fsMkDir}  from "fs/promises";
-
-async function mkdir(path) {
-    await fsMkDir(path, { mode: 0o755, recursive: true });
-}
 
 const t = new ModuleTesting(path.join(__dirname, '../tmp'));
 
