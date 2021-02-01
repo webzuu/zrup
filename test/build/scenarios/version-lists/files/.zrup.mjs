@@ -50,7 +50,7 @@ const test = function test(M) {
 
     rule(
         'build-record',
-        (R) => {
+        () => {
             after('out-state');
             const [stamp] = produces('internal:stamp')
             return new WrapperRecipe({
