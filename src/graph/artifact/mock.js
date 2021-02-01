@@ -65,7 +65,6 @@ export const MockArtifact = class MockArtifact extends Artifact
 }
 
 export const MockFileFactory = class MockFileFactory extends ArtifactFactory
-
 {
     /** @type {Project} */
     #project

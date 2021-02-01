@@ -21,7 +21,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS artifact_type_identity ON artifacts(artifact_t
 
 CREATE TRIGGER IF NOT EXISTS multiple_generating_rules_check BEFORE INSERT ON states
 BEGIN
-    SELECT RAISE(FAIL, "only one rule can create a particular version of a target")
+    SELECT RAISE(FAIL, 'only one rule can create a particular version of a target')
     FROM states
     WHERE target = NEW.target
     AND target_version = NEW.target_version

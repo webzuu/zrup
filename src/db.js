@@ -24,18 +24,12 @@ function openDb(filename)
     catch(e) {
         throw e;
     }
-    ensureSchema(db);
-    db.exec("PRAGMA journal_mode = MEMORY");
-    db.exec("PRAGMA synchronous = OFF");
+    db.exec(fsi.readFileSync(path.join(__dirname, 'sql/schema.sql'), 'utf-8'));
+    db.exec("PRAGMA journal_mode = MEMORY; PRAGMA synchronous = OFF;");
     return db;
 }
 
-function ensureSchema(db)
-{
-    db.exec(fsi.readFileSync(path.join(__dirname, 'sql/schema.sql'),'utf-8'));
-}
-
-const sql = {
+const queries = {
     has:
         'SELECT COUNT(*) AS c FROM states WHERE target = @target',
     hasVersion:
@@ -45,10 +39,11 @@ const sql = {
     listVersionSources:
         'SELECT source, source_version AS version FROM states WHERE target = @target AND target_version = @version',
     record:
-        'INSERT INTO states (target, target_version, rule, source, source_version)'
-        + ' VALUES (@target, @targetVersion, @rule, @source, @sourceVersion)'
-        + ' ON CONFLICT(target,target_version,source) DO'
-        + ' UPDATE SET source_version = @sourceVersion',
+        `
+        INSERT INTO states (target, target_version, rule, source, source_version)
+        VALUES (@target, @targetVersion, @rule, @source, @sourceVersion)
+        ON CONFLICT(target,target_version,source) DO UPDATE SET source_version = @sourceVersion
+        `,
     retract:
         'DELETE FROM states WHERE target = @target AND target_version = @version',
     retractTarget:
@@ -56,29 +51,35 @@ const sql = {
     retractRule:
         'DELETE FROM states WHERE rule = @rule',
     listRuleSources:
-        'SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity' +
-        ' FROM states' +
-        ' INNER JOIN artifacts' +
-        ' ON artifacts.key = states.source' +
-        ' WHERE states.rule = @rule',
+        `
+        SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity
+        FROM states
+            INNER JOIN artifacts ON artifacts.key = states.source
+        WHERE states.rule = @rule
+        `,
     listRuleTargets:
-        'SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity' +
-        ' FROM states' +
-        ' INNER JOIN artifacts' +
-        ' ON artifacts.key = states.target' +
-        ' WHERE states.rule = @rule',
+        `
+        SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity
+        FROM states
+            INNER JOIN artifacts ON artifacts.key = states.target
+        WHERE states.rule = @rule
+        `,
     getProducingRule:
         `SELECT DISTINCT rule FROM states WHERE target=@target AND target_version=@version`,
     recordArtifact:
-        'INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)'
-        + ' VALUES (@key, @type, @identity)',
+        `
+        INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)
+        VALUES (@key, @type, @identity)
+        `,
     getArtifact:
         'SELECT key, artifact_type AS type, identity FROM artifacts WHERE key = @key',
     pruneArtifacts:
-        'DELETE FROM artifacts'
-        +' WHERE NOT EXISTS ('
-        +'    SELECT 1 FROM states WHERE states.source = artifacts.key OR states.target = artifacts.key'
-        +' )'
+        `
+        DELETE FROM artifacts
+        WHERE NOT EXISTS (
+            SELECT 1 FROM states WHERE states.source = artifacts.key OR states.target = artifacts.key
+        )
+        `
 }
 
 class Statements
@@ -95,13 +96,13 @@ class Statements
     }
 }
 
-for (let queryName of Object.getOwnPropertyNames(sql)) {
+for (let queryName of Object.getOwnPropertyNames(queries)) {
     Object.defineProperty(Statements.prototype, queryName, {
         get: function() {
             // noinspection JSUnresolvedVariable
             return (
                 this.__db[queryName]
-                || (this.__prepared[queryName] = this.__db.prepare(sql[queryName])
+                || (this.__prepared[queryName] = this.__db.prepare(queries[queryName])
                 )
             );
         }
