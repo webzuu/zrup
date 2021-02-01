@@ -44,7 +44,7 @@ const test = function test(R) {
     });
 
     rule(function viaTemplateString() {
-        const [[output], [input1, input2]] = [
+        const [[output], [input1]] = [
             produces('viaTemplateString.txt'),
             depends('src/input1.txt', 'src/input2.txt')
         ];
@@ -108,7 +108,7 @@ const test = function test(R) {
         always();
         const [target] = produces('internal:foo/bar/handle-always.txt');
 
-        return new CommandRecipe(({shell, out,always}) => {
+        return new CommandRecipe(({shell, out}) => {
             out(target);
             shell("echo whatevs");
         })
