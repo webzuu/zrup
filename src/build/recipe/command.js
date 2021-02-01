@@ -122,8 +122,6 @@ import recursive, {dictionary} from "../../util/ducktype.js";
 import {reassemble} from "../../util/tagged-template.js";
 import {Recipe} from "../recipe.js";
 
-const DuckType = ducktype(Boolean).constructor;
-
 /***/
 export const CommandError = class CommandError extends Error
 
@@ -363,8 +361,6 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         // noinspection UnnecessaryLocalVariableJS
         /** @type {RuleBuilder~definer} */
         const definer = (R) => {
-
-            const descriptor = descriptorProvider(R);
             return CommandRecipe.fromSimpleDescriptor(descriptorProvider(R));
         };
         return definer;

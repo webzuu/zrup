@@ -142,6 +142,8 @@ export const Job = class Job  {
 
         const mergedDeps = this.#getMergedDependencies();
 
+        // https://youtrack.jetbrains.com/issue/WEB-49389
+        // noinspection JSIncompatibleTypesComparison
         const dependencyRuleKeys = (await Promise.all(
             mergedDeps.map(async dep => await this.build.getRuleKeyForArtifact(dep.artifact))
         )).filter(_ => null !== _);
@@ -149,7 +151,7 @@ export const Job = class Job  {
         const afterRuleKeys = Object.keys(this.rule.after || {});
 
         for(let ruleKey of dependencyRuleKeys) result[ruleKey] = "dependency";
-        for(let ruleKey of afterRuleKeys) result[ruleKey] = "after"
+        for(let ruleKey of afterRuleKeys) result[ruleKey] = "after";
         return result;
     }
 
@@ -166,7 +168,7 @@ export const Job = class Job  {
                     : new JobSet(this.build.getJobForRuleKey(ruleKey))
             );
         }
-        return jobSet;//.difference(new JobSet(this));
+        return jobSet;
     }
 
     /**

@@ -113,8 +113,8 @@ export const Build = class Build extends EventEmitter  {
     /**
      *
      * @param {Artifact} artifact
-     * @param {string|null|undefined} [version]
-     * @return {Promise<string|null>}
+     * @param {(string|null|undefined)} [version]
+     * @return {Promise<(string|null)>}
      */
     async getRuleKeyForArtifact(artifact, version)
     {

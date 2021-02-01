@@ -36,6 +36,7 @@
 
 /***/
 import {NopRecipe, Recipe} from "../recipe.js";
+import {Job} from "../job.js";
 
 /***/
 export const WrapperRecipe = class WrapperRecipe extends Recipe
