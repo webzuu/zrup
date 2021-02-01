@@ -1,6 +1,4 @@
 import chai from "chai";
-import asserttype from 'chai-asserttype';
-chai.use(asserttype);
 const expect = chai.expect;
 import {AID, ArtifactManager} from "../../src/graph/artifact.js";
 import {Project} from "../../src/project.js";

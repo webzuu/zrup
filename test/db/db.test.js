@@ -1,8 +1,6 @@
 import fs from "fs";
 const fsp = fs.promises;
 import chai from "chai";
-import asserttype from 'chai-asserttype';
-chai.use(asserttype);
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -50,7 +48,7 @@ describe('Db', function () {
         t.db.record('A','B',ruleKey,'X','Y');
         t.db.record('A','C',ruleKey,'X','Z');
         const answer = t.db.listVersions('A');
-        expect(answer).to.be.array();
+        expect(answer).to.be.an('array');
         expect(answer.map(_ => _.version).sort()).to.deep.equal(['B','C']);
     });
 
@@ -60,10 +58,10 @@ describe('Db', function () {
         t.db.record('A','B',ruleKey,'X','Y');
         t.db.record('A','C',ruleKey,'X','Z');
         let answer = t.db.listVersionSources('A','B');
-        expect(answer).to.be.array();
+        expect(answer).to.be.an('array');
         expect(answer.sort((l,r) => l.source.localeCompare(r.source)).map(_ => _.version)).to.deep.equal(['V','Y']);
         answer = t.db.listVersionSources('A','C');
-        expect(answer).to.be.array();
+        expect(answer).to.be.an('array');
         expect(answer.sort((l,r) => l.source.localeCompare(r.source)).map(_ => _.version)).to.deep.equal(['Z']);
     });
 
@@ -153,10 +151,10 @@ describe('Db', function () {
         t.db.recordArtifact("baz","file","baz.h");
         t.db.recordArtifact("gee","file","gee.js");
         t.db.getArtifact("gee");
-        expect(t.db.getArtifact("gee")).to.be.object;
+        expect(t.db.getArtifact("gee")).to.be.an('object');
         t.db.pruneArtifacts();
         expect(t.db.getArtifact("gee")).to.be.null;
-        expect(t.db.getArtifact("foo")).to.be.object;
+        expect(t.db.getArtifact("foo")).to.be.an('object');
     });
 
     it("lists rule sources", () => {
@@ -171,7 +169,7 @@ describe('Db', function () {
         t.db.recordArtifact("BAR","file","bar.c");
         /** @type {object[]} */
         const sources = t.db.listRuleSources(ruleKey);
-        expect(sources).to.be.array();
+        expect(sources).to.be.an('array');
         expect(sources.length).to.equal(2);
         sources.sort((a, b) => a.key.localeCompare(b.key));
         expect(sources[0].key).to.equal("BAR");
@@ -190,7 +188,7 @@ describe('Db', function () {
         t.db.recordArtifact("BAR","file","bar.c");
         /** @type {object[]} */
         const targets = t.db.listRuleTargets(ruleKey);
-        expect(targets).to.be.array();
+        expect(targets).to.be.an('array');
         expect(targets.length).to.equal(2);
         targets.sort((a, b) => a.key.localeCompare(b.key));
         expect(targets[0].key).to.equal("I");

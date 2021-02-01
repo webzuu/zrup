@@ -19,8 +19,7 @@ import {ArtifactManager} from "../graph/artifact.js";
  */
 
 /**
- * @typedef RuleBuilder~DefinerParams
- * @type {object}
+ * @typedef {Object.<string,*>} RuleBuilder~DefinerParams
  * @property {Rule} rule
  * @property {RuleBuilder~artifactNominator} depends
  * @property {RuleBuilder~artifactNominator} produces

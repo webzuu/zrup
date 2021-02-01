@@ -1,9 +1,7 @@
 import chai from "chai";
-import asserttype from 'chai-asserttype';
 import {MockArtifact} from "../../../src/graph/artifact/mock.js";
 import {PromiseKeeper} from "../../../src/util/promise-keeper.js";
 import path from "path";
-chai.use(asserttype);
 const expect = chai.expect;
 
 

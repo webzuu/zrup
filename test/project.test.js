@@ -6,8 +6,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 import chai from "chai";
-import asserttype from 'chai-asserttype';
-chai.use(asserttype);
 import chaiAsPromised from "chai-as-promised";
 import {TempDir} from "../src/util/testing.js";
 import {Module} from "../src/module.js";

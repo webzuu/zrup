@@ -1,6 +1,4 @@
 import chai from "chai";
-import asserttype from 'chai-asserttype';
-chai.use(asserttype);
 const expect = chai.expect;
 
 import {MockArtifact} from "../../../src/graph/artifact/mock.js";
@@ -20,10 +18,10 @@ describe("Artifact list", () => {
         const list = new ArtifactList("baz");
         list.items = [foo,bar];
         const version1 = await list.version;
-        expect(version1).to.be.string();
+        expect(version1).to.be.a('string');
         pk.set(foo.key,"version","999999");
         const version2 = await list.version;
-        expect(version2).to.be.string();
+        expect(version2).to.be.a('string');
         expect(version2).to.not.equal(version1);
         list.items = [bar,foo];
         expect(await list.version).to.equal(version2);

@@ -1,8 +1,6 @@
 import fs from "fs";
 const fsp = fs.promises;
 import chai from "chai";
-import asserttype from 'chai-asserttype';
-chai.use(asserttype);
 const expect = chai.expect;
 
 import path from "path";
@@ -16,7 +14,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 import { DbTesting } from "../../src/util/testing.js";
-import { Graph } from "../../src/graph.js";
 import { PromiseKeeper } from "../../src/util/promise-keeper.js";
 import { Recipe } from "../../src/build/recipe.js";
 import md5 from "md5";
@@ -27,7 +24,6 @@ import { Dependency } from "../../src/graph/dependency.js";
 import {Project} from "../../src/project.js";
 import {Artifact, ArtifactManager} from "../../src/graph/artifact.js";
 import {Module} from "../../src/module.js";
-import {FileArtifactFactory} from "../../src/graph/artifact/file.js";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 
@@ -112,9 +108,9 @@ describe("Build", () => {
         const {pk,g,target,source,makeTarget,rule,build} = simple();
         (pk.about(target.key,"exists").resolve)(false);
         const versionInfo = await build.getRecordedVersionInfo(target);
-        expect(versionInfo).to.be.object();
+        expect(versionInfo).to.be.an('object');
         expect(versionInfo.version).to.be.null;
-        expect(versionInfo.sourceVersions).to.be.object();
+        expect(versionInfo.sourceVersions).to.be.an('object');
         expect(versionInfo.sourceVersions).to.be.empty;
     });
 
@@ -125,9 +121,9 @@ describe("Build", () => {
             [target.key]: [true,"142857"]
         });
         const versionInfo = await build.getRecordedVersionInfo(target);
-        expect(versionInfo).to.be.object();
+        expect(versionInfo).to.be.an('object');
         expect(versionInfo.version).to.equal("142857");
-        expect(versionInfo.sourceVersions).to.be.object();
+        expect(versionInfo.sourceVersions).to.be.an('object');
         expect(versionInfo.sourceVersions).to.be.empty;
     });
 
@@ -140,9 +136,9 @@ describe("Build", () => {
         });
         await t.db.record(target.key, await target.version, rule.key, source.key, await source.version);
         const versionInfo = await build.getRecordedVersionInfo(target);
-        expect(versionInfo).to.be.object();
+        expect(versionInfo).to.be.an('object');
         expect(versionInfo.version).to.equal("857142");
-        expect(versionInfo.sourceVersions).to.be.object();
+        expect(versionInfo.sourceVersions).to.be.an('object');
         expect(versionInfo.sourceVersions[source.key]).to.equal("142857");
     });
 
@@ -154,14 +150,14 @@ describe("Build", () => {
             [target.key]: [true,"857142"]
         });
         const versionInfo = await build.getActualVersionInfo(Object.values(rule.dependencies));
-        expect(versionInfo).to.be.object();
+        expect(versionInfo).to.be.an('object');
     });
 
     it("gets build job for target", async () => {
         // noinspection JSUnusedLocalSymbols
         const {pk,g,target,source,makeTarget,rule,build} = simple();
         const jobSet = await build.getJobSetForArtifact(target);
-        expect(jobSet).to.be.object();
+        expect(jobSet).to.be.an('object');
         const job = jobSet.jobs[0];
         expect(job.build).to.equal(build);
         expect(job.rule).to.equal(rule);
@@ -264,7 +260,7 @@ describe("Build", () => {
             [source.key]: [false]
         });
         const versionInfo = await build.getActualVersionInfo(Object.values(rule.dependencies));
-        expect(versionInfo).to.be.object();
+        expect(versionInfo).to.be.an('object');
     })
 
     it("reports nonexistent target from nonexistent source as not up to date", async ()=> {

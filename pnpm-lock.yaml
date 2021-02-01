@@ -22,7 +22,6 @@ dependencies:
 devDependencies:
   chai: 4.2.0
   chai-as-promised: 7.1.1_chai@4.2.0
-  chai-asserttype: 1.0.5
   mocha: 8.2.1
   recursive-copy: 2.0.11
   webpack: 5.15.0_webpack-cli@4.3.1
@@ -470,14 +469,6 @@ packages:
       chai: '>= 2.1.2 < 5'
     resolution:
       integrity: sha512-azL6xMoi+uxu6z4rhWQ1jbdUhOMhis2PvscD/xjLqNMkv3BPPp2JyyuTHOrf9BOosGpNQ11v6BKv/g57RXbiaA==
-  /chai-asserttype/1.0.5:
-    dependencies:
-      check-types: 7.4.0
-    dev: true
-    engines:
-      node: '>=0.10'
-    resolution:
-      integrity: sha1-sAl9supm6yGYlNFGPDmBijGRkNw=
   /chai/4.2.0:
     dependencies:
       assertion-error: 1.1.0
@@ -518,10 +509,6 @@ packages:
     dev: true
     resolution:
       integrity: sha1-V00xLt2Iu13YkS6Sht1sCu1KrII=
-  /check-types/7.4.0:
-    dev: true
-    resolution:
-      integrity: sha512-YbulWHdfP99UfZ73NcUDlNJhEIDgm9Doq9GhpyXbF+7Aegi3CVV7qqMCKTTqJxlvEvnQBp9IA+dxsGN6xK/nSg==
   /chokidar/3.4.3:
     dependencies:
       anymatch: 3.1.1
@@ -2402,7 +2389,6 @@ specifiers:
   better-sqlite3: ^7.1.2
   chai: ^4.2.0
   chai-as-promised: ^7.1.1
-  chai-asserttype: ^1.0.5
   commander: ^6.2.1
   ducktype: ^1.2.2
   execa: ^5.0.0

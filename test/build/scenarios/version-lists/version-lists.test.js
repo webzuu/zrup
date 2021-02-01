@@ -9,8 +9,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import chai from "chai";
 const expect = chai.expect;
-import chaiAssertType from "chai-asserttype";
-chai.use(chaiAssertType);
 import {ModuleBuilder} from "../../../../src/front/module-builder.js";
 import {Build} from "../../../../src/build.js";
 import {Db} from "../../../../src/db.js";
@@ -72,7 +70,7 @@ describe('Version list idiom', function() {
         expect(await actual.out_list.contents).to.equal(await expected.out_list.contents);
         expect(await actual.out_state.contents).to.equal(await expected.out_state.contents);
         const versions = db.listVersions(am.get('dist/delta/gamma.txt').key);
-        expect(versions).to.be.array();
+        expect(versions).to.be.an('array');
         expect(versions.length).to.equal(3);
     })
 })

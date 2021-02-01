@@ -1,7 +1,5 @@
 import chai from "chai";
-import asserttype from 'chai-asserttype';
 import {PromiseKeeper} from "../../src/util/promise-keeper.js";
-chai.use(asserttype);
 const expect = chai.expect;
 
 function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }

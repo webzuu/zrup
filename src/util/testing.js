@@ -194,15 +194,14 @@ export const ProjectTesting = class ProjectTesting
     };
 }
 
-export const DummyRecipe = class DummyRecipe extends Recipe
-
+export class DummyRecipe extends Recipe
 {
     async executeFor(job,spec) {
         return undefined;
     }
 
-    async resolveSpecFor(job) {
-        return {};
+    async concretizeSpecFor(job) {
+        return Promise.resolve({});
     }
 }
 
