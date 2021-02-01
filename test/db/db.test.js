@@ -1,5 +1,4 @@
 import fs from "fs";
-const fsp = fs.promises;
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
@@ -11,7 +10,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import {DbTesting, TempDir} from "../../src/util/testing.js";
+import {DbTesting} from "../../src/util/testing.js";
 
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 
