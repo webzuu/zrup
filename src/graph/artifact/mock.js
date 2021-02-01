@@ -1,6 +1,5 @@
 import {AID, Artifact, ArtifactManager, ArtifactFactory} from "../artifact.js";
 import {PromiseKeeper} from "../../util/promise-keeper.js";
-import * as path from "path";
 import {FileArtifactFactory, FileArtifactResolver} from "./file.js";
 
 export const MockArtifact = class MockArtifact extends Artifact
