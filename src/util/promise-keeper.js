@@ -45,6 +45,11 @@ export const PromiseKeeper = class PromiseKeeper  {
         this.init(key, topic, value);
     }
 
+    /**
+     * @param {string} key
+     * @param {string} topic
+     * @return {(PromiseKeeper~Descriptor|null)}
+     */
     #retrieve(key, topic)
     {
         if(!(key in this.#descriptors)) return null;

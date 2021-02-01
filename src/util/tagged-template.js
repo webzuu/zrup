@@ -19,8 +19,13 @@ export function stringifyUsing(variableCallback, variable)
 }
 
 /**
+ * @typedef {string[]} StringArrayWithRaws
+ * @property {string[]} raw
+ */
+
+/**
  * @param {templateVariableCallback} variableCallback
- * @param {(string[] & {raw: string[]})} strings
+ * @param {StringArrayWithRaws} strings
  * @param {...*} variables
  */
 export function reassemble(variableCallback, strings, ...variables)
