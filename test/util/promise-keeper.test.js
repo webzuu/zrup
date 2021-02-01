@@ -2,8 +2,6 @@ import chai from "chai";
 import {PromiseKeeper} from "../../src/util/promise-keeper.js";
 const expect = chai.expect;
 
-function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-
 describe("PromiseKeeper",() => {
 
     it("does not duplicate promises", () => {
