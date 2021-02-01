@@ -178,7 +178,7 @@ export const Build = class Build extends EventEmitter  {
     }
 
     /**
-     * @param {{output: ZrupAPI.Artifact, version: string}[]} outputInfos
+     * @param {{output: Artifact, version: string}[]} outputInfos
      * @param {{dependency: Dependency, version: string}[]} depInfos
      * @param {Job} job
      */

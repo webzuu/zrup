@@ -1,5 +1,4 @@
 import Database from "better-sqlite3";
-const {Statement} = Database;
 import sleep from "simple-async-sleep";
 import fsi from "fs";
 import path from "path";
