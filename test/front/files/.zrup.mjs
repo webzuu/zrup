@@ -1,4 +1,4 @@
 export default function
-root({include,rule}) {
+root({include}) {
     include('submodule');
 }

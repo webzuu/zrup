@@ -5,6 +5,7 @@ import {AID, Artifact} from "../graph/artifact.js";
 import {Dependency} from "../graph/dependency.js";
 import {reassemble} from "../util/tagged-template.js";
 import {ArtifactManager} from "../graph/artifact.js";
+import {Recipe} from "../build/recipe.js";
 
 /**
  * @callback RuleBuilder~definerAcceptor

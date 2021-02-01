@@ -10,7 +10,7 @@
  */
 
 /**
- * @typedef ModuleBuilder~DefinerParams
+ * @typedef {Object.<string,*>} ModuleBuilder~DefinerParams
  * @property {Module} module
  * @property {ModuleBuilder~includeNominator} include
  * @property {RuleBuilder~definerAcceptor} rule
