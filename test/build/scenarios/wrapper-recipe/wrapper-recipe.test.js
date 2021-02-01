@@ -12,8 +12,6 @@ const expect = chai.expect;
 import {ModuleBuilder} from "../../../../src/front/module-builder.js";
 import {Build} from "../../../../src/build.js";
 import {Db} from "../../../../src/db.js";
-import * as fs from "fs";
-import {Artifact} from "../../../../src/graph/artifact.js";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
 
