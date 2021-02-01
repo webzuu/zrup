@@ -1,4 +1,7 @@
 import {Build} from "../build.js";
+import {RuleBuilder} from "./rule-builder.js";
+import {ArtifactManager} from "../graph/artifact.js";
+import {ModuleBuilder} from "./module-builder.js";
 
 export const Verbosity = class Verbosity {
 
@@ -50,6 +53,7 @@ export const Verbosity = class Verbosity {
             build.on('capturing.output',(job, outputFilePath) => {
                 console.log(`${job.rule.module.name}+${job.rule.name}: > ${outputFilePath}`);
             });
+            // noinspection JSUnusedLocalSymbols
             build.on('spawning.command', (job, rawExec, args, child) =>{
                 console.log(`${job.rule.module.name}+${job.rule.name}: spawning ${rawExec} ${[args].flat().join(' ')}`)
             });

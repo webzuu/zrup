@@ -1,11 +1,12 @@
-import EventEmitter from "events";
 import {Rule} from "../graph/rule.js";
 import {Module, resolveArtifacts} from "../module.js";
 import {AID, Artifact} from "../graph/artifact.js";
 import {Dependency} from "../graph/dependency.js";
 import {reassemble} from "../util/tagged-template.js";
+
 import {ArtifactManager} from "../graph/artifact.js";
 import {Recipe} from "../build/recipe.js";
+import EventEmitter from "events";
 
 /**
  * @callback RuleBuilder~definerAcceptor
@@ -27,7 +28,6 @@ import {Recipe} from "../build/recipe.js";
  * @property {RuleBuilder~ruleNominator} after
  * @property {RuleBuilder~flagSetter} always
  * @property {templateStringTag} T
- *
  */
 
 /**
@@ -63,9 +63,16 @@ import {Recipe} from "../build/recipe.js";
  * @return [string]
  */
 
+/**
+ * @typedef RuleBuilder~LocateResult
+ * @extends {Object}
+ * @property {(Rule|null)} rule,
+ * @property {string} resolvedRef
+ */
 
-/** */
-export const RuleBuilder = class RuleBuilder extends EventEmitter
+/***/
+let self;
+export const RuleBuilder = self = class RuleBuilder extends EventEmitter
 {
     /** @type {Project} */
     #project;
@@ -200,18 +207,29 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
     /** @type {RuleBuilder~ruleNominator} */
     after = (...prerequisiteRuleRefs) =>
     {
-        const dependentRule = this.requireCurrentRule('after'), module = dependentRule.module;
-        this.#afterEdges[dependentRule.key] = (this.#afterEdges[dependentRule.key] || []).concat(prerequisiteRuleRefs);
-        for(let ref of prerequisiteRuleRefs) this.emit('after', module, dependentRule, ref);
+        this.#declareRuleEdges(this.#afterEdges, 'after', ...prerequisiteRuleRefs);
     }
 
     /** @type {RuleBuilder~ruleNominator} */
-    also = (...peerRuleRefs) => {
-        const thisRule = this.requireCurrentRule('also'), module = thisRule.module;
-        this.#alsoEdges[thisRule.key] = (this.#afterEdges[thisRule.key] || []).concat(peerRuleRefs);
-        for(let ref of peerRuleRefs) this.emit('also', module, thisRule, ref);
+    also = (...peerRuleRefs) =>
+    {
+        this.#declareRuleEdges(this.#alsoEdges, 'also', ...peerRuleRefs);
     }
 
+    /**
+     * @param {Object.<string,string[]>} dictionary
+     * @param {string} edgeKind
+     * @param {...string} ruleRefs
+     */
+    #declareRuleEdges(dictionary, edgeKind, ...ruleRefs)
+    {
+        const ruleFrom = this.requireCurrentRule(edgeKind), module = ruleFrom.module;
+        dictionary[ruleFrom.key] = [
+            ...(dictionary[ruleFrom.key] || []),
+            ...ruleRefs
+        ]
+        for(let ref of ruleRefs) this.emit(edgeKind, module, ruleFrom, ref);
+    }
 
     /** @type {RuleBuilder~flagSetter} */
     always = (value) => {
@@ -316,13 +334,6 @@ export const RuleBuilder = class RuleBuilder extends EventEmitter
         );
         inducingRule.addAlso(inducedRule);
     }
-
-    /**
-     * @typedef RuleBuilder~LocateResult
-     * @extends {Object}
-     * @property {(Rule|null)} rule,
-     * @property {string} resolvedRef
-     */
 
     /**
      * @param {Rule} referentRule

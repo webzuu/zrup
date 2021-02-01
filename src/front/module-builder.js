@@ -46,8 +46,10 @@ import * as path from "path";
  * @property {ModuleBuilder~definer} definer
  */
 
-import EventEmitter from "events";
+/***/
+//import EventEmitter from "events";
 import {ZrupAPI} from "./zrup.js";
+import EventEmitter from "events";
 
 let self;
 export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
