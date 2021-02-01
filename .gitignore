@@ -112,3 +112,4 @@ web_modules/
 .pnp.*
 
 /.idea
+/data

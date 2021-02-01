@@ -4,6 +4,12 @@ import fsi from "fs";
 import path from "path";
 import {performance} from "perf_hooks"
 
+import {fileURLToPath} from 'url';
+import {dirname} from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 /**
  * @param {string} filename
  * @return {Database}
@@ -26,38 +32,7 @@ function openDb(filename)
 
 function ensureSchema(db)
 {
-    db.exec(
-        `CREATE TABLE IF NOT EXISTS states (
-            target CHAR(32),
-            target_version CHAR(32),
-            rule CHAR(32),
-            source CHAR(32),
-            source_version CHAR(32)
-        )`
-    );
-    db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS target_version_source ON states(target, target_version, source)`);
-    db.exec(`CREATE INDEX IF NOT EXISTS source ON states(source)`)
-    db.exec(`CREATE INDEX IF NOT EXISTS target ON states(target)`)
-    db.exec(`CREATE INDEX IF NOT EXISTS rule ON states(rule)`);
-    db.exec(
-        `CREATE TABLE IF NOT EXISTS artifacts (
-            key CHAR(32) PRIMARY KEY,
-            artifact_type VARCHAR(96),
-            identity VARCHAR(1024)
-        )`
-    );
-    db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS artifact_type_identity ON artifacts(artifact_type, identity)`);
-    db.exec(
-        'CREATE TRIGGER IF NOT EXISTS multiple_generating_rules_check ' +
-        'BEFORE INSERT ON states ' +
-        'BEGIN\n' +
-        '    SELECT RAISE(FAIL, "only one rule can create a particular version of a target")\n' +
-        '    FROM states\n' +
-        '    WHERE target = NEW.target\n' +
-        '        AND target_version = NEW.target_version\n' +
-        '        AND rule != NEW.rule;\n' +
-        'END\n'
-    );
+    db.exec(fsi.readFileSync(path.join(__dirname, 'sql/schema.sql'),'utf-8'));
 }
 
 const sql = {
