@@ -124,6 +124,7 @@ export const FileArtifactResolver = class FileArtifactResolver extends ArtifactR
      * @return {AID}
      */
     normalize(aid) {
+        aid = super.normalize(aid);
         const {statedModule, closestModule} = this.resolveModule(aid);
         if (!closestModule) {
             throw new Error(`Could not find module responsible for "${aid}"`);
@@ -131,7 +132,7 @@ export const FileArtifactResolver = class FileArtifactResolver extends ArtifactR
         if (closestModule !== statedModule) {
             //TODO: warn about artifact aliasing
             const absolutePath = pathUtils.resolve(statedModule.absolutePath, aid.ref);
-            const relativeToClosest = pathUtils.relative(absolutePath, closestModule.absolutePath)
+            const relativeToClosest = pathUtils.relative(closestModule.absolutePath, absolutePath)
             return aid.withModule(closestModule.name).withRef(relativeToClosest);
         }
         return aid.withModule(closestModule.name).withType(this.type);

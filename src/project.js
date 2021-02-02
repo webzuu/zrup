@@ -41,6 +41,7 @@ export const Project = class Project
 
     /**
      * @param {Module} module
+     * @return {Module}
      */
     addModule(module)
     {

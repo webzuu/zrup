@@ -1,7 +1,7 @@
 import pathUtils from "path";
 import {Project} from "../../../src/project.js";
 import {FileArtifact, FileArtifactFactory} from "../../../src/graph/artifact/file.js";
-import {ArtifactManager} from "../../../src/graph/artifact.js";
+import {AID, ArtifactManager} from "../../../src/graph/artifact.js";
 import {Module} from "../../../src/module.js";
 import {TempDir} from "../../../src/util/testing.js";
 
@@ -113,3 +113,22 @@ describe('FileArtifactFactory', ()=>{
         )
     });
 });
+
+describe("FileArtifactResolver", () => {
+    it ('resolves artifacts to closest module', async () => {
+
+        const
+            root = tmpDir.toString(),
+            prj = new Project(root),
+            rootModule = Module.createRoot(prj, 'zuu'),
+            images = prj.addModule(new Module(rootModule, 'images')),
+            openresty = prj.addModule(new Module(images, 'openresty', 'images_openresty')),
+            cloud = prj.addModule(new Module(openresty, 'cloud', 'openresty_cloud')),
+            am = new ArtifactManager(),
+            ff = new FileArtifactFactory(am, prj);
+
+        expect(ff.resolver.normalize(new AID('images/openresty/cloud/pconv.jsxn')).toString())
+            .to.equal('file:openresty_cloud+pconv.jsxn');
+
+    });
+})
