@@ -149,7 +149,7 @@ export const Build = class Build extends EventEmitter  {
     /**
      * @param {Artifact} artifact
      * @param {(string|null|undefined)} [version]
-     * @return {Promise<JobSet>}
+     * @return {Promise<string>}
      */
     async requireRuleKeyForArtifact(artifact, version)
     {
@@ -290,7 +290,7 @@ export const Build = class Build extends EventEmitter  {
         const [recordedSourceVersionsByOutput, actualSourceVersions] = await Promise.all([
             Promise.all(allOutputs.map(this.getRecordedVersionInfo.bind(this))),
             this.getActualVersionInfo(job.dependencies)
-        ])
+        ]);
         const actualSourceKeys = Object.getOwnPropertyNames(actualSourceVersions).sort();
         const actualSourceKeyHash = md5(JSON.stringify(actualSourceKeys));
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {

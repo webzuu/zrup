@@ -18,6 +18,7 @@ import path from "path";
 import {Build} from "../build.js";
 import * as util from "util";
 import {Verbosity} from "./verbosity.js";
+import {resolveArtifacts} from "../module.js";
 
 /**
  * @typedef {Object.<string,*>} Zrup~Config
@@ -219,4 +220,5 @@ export class ZrupAPI
     ModuleBuilder = ModuleBuilder;
     RuleBuilder = RuleBuilder;
     Zrup = Zrup;
+    resolveArtifacts = resolveArtifacts;
 }
