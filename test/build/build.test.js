@@ -97,7 +97,7 @@ function answers(pk, answers)
     }
 }
 
-describe("Build", () => {
+describe("Build", function () {
 
     t.setup();
 

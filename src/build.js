@@ -5,7 +5,7 @@ import {BuildError} from "./build/error.js";
 import {Dependency} from "./graph/dependency.js";
 import EventEmitter from "events";
 import {Db} from "./db.js";
-import {Artifact,ArtifactManager} from "./graph/artifact.js";
+import {AID, Artifact, ArtifactManager} from "./graph/artifact.js";
 
 export const Build = class Build extends EventEmitter  {
 
@@ -280,12 +280,15 @@ export const Build = class Build extends EventEmitter  {
         const rule = job.rule;
         if (rule.always) return false;
         const outputs = job.outputs;
+        let outputRecords = this.db.listRuleTargets(rule.key);
+        const recordedOutputs = outputRecords.map(output => this.artifactManager.get(output.identity));
+        const allOutputs = [...new Set([...outputs, ...recordedOutputs]).values()];
         const allOutputsExist =
-            (await Promise.all(outputs.map(artifact => artifact.exists)))
+            (await Promise.all(allOutputs.map(artifact => artifact.exists)))
                 .reduce((previous, current) => previous && current, true);
         if (!allOutputsExist) return false;
         const [recordedSourceVersionsByOutput, actualSourceVersions] = await Promise.all([
-            Promise.all(outputs.map(this.getRecordedVersionInfo.bind(this))),
+            Promise.all(allOutputs.map(this.getRecordedVersionInfo.bind(this))),
             this.getActualVersionInfo(job.dependencies)
         ])
         const actualSourceKeys = Object.getOwnPropertyNames(actualSourceVersions).sort();
