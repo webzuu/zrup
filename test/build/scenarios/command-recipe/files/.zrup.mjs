@@ -1,9 +1,9 @@
 import {CommandRecipe} from "../../../../../src/build/recipe/command.js";
 
 /** @type {ModuleBuilder~definer} */
-const test = function test(R) {
+const test = function test(M) {
 
-    const {rule, produces, depends, always} = R;
+    const {rule, produces, depends, always, to} = M;
 
     rule(function fromEmpty() {
 
@@ -113,6 +113,11 @@ const test = function test(R) {
             shell("echo whatevs");
         })
     })
+
+    to(
+        'from-simple-descriptor',
+        ({T}) => T`echo "success" > ${produces('actual-simple.txt')}`
+    );
 
 };
 

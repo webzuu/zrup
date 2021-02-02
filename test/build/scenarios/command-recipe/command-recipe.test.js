@@ -212,4 +212,24 @@ describe("CommandRecipe", () => {
         expect((await runNewJob()).job.recipeInvoked).to.be.true;
         expect((await runNewJob()).job.recipeInvoked).to.be.true;
     });
+
+    it('accepts a string as command-only simple descriptor', async() => {
+        const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+
+        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
+        ruleBuilder.finalize();
+
+        const
+            expected = d.artifactManager.get('expected-simple.txt'),
+            actual = d.artifactManager.get('actual-simple.txt');
+
+        let jobs = null;
+        async function runNewJob() {
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            return jobs;
+        }
+
+        await runNewJob();
+        expect(await actual.version).to.equal(await expected.version);
+    });
 })

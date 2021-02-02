@@ -101,7 +101,7 @@
 /**
  * @callback CommandRecipe~simpleDescriptorBuilderAcceptor
  * @param {string} ruleName
- * @param {CommandRecipe~simpleDescriptorBuilder} descriptorProvider
+ * @param {(CommandRecipe~simpleDescriptorBuilder|string)} descriptorProvider
  */
 
 /**
@@ -361,16 +361,35 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         // noinspection UnnecessaryLocalVariableJS
         /** @type {RuleBuilder~definer} */
         const definer = (R) => {
-            return CommandRecipe.fromSimpleDescriptor(descriptorProvider(R));
+            return CommandRecipe.fromSimpleDescriptor(self.#redeemDescriptorProvider(R,descriptorProvider));
         };
         return definer;
     }
 
     /**
-     * @param {CommandRecipe~SimpleDescriptor} descriptor
+     * @param {RuleBuilder~DefinerParams} R
+     * @param {(CommandRecipe~simpleDescriptorBuilder)|string} provider
+     * @return CommandRecipe~SimpleDescriptor
+     */
+    static #redeemDescriptorProvider(R,provider)
+    {
+        if ('string' === typeof provider) {
+            return {
+                cmd: provider
+            };
+        }
+        else if ('function' === typeof provider) {
+            return provider(R);
+        }
+        throw new Error("Invalid provider of command recipe descriptor");
+    }
+
+    /**
+     * @param {(CommandRecipe~SimpleDescriptor|string)} descriptor
      */
     static fromSimpleDescriptor(descriptor)
     {
+        descriptor = 'string' === typeof descriptor ? { cmd: descriptor } : descriptor;
         return new CommandRecipe(C => {
 
             CommandRecipe.#validateCommandDescriptorSchema(descriptor);
@@ -410,7 +429,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         const sink = ducktype(itemType, Function);
         const sinks = recursive(sinks => ducktype(sink, [sinks]));
         const opt = { optional: true };
-        return ducktype(
+        const descriptorValidator = ducktype(
             {
                 cmd: items,
                 args: ducktype(items, opt),
@@ -421,6 +440,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
                 combined: ducktype(sinks, opt)
             }
         )
+        return ducktype(descriptorValidator, String);
     }
 }
 
