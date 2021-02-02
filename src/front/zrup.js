@@ -19,6 +19,7 @@ import {Build} from "../build.js";
 import * as util from "util";
 import {Verbosity} from "./verbosity.js";
 import {resolveArtifacts} from "../module.js";
+import {Rule} from "../graph/rule.js";
 
 /**
  * @typedef {Object.<string,*>} Zrup~Config
@@ -211,6 +212,7 @@ export class ZrupAPI
     Build = Build;
         Job = Job;
         JobSet = JobSet;
+        Rule = Rule;
         Recipe = Recipe;
             NopRecipe = NopRecipe;
             CommandRecipe = CommandRecipe;
