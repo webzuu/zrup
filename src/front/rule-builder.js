@@ -57,11 +57,6 @@ import EventEmitter from "events";
  * @property {RuleBuilder~boundDefiner} boundDefiner
  */
 
-/**
- * @callback RuleBuilder~resolve
- * @param {Artifact~Resolvables} items
- * @return [string]
- */
 
 /**
  * @typedef RuleBuilder~LocateResult
@@ -103,9 +98,16 @@ export const RuleBuilder = self = class RuleBuilder extends EventEmitter
         this.#artifactManager = artifactManager;
     }
 
+    /** @return {Project} */
     get project()
     {
         return this.#project;
+    }
+
+    /** @return {ArtifactManager} */
+    get artifactManager()
+    {
+        return this.#artifactManager
     }
 
     /**
@@ -165,14 +167,15 @@ export const RuleBuilder = self = class RuleBuilder extends EventEmitter
      */
     #bindDefinerArgs(module, rule)
     {
+        const resolve = resolveArtifacts.bind(null, this.artifactManager, module, false);
         return {
             rule,
             depends: this.depends,
             produces: this.produces,
             after: this.after,
             always: this.always,
-            resolve: this.resolve,
-            T: reassemble.bind(null, this.resolve)
+            resolve: resolve,
+            T: reassemble.bind(null, resolve)
         }
     }
 
@@ -234,12 +237,6 @@ export const RuleBuilder = self = class RuleBuilder extends EventEmitter
     /** @type {RuleBuilder~flagSetter} */
     always = (value) => {
         this.requireCurrentRule('always').always = false !== value;
-    }
-
-    /** @type {RuleBuilder~resolve} */
-    resolve = (...items) => {
-        const rule = this.requireCurrentRule('resolve'), module = rule.module;
-        return resolveArtifacts(this.#artifactManager, module, false, ...items);
     }
 
     /**

@@ -20,19 +20,15 @@
  * @property {CommandRecipe~simpleDescriptorBuilderAcceptor} to
  * @property {RuleBuilder~flagSetter} always
  * @property {RuleBuilder~ruleNominator} also
- * @property {RuleBuilder~resolve} resolve
+ * @property {ModuleBuilder~resolve} resolve
  * @property {ZrupAPI} API
  */
 
 /**
  * @callback ModuleBuilder~resolve
- * @param {string}
+ * @param {Artifact~Resolvables} items
+ * @return [string]
  */
-
-/***/
-import {CommandRecipe} from "../build/recipe/command.js";
-import {Module} from "../module.js";
-import * as path from "path";
 
 /**
  * @callback ModuleBuilder~includeNominator
@@ -47,7 +43,9 @@ import * as path from "path";
  */
 
 /***/
-//import EventEmitter from "events";
+import {CommandRecipe} from "../build/recipe/command.js";
+import {Module, resolveArtifacts} from "../module.js";
+import * as path from "path";
 import {ZrupAPI} from "./zrup.js";
 import EventEmitter from "events";
 
@@ -110,7 +108,7 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
             /** @type {CommandRecipe~simpleDescriptorBuilderAcceptor} */
             to: CommandRecipe.to.bind(null, this.#ruleBuilder, module),
             always: this.#ruleBuilder.always,
-            resolve: this.#ruleBuilder.resolve,
+            resolve: resolveArtifacts.bind(null, this.#ruleBuilder.artifactManager, module, false),
             also: this.#ruleBuilder.also,
             API: new ZrupAPI()
         };
