@@ -121,7 +121,9 @@ export const Zrup = class Zrup
             console.log("Resolving artifacts");
             const requestedArtifacts = this.#request.goals.map(ref => this.#artifactManager.get(ref));
             console.log("Creating top level build jobs");
-            const jobSetsPromise = Promise.all(requestedArtifacts.map(async artifact => await build.getJobSetForArtifact(artifact)));
+            const jobSetsPromise = Promise.all(
+                requestedArtifacts.map(async artifact => await build.getJobSetForArtifact(artifact,true))
+            );
             console.log("Running build jobs");
             const jobSets = await jobSetsPromise;
             const runs = jobSets.map(async jobSet => await jobSet.run());

@@ -35,38 +35,54 @@ export const Build = class Build extends EventEmitter  {
 
     /**
      * @param {Dependency} dependency
+     * @param {boolean} [require]
      * @return {Promise<Job>}
      */
-    async getJobFor(dependency)
+    async getJobFor(dependency,require = false)
     {
-        return await this.getJobForArtifact(dependency.artifact);
+        return await this.getJobForArtifact(dependency.artifact, require);
     }
 
     /**
      * @param {Dependency} dependency
+     * @param {boolean} [require]
      * @return {Promise<(JobSet|null)>}
      */
-    async getJobSetFor(dependency)
+    async getJobSetFor(dependency, require=false)
     {
-        return await this.getJobSetForArtifact(dependency.artifact);
+        return await this.getJobSetForArtifact(dependency.artifact,require);
     }
 
     /**
      * @param {Artifact} artifact
+     * @param {boolean} [require]
      * @return {Promise<Job|null>}
      */
-    async getJobForArtifact(artifact)
+    async getJobForArtifact(artifact,require=false)
     {
-        return this.getJobForRuleKey(await this.getRuleKeyForArtifact(artifact));
+        return this.getJobForRuleKey(
+            await (
+                true === require
+                    ? this.requireRuleKeyForArtifact(artifact)
+                    : this.getRuleKeyForArtifact(artifact)
+            )
+        );
     }
 
     /**
      * @param {Artifact} artifact
+     * @param {boolean} [require]
      * @return {Promise<(JobSet|null)>}
      */
-    async getJobSetForArtifact(artifact)
+    async getJobSetForArtifact(artifact, require = false)
     {
-        return this.getJobSetForRuleKey(await this.getRuleKeyForArtifact(artifact));
+        return this.getJobSetForRuleKey(
+            await (
+                true === require
+                    ? this.requireRuleKeyForArtifact(artifact)
+                    : this.getRuleKeyForArtifact(artifact)
+            )
+        );
     }
 
     /**
@@ -111,7 +127,6 @@ export const Build = class Build extends EventEmitter  {
     }
 
     /**
-     *
      * @param {Artifact} artifact
      * @param {(string|null|undefined)} [version]
      * @return {Promise<(string|null)>}
@@ -129,6 +144,22 @@ export const Build = class Build extends EventEmitter  {
         }
         if (ruleKey) return ruleKey;
         return null;
+    }
+
+    /**
+     * @param {Artifact} artifact
+     * @param {(string|null|undefined)} [version]
+     * @return {Promise<JobSet>}
+     */
+    async requireRuleKeyForArtifact(artifact, version)
+    {
+        const ruleKey = await this.getRuleKeyForArtifact(artifact, version);
+        if (null===ruleKey) {
+            throw new BuildError(
+                `No rule to build requested ${artifact.identity}`
+            );
+        }
+        return ruleKey;
     }
 
     /**

@@ -6,6 +6,7 @@ import {Build} from "../build.js";
 import {FileArtifact} from "../graph/artifact/file.js";
 import {Artifact} from "../graph/artifact.js";
 import {JobSet} from "./job-set.js";
+import {resolveArtifacts} from "../module.js";
 
 /**
  * @property {Build} build
@@ -336,10 +337,19 @@ export const Job = class Job  {
 
    async readVersionFileList(ref, artifactType="file")
    {
-       const artifact = this.build.artifactManager.get(ref);
-       if (!(artifact instanceof FileArtifact)) {
+       const resolveResult = resolveArtifacts(
+           this.build.artifactManager,
+           this.rule.module,
+           false,
+           ref
+       );
+       if (
+           resolveResult.length < 1
+           || !(resolveResult[0].artifact instanceof FileArtifact)
+       ) {
            throw new Error(`${ref} does not refer to a file artifact`);
        }
+       const artifact = resolveResult[0].artifact;
        // noinspection UnnecessaryLocalVariableJS
        const debugResult = (
            (await artifact.contents)
