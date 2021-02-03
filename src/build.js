@@ -258,12 +258,15 @@ export const Build = class Build extends EventEmitter  {
     async getActualVersionInfo(dependencies)
     {
         const actualSourceVersions = {};
+        const unique = {};
+        for(let dependency of dependencies) unique[dependency.artifact.key] = dependency.artifact;
+        const artifacts = Object.values(unique);
         await Promise.all(
-            dependencies.map(
-                dependency => (async () => {
-                    actualSourceVersions[dependency.artifact.key] =
-                        (await dependency.artifact.exists) ? (await dependency.artifact.version) : null;
-                })()
+            artifacts.map(
+                async (artifact) => {
+                    actualSourceVersions[artifact.key] =
+                        (await artifact.exists) ? (await artifact.version) : null;
+                }
             )
         );
         return actualSourceVersions;
@@ -289,7 +292,7 @@ export const Build = class Build extends EventEmitter  {
         if (!allOutputsExist) return false;
         const [recordedSourceVersionsByOutput, actualSourceVersions] = await Promise.all([
             Promise.all(allOutputs.map(this.getRecordedVersionInfo.bind(this))),
-            this.getActualVersionInfo(job.dependencies)
+            this.getActualVersionInfo([...job.dependencies, ...job.recordedDependencies])
         ]);
         const actualSourceKeys = Object.getOwnPropertyNames(actualSourceVersions).sort();
         const actualSourceKeyHash = md5(JSON.stringify(actualSourceKeys));
