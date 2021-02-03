@@ -5,7 +5,8 @@ import {BuildError} from "./build/error.js";
 import {Dependency} from "./graph/dependency.js";
 import EventEmitter from "events";
 import {Db} from "./db.js";
-import {AID, Artifact, ArtifactManager} from "./graph/artifact.js";
+import {Artifact, ArtifactManager} from "./graph/artifact.js";
+import objectHash from "object-hash";
 
 export const Build = class Build extends EventEmitter  {
 
@@ -298,16 +299,14 @@ export const Build = class Build extends EventEmitter  {
             Promise.all(allOutputs.map(this.getRecordedVersionInfo.bind(this))),
             this.getActualVersionInfo([...job.dependencies, ...job.recordedDependencies])
         ]);
-        const actualSourceKeys = Object.getOwnPropertyNames(actualSourceVersions).sort();
-        const actualSourceKeyHash = md5(JSON.stringify(actualSourceKeys));
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {
-            const recordedSourceKeys = Object.getOwnPropertyNames(recordedVersionsInfo.sourceVersions).sort();
-            const recordedSourceKeyHash = md5(JSON.stringify(recordedSourceKeys));
-            if (recordedSourceKeyHash !== actualSourceKeyHash) {
-                return false;
-            }
-            for(let key of recordedSourceKeys) {
-                if (recordedVersionsInfo.sourceVersions[key] !== actualSourceVersions[key]) {
+
+            const recordedSourceKeys = Object.keys(recordedVersionsInfo.sourceVersions);
+            for(let recordedSourceKey of recordedSourceKeys) {
+                if (
+                    recordedVersionsInfo.sourceVersions[recordedSourceKey]
+                    !== actualSourceVersions[recordedSourceKey]
+                ) {
                     return false;
                 }
             }
