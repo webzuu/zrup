@@ -281,7 +281,9 @@ export const Build = class Build extends EventEmitter  {
     {
         job.prepare();
         const rule = job.rule;
-        if (rule.always) return false;
+        if (rule.always) {
+            return false;
+        }
         const outputs = job.outputs;
         let outputRecords = this.db.listRuleTargets(rule.key);
         const recordedOutputs = outputRecords.map(output => this.artifactManager.get(output.identity));
@@ -289,7 +291,9 @@ export const Build = class Build extends EventEmitter  {
         const allOutputsExist =
             (await Promise.all(allOutputs.map(artifact => artifact.exists)))
                 .reduce((previous, current) => previous && current, true);
-        if (!allOutputsExist) return false;
+        if (!allOutputsExist) {
+            return false;
+        }
         const [recordedSourceVersionsByOutput, actualSourceVersions] = await Promise.all([
             Promise.all(allOutputs.map(this.getRecordedVersionInfo.bind(this))),
             this.getActualVersionInfo([...job.dependencies, ...job.recordedDependencies])
@@ -299,9 +303,13 @@ export const Build = class Build extends EventEmitter  {
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {
             const recordedSourceKeys = Object.getOwnPropertyNames(recordedVersionsInfo.sourceVersions).sort();
             const recordedSourceKeyHash = md5(JSON.stringify(recordedSourceKeys));
-            if (recordedSourceKeyHash !== actualSourceKeyHash) return false;
+            if (recordedSourceKeyHash !== actualSourceKeyHash) {
+                return false;
+            }
             for(let key of recordedSourceKeys) {
-                if (recordedVersionsInfo.sourceVersions[key] !== actualSourceVersions[key]) return false;
+                if (recordedVersionsInfo.sourceVersions[key] !== actualSourceVersions[key]) {
+                    return false;
+                }
             }
         }
         return true;

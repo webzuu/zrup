@@ -1,6 +1,6 @@
 {
   "name": "zrup",
-  "version": "0.8.20",
+  "version": "0.8.21",
   "description": "Build system experiment",
   "main": "src/front/runner.js",
   "repository": "git@github.com:/rulatir/zrup.git",
