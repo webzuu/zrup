@@ -261,7 +261,18 @@ describe("Build", function () {
         expect(versionInfo).to.be.an('object');
     })
 
-    it("reports nonexistent target from nonexistent source as not up to date", async ()=> {
+    //Should have tested for this since day one!!!
+    it("reports existing target w/o build record as outdated", async() => {
+        let {pk,g,target,source,makeTarget,rule,build} = simple();
+        answers(pk,{
+            [target.key]: [true,"654321"],
+            [source.key]: [true,"123456"]
+        });
+        const jobs = await build.getJobSetForArtifact(target);
+        expect(await build.isUpToDate(jobs.job)).to.be.false;
+    });
+
+    it("reports nonexistent target from nonexistent source as outdated", async ()=> {
         // noinspection JSUnusedLocalSymbols
         let {pk,g,target,dep,source,makeTarget,rule,build} = simple();
         answers(pk,{
@@ -298,7 +309,7 @@ describe("Build", function () {
         expect(why).to.equal("Rule w.nginx failed to build\n"+
             "because No rule to build required file:test+obey/w.nginx.php");
     });
-    
+
     it("records version info along with artifacts", async () => {
         // noinspection JSUnusedLocalSymbols
         let {pk,g,target,source,makeTarget,rule,build} = simple();
@@ -306,8 +317,8 @@ describe("Build", function () {
             [target.key]: [false,nil],
             [source.key]: [true,"123456"]
         });
-        const job = await build.getJobSetForArtifact(target);
-        await job.run();
+        const jobs = await build.getJobSetForArtifact(target);
+        await jobs.run();
         /** @type {Db~ArtifactRecord|null} */
         let targetInfo = await build.db.getArtifact(target.key);
         expect(targetInfo.key).to.equal(target.key);

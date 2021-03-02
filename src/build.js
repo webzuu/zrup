@@ -288,11 +288,15 @@ export const Build = class Build extends EventEmitter  {
         const outputs = job.outputs;
         let outputRecords = this.db.listRuleTargets(rule.key);
         const recordedOutputs = outputRecords.map(output => this.artifactManager.get(output.identity));
+        const recordedOutputsByKey = {}; for(let o of recordedOutputs) recordedOutputsByKey[o.key] = o;
         const allOutputs = [...new Set([...outputs, ...recordedOutputs]).values()];
-        const allOutputsExist =
-            (await Promise.all(allOutputs.map(artifact => artifact.exists)))
-                .reduce((previous, current) => previous && current, true);
-        if (!allOutputsExist) {
+        const allOutputsExistAndHaveBuildRecords =
+            (await Promise.all(allOutputs.map(
+                artifact =>
+                    artifact.exists
+                    && (artifact.key in recordedOutputsByKey)
+            ))).reduce((previous, current) => previous && current, true);
+        if (!allOutputsExistAndHaveBuildRecords) {
             return false;
         }
         const [recordedSourceVersionsByOutput, actualSourceVersions] = await Promise.all([
