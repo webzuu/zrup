@@ -42,6 +42,7 @@
  * @property {ModuleBuilder~definer} definer
  */
 
+import fs from "fs";
 /***/
 import {CommandRecipe} from "../build/recipe/command.js";
 import {Module, resolveArtifacts} from "../module.js";
@@ -178,16 +179,17 @@ export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
         let importedModule = null;
         this.emit('loading.module',base);
         for(let ext of ["mjs","cjs","js"]) {
+            const fullPath = `${base}.${ext}`;
             try {
-                const fullPath = `${base}.${ext}`;
                 importedModule = (await import(fullPath)).default;
                 this.emit('loaded.module', fullPath);
                 return importedModule;
             }
             catch(e) {
-                if ("ERR_MODULE_NOT_FOUND" !== e.code) {
-                    throw e;
-                }
+                if ("ERR_MODULE_NOT_FOUND" !== e.code) throw e;
+                let butItExistsBooHoo = false;
+                try { butItExistsBooHoo = (await fs.promises.stat(fullPath)).isFile(); } catch(v) {}
+                if (butItExistsBooHoo) throw e;
             }
         }
         throw new Error(`No zrup module definition file found in ${containingDir}`);
