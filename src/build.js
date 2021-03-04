@@ -292,9 +292,7 @@ export const Build = class Build extends EventEmitter  {
         const allOutputs = [...new Set([...outputs, ...recordedOutputs]).values()];
         const allOutputsExistAndHaveBuildRecords =
             (await Promise.all(allOutputs.map(
-                artifact =>
-                    artifact.exists
-                    && (artifact.key in recordedOutputsByKey)
+                async artifact => (await artifact.exists) && (artifact.key in recordedOutputsByKey)
             ))).reduce((previous, current) => previous && current, true);
         if (!allOutputsExistAndHaveBuildRecords) {
             return false;
