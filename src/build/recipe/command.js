@@ -182,12 +182,19 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
      */
     {
         let {exec, shell, args, cwd, out, err, combined} = config;
-        if ('undefined' === typeof cwd) {
-            cwd = job.rule.module.absolutePath;
+        if (undefined === cwd) {
+            cwd = job.rule.module.name + '+';
         }
         const options = {};
+        //resolve cwd
+        options.cwd = resolveArtifacts(
+            job.build.artifactManager,
+            job.rule.module,
+            false,
+            ...[cwd].flat()
+        )[0].toString();
+
         if (shell) options.shell = "/bin/bash";
-        if (cwd) options.cwd = path.resolve(job.rule.module.absolutePath, cwd);
         exec = exec.replace(/^\s+/,'').replace(/\s+$/,'');
         const rawExec = exec+'';
         if (shell) exec = `set -euo pipefail; ${exec}`;
@@ -361,7 +368,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
         // noinspection UnnecessaryLocalVariableJS
         /** @type {RuleBuilder~definer} */
         const definer = (R) => {
-            return CommandRecipe.fromSimpleDescriptor(self.#redeemDescriptorProvider(R,descriptorProvider));
+            return self.fromSimpleDescriptor(module, self.#redeemDescriptorProvider(R,descriptorProvider));
         };
         return definer;
     }
@@ -386,27 +393,25 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
 
     /**
      * @param {(CommandRecipe~SimpleDescriptor|string)} descriptor
+     * @param {Module} module
      */
-    static fromSimpleDescriptor(descriptor)
+    static fromSimpleDescriptor(module, descriptor)
     {
         descriptor = 'string' === typeof descriptor ? { cmd: descriptor } : descriptor;
         return new CommandRecipe(C => {
 
             CommandRecipe.#validateCommandDescriptorSchema(descriptor);
-            C.shell(...(Array.isArray(descriptor.cmd) ? descriptor.cmd.flat() : [descriptor.cmd]));
+            C.shell(...[descriptor.cmd].flat());
             if ('args' in descriptor) {
-                C.args(...(Array.isArray(descriptor.args) ? descriptor.args.flat() : [descriptor.args]))
+                C.args(...[descriptor.args].flat())
             }
             if ('cwd' in descriptor) {
-                let cwd = descriptor.cwd;
-                if (Array.isArray(cwd)) {
-                    if (cwd.length !== 1) {
-                        //TODO: throw InvalidSpecification
-                        throw new Error("Invalid specification: cwd must be a single item")
-                    }
-                    cwd = cwd[0];
+                const cwd = [descriptor.cwd].flat();
+                if (cwd.length !== 1) {
+                    //TODO: throw InvalidSpecification
+                    throw new Error("Invalid specification: cwd must be a single item")
                 }
-                C.cwd(cwd.toString())
+                C.cwd(cwd[0]);
             }
             for (let key of ['out', 'err', 'combined']) {
                 if (!(key in descriptor)) continue;
