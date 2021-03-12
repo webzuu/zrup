@@ -169,11 +169,12 @@ export const Build = class Build extends EventEmitter  {
      */
     async getRecordedVersionInfo(output)
     {
-        if (!(await output.exists)) return {
+        const nonresult = {
             target: output.key,
             version: null,
             sourceVersions: {}
-        };
+        }
+        if (!(await output.exists)) return nonresult;
         const version = await output.version;
         const versionSourcesResult = this.db.listVersionSources(output.key, version);
         const sourceVersions = {};
@@ -253,17 +254,16 @@ export const Build = class Build extends EventEmitter  {
 
     /**
      *
-     * @param {Dependency[]} dependencies
+     * @param {Artifact[]} artifacts
      * @return {Promise<object>}
      */
-    async getActualVersionInfo(dependencies)
+    async getActualVersionInfo(artifacts)
     {
         const actualSourceVersions = {};
         const unique = {};
-        for(let dependency of dependencies) unique[dependency.artifact.key] = dependency.artifact;
-        const artifacts = Object.values(unique);
+        const artifactsUnique = [...new Set(artifacts).values()];
         await Promise.all(
-            artifacts.map(
+            artifactsUnique.map(
                 async (artifact) => {
                     actualSourceVersions[artifact.key] =
                         (await artifact.exists) ? (await artifact.version) : null;
@@ -297,14 +297,20 @@ export const Build = class Build extends EventEmitter  {
         if (!allOutputsExistAndHaveBuildRecords) {
             return false;
         }
-        const [recordedSourceVersionsByOutput, actualSourceVersions] = await Promise.all([
+        const [recordedSourceVersionsByOutput, actualSourceVersions, actualOutputVersions] = await Promise.all([
             Promise.all(allOutputs.map(this.getRecordedVersionInfo.bind(this))),
-            this.getActualVersionInfo([...job.dependencies, ...job.recordedDependencies])
+            this.getActualVersionInfo([...job.dependencies, ...job.recordedDependencies].map(d => d.artifact)),
+            this.getActualVersionInfo(allOutputs)
         ]);
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {
 
+            if (actualOutputVersions[recordedVersionsInfo.target] !== recordedVersionsInfo.version) {
+                return false;
+            }
             const recordedSourceKeys = Object.keys(recordedVersionsInfo.sourceVersions);
+            let hadRecordedSources = false;
             for(let recordedSourceKey of recordedSourceKeys) {
+                hadRecordedSources = true;
                 if (
                     recordedVersionsInfo.sourceVersions[recordedSourceKey]
                     !== actualSourceVersions[recordedSourceKey]
@@ -312,6 +318,7 @@ export const Build = class Build extends EventEmitter  {
                     return false;
                 }
             }
+            if (!hadRecordedSources) return false;
         }
         return true;
     }

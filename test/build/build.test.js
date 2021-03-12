@@ -147,7 +147,7 @@ describe("Build", function () {
             [source.key]: [true,"142857"],
             [target.key]: [true,"857142"]
         });
-        const versionInfo = await build.getActualVersionInfo(Object.values(rule.dependencies));
+        const versionInfo = await build.getActualVersionInfo(Object.values(rule.dependencies).map(d => d.artifact));
         expect(versionInfo).to.be.an('object');
     });
 
@@ -230,6 +230,23 @@ describe("Build", function () {
         expect(jobs2.job.recipeInvoked).to.be.true;
     });
 
+    it("finds target outdated if it doesn't match the build record", async () => {
+
+        let {pk,g,target,source,makeTarget,rule,build} = simple();
+        answers(pk, {
+            [source.key]: [true, "142857"],
+            [target.key]: [false]
+        });
+        let jobs = await build.getJobSetForArtifact(target);
+        await jobs.run();
+        answers(pk, {
+            [target.key]: [true, "857142"]
+        });
+        build = new Build(g, build.db, build.artifactManager);
+        jobs = await build.getJobSetForArtifact(target);
+        expect(await build.isUpToDate(jobs.job)).to.be.false;
+    });
+
     it("always rebuilds a target of an always-rule", async() => {
         let {pk,target,source,rule,build} = simple();
         rule.always = true;
@@ -257,7 +274,7 @@ describe("Build", function () {
             [target.key]: [false],
             [source.key]: [false]
         });
-        const versionInfo = await build.getActualVersionInfo(Object.values(rule.dependencies));
+        const versionInfo = await build.getActualVersionInfo(Object.values(rule.dependencies).map(d => d.artifact));
         expect(versionInfo).to.be.an('object');
     })
 
