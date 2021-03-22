@@ -119,6 +119,15 @@ const test = function test(M) {
         ({T}) => T`echo "success" > ${produces('actual-simple.txt')}`
     );
 
+    to(
+        'capture-and-echo',
+        ({T}) => ({
+            cmd: T`echo "success"`,
+            out: produces('actual-capture-and-echo.txt'),
+            combined: true
+        })
+    )
+
 };
 
 export default test;

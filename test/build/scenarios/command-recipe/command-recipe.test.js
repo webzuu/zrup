@@ -17,6 +17,7 @@ import {Db} from "../../../../src/db.js";
 import * as fs from "fs";
 import {CommandError, CommandRecipe} from "../../../../src/build/recipe/command.js";
 import {BuildError} from "../../../../src/build/error.js";
+import stdout from "stdout-monkey"
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
 
@@ -231,5 +232,35 @@ describe("CommandRecipe", () => {
 
         await runNewJob();
         expect(await actual.version).to.equal(await expected.version);
+    });
+
+    it('supports echoing process output in addition to also capturing it', async() => {
+
+        let monkey = undefined;
+        const chunks = [];
+        try {
+            monkey = stdout((str, enc, cb) => { chunks.push(str); });
+            const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+
+            await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
+            ruleBuilder.finalize();
+
+            const
+                expected = d.artifactManager.get('expected-capture-and-echo.txt'),
+                actual = d.artifactManager.get('actual-capture-and-echo.txt');
+
+            let jobs = null;
+            async function runNewJob() {
+                await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+                return jobs;
+            }
+
+            await runNewJob();
+            expect(await actual.version).to.equal(await expected.version);
+            expect(chunks.join('')).to.equal(await expected.contents);
+        }
+        finally {
+            if (monkey) monkey.restore();
+        }
     });
 })

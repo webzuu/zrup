@@ -1,12 +1,10 @@
-import md5 from "md5";
+import EventEmitter from "events";
+import {BuildError} from "./build/error.js";
 import {JobSet} from "./build/job-set.js";
 import {Job} from "./build/job.js";
-import {BuildError} from "./build/error.js";
-import {Dependency} from "./graph/dependency.js";
-import EventEmitter from "events";
 import {Db} from "./db.js";
 import {Artifact, ArtifactManager} from "./graph/artifact.js";
-import objectHash from "object-hash";
+import {Dependency} from "./graph/dependency.js";
 
 export const Build = class Build extends EventEmitter  {
 

@@ -24,6 +24,7 @@ devDependencies:
   chai-as-promised: 7.1.1_chai@4.2.0
   mocha: 8.2.1
   recursive-copy: 2.0.11
+  stdout-monkey: 1.1.0
   webpack: 5.15.0_webpack-cli@4.3.1
   webpack-cli: 4.3.1_webpack@5.15.0
 lockfileVersion: 5.2
@@ -1278,6 +1279,121 @@ packages:
       node: '>=10'
     resolution:
       integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==
+  /lodash._basebind/2.4.1:
+    dependencies:
+      lodash._basecreate: 2.4.1
+      lodash._setbinddata: 2.4.1
+      lodash._slice: 2.4.1
+      lodash.isobject: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-6UC5690nwyfgqNqxtVkWxTQelXU=
+  /lodash._basecreate/2.4.1:
+    dependencies:
+      lodash._isnative: 2.4.1
+      lodash.isobject: 2.4.1
+      lodash.noop: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-+Ob1tXip405UEXm1a47uv0oofgg=
+  /lodash._basecreatecallback/2.4.1:
+    dependencies:
+      lodash._setbinddata: 2.4.1
+      lodash.bind: 2.4.1
+      lodash.identity: 2.4.1
+      lodash.support: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-fQsmdknLKeehOdAQO3wR+uhOSFE=
+  /lodash._basecreatewrapper/2.4.1:
+    dependencies:
+      lodash._basecreate: 2.4.1
+      lodash._setbinddata: 2.4.1
+      lodash._slice: 2.4.1
+      lodash.isobject: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-TTHy595+E0+/KAN2K4FQsyUZZm8=
+  /lodash._createwrapper/2.4.1:
+    dependencies:
+      lodash._basebind: 2.4.1
+      lodash._basecreatewrapper: 2.4.1
+      lodash._slice: 2.4.1
+      lodash.isfunction: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-UdaVeXPaTtVW43KQ2MGhjFPeFgc=
+  /lodash._isnative/2.4.1:
+    dev: true
+    resolution:
+      integrity: sha1-PqZAS3hKe+g2x7V1gOHN95sUgyw=
+  /lodash._objecttypes/2.4.1:
+    dev: true
+    resolution:
+      integrity: sha1-fAt/admKH3ZSn4kLDNsbTf7BHBE=
+  /lodash._setbinddata/2.4.1:
+    dependencies:
+      lodash._isnative: 2.4.1
+      lodash.noop: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-98IAzRuS7yNrOZ7s9zxkjReqlNI=
+  /lodash._shimisplainobject/2.4.1:
+    dependencies:
+      lodash.forin: 2.4.1
+      lodash.isfunction: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-AeyTsu5j5Z8aqDiZrG+gkFrHWW8=
+  /lodash._slice/2.4.1:
+    dev: true
+    resolution:
+      integrity: sha1-dFz0GlNZexj2iImFREBe+isG2Q8=
+  /lodash.bind/2.4.1:
+    dependencies:
+      lodash._createwrapper: 2.4.1
+      lodash._slice: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-XRn6AFyMTSNvr0dCx7eh/Kvikmc=
+  /lodash.forin/2.4.1:
+    dependencies:
+      lodash._basecreatecallback: 2.4.1
+      lodash._objecttypes: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-gInq7X0lsIZyt8Zv0HrFXQYjIOs=
+  /lodash.identity/2.4.1:
+    dev: true
+    resolution:
+      integrity: sha1-ZpTP+mX++TH3wxzobHRZfPVg9PE=
+  /lodash.isfunction/2.4.1:
+    dev: true
+    resolution:
+      integrity: sha1-LP1XXHPkmKtX4xm3f6Aq3vE6lNE=
+  /lodash.isobject/2.4.1:
+    dependencies:
+      lodash._objecttypes: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-Wi5H/mmVPx7mMafrof5k0tBlWPU=
+  /lodash.isplainobject/2.4.1:
+    dependencies:
+      lodash._isnative: 2.4.1
+      lodash._shimisplainobject: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-rHOF4uqawDIfMNw7gDKm0iMagBE=
+  /lodash.noop/2.4.1:
+    dev: true
+    resolution:
+      integrity: sha1-T7VPgWZS5a4Q6PcvcXo4jHMmU4o=
+  /lodash.support/2.4.1:
+    dependencies:
+      lodash._isnative: 2.4.1
+    dev: true
+    resolution:
+      integrity: sha1-Mg4LZwMWc8KNeiu12eAzGkUkBRU=
   /lodash/4.17.20:
     dev: true
     resolution:
@@ -1965,6 +2081,12 @@ packages:
     dev: false
     resolution:
       integrity: sha512-UiHAgJI4NzbnBXdD3r8EHOpwCOiv8VxcC6dnOoEYPEde8bw6t2HRqUcvGppF3uOV/SrqyVHicMl5Cjmuaalnlw==
+  /stdout-monkey/1.1.0:
+    dependencies:
+      utils-type: 0.5.2
+    dev: true
+    resolution:
+      integrity: sha1-ZhwqI2g0G7f8Jkq9Pyi7DblddsY=
   /string-width/1.0.2:
     dependencies:
       code-point-at: 1.1.0
@@ -2178,6 +2300,15 @@ packages:
     dev: false
     resolution:
       integrity: sha1-RQ1Nyfpw3nMnYvvS1KKJgUGaDM8=
+  /utils-type/0.5.2:
+    dependencies:
+      lodash.isobject: 2.4.1
+      lodash.isplainobject: 2.4.1
+    dev: true
+    engines:
+      node: '>= 0.6.0'
+    resolution:
+      integrity: sha1-tJVX01GYwtKSXTT0nP3aXzaaOE0=
   /v8-compile-cache/2.2.0:
     dev: true
     resolution:
@@ -2408,6 +2539,7 @@ specifiers:
   rmfr: ^2.0.0
   simple-async-sleep: ^1.0.0
   sqlite: ^4.0.15
+  stdout-monkey: ^1.1.0
   typeof--: ^1.3.3
   webpack: ^5.6.0
   webpack-cli: ^4.2.0

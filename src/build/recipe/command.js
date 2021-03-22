@@ -218,12 +218,33 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
             stderrRedirected = err.length > 0,
             combinedRedirected = stdoutRedirected || stderrRedirected || combined.length > 0;
 
-        if (!stdoutRedirected) out = [listen(this.#stdout)];
-        if (!stderrRedirected) err = [listen(this.#stderr)];
-        if (!combinedRedirected) combined = [listen(this.#combined)];
-        for (let listener of out) addDataListenerToStreams(listener, child, child.stdout);
-        for (let listener of err) addDataListenerToStreams(listener, child, child.stderr);
-        for (let listener of combined) addDataListenerToStreams(listener, child, child.stdout, child.stderr);
+        if (!stdoutRedirected) out = [true];
+        if (!stderrRedirected) err = [true];
+        if (!combinedRedirected) combined = [true];
+        for (let listener of out) {
+            if (false===listener) continue;
+            addDataListenerToStreams(
+                true===listener ? listen(this.#stdout) : listener,
+                child,
+                child.stdout
+            );
+        }
+        for (let listener of err) {
+            if (false===listener) continue;
+            addDataListenerToStreams(
+                true===listener ? listen(this.#stderr) : listener,
+                child,
+                child.stderr
+            );
+        }
+        for (let listener of combined) {
+            if (false===listener) continue;
+            addDataListenerToStreams(
+                true===listener ? listen(this.#combined) : listener,
+                child,
+                child.stdout, child.stderr
+            );
+        }
     }
 
     /** @return {string} */
@@ -431,7 +452,7 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
     static #createDescriptorValidator(itemType)
     {
         const items = recursive(items => ducktype(itemType, [items]));
-        const sink = ducktype(itemType, Function);
+        const sink = ducktype(itemType, Function, Boolean);
         const sinks = recursive(sinks => ducktype(sink, [sinks]));
         const opt = { optional: true };
         const descriptorValidator = ducktype(
@@ -477,9 +498,11 @@ export function captureTo(artifactRef,job)
     return result;
 }
 
+
 class OutputSinkIsArray extends Error {}
 
 function makeOutputSink(job, sink) {
+    if (true===sink) return true;
     const resolve = job.build.artifactManager.resolveToExternalIdentifier.bind(job.build.artifactManager);
     if (Array.isArray(sink)) {
         throw new OutputSinkIsArray();
