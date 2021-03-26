@@ -26,7 +26,7 @@ import {Module} from "../../src/module.js";
 const t = new DbTesting(path.join(__dirname, '../tmp'));
 
 
-class MakeItExistRecipe extends Recipe
+const MakeItExistRecipe = class MakeItExistRecipe extends Recipe
 {
     #pk;
 
@@ -346,5 +346,25 @@ describe("Build", function () {
         expect(sourceInfo.key).to.equal(source.key);
         expect(sourceInfo.type).to.equal(source.type);
         expect(sourceInfo.identity).to.equal(source.identity);
+    });
+
+    it("deletes recorded targets before build", async() => {
+        let {pk,g,target,source,makeTarget,rule,build,manager} = simple();
+        answers(pk,{
+            [target.key]: [true,"654321"],
+            [source.key]: [true,"123456"]
+        });
+        const noLongerBuilt = manager.get("file:z.nginx");
+        answers(pk,{
+            [noLongerBuilt.key]: [true,"000000"]
+        });
+        expect(await noLongerBuilt.exists).to.be.true;
+        const ruleKey = rule.key;
+        await build.db.record(target.key, "123456", rule.key, source.key, await source.version);
+        await build.db.record(noLongerBuilt.key, await noLongerBuilt.version, rule.key, source.key, await source.version);
+        await build.recordArtifacts([source,target,noLongerBuilt]);
+        const jobSet = await build.getJobSetForArtifact(target);
+        await jobSet.run();
+        expect(await noLongerBuilt.exists).to.be.false;
     });
 });

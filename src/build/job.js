@@ -83,8 +83,6 @@ export const Job = class Job  {
         }
     }
 
-
-
     /**
      * The main build algorithm
      * @return {Promise<void>}
@@ -102,6 +100,8 @@ export const Job = class Job  {
             async dependency => await this.build.recordReliance(this.rule, dependency.artifact)
         ));
         if (!await this.build.isUpToDate(this)) {
+            this.build.emit('cleaning.outputs',this.rule);
+            await this.build.cleanOutputs(this);
             this.build.emit('invoking.recipe',this.rule);
             this.recipeInvoked = true;
             this.build.db.retractRule(this.rule.key);
@@ -116,6 +116,7 @@ export const Job = class Job  {
             await this.build.recordStandardVersionInfo(this);
         }
     }
+
 
     verifyBuiltDependency = async dependency =>
     {

@@ -4,6 +4,7 @@ import {JobSet} from "./build/job-set.js";
 import {Job} from "./build/job.js";
 import {Db} from "./db.js";
 import {Artifact, ArtifactManager} from "./graph/artifact.js";
+import {FileArtifact} from "./graph/artifact/file.js";
 import {Dependency} from "./graph/dependency.js";
 
 export const Build = class Build extends EventEmitter  {
@@ -319,6 +320,22 @@ export const Build = class Build extends EventEmitter  {
             if (!hadRecordedSources) return false;
         }
         return true;
+    }
+
+    /**
+     * @param {Job} job
+     * @return {Promise<void>}
+     */
+    async cleanOutputs(job)
+    {
+        const rule = job.rule;
+        let outputRecords = this.db.listRuleTargets(rule.key);
+        await Promise.all(outputRecords.map(async output => {
+            const outputArtifact = this.artifactManager.get(output.identity);
+            if ('function' === typeof outputArtifact.rm) {
+                await outputArtifact.rm();
+            }
+        }));
     }
 
     /**

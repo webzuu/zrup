@@ -1,4 +1,5 @@
 import {uniqueAdd} from "./util/indexing.js";
+import {Rule} from "./graph/rule.js";
 
 export const Graph = class Graph
 

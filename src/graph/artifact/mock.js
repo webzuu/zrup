@@ -46,6 +46,15 @@ export const MockArtifact = class MockArtifact extends Artifact
         this.#pk.set(this.key, "contents", contents);
     }
 
+    async rm()
+    {
+        this.#pk.forget(this.key, "exists");
+        this.#pk.forget(this.key, "version");
+        this.#pk.forget(this.key, "contents");
+        this.#pk.set(this.key, "exists", false);
+        this.#pk.set(this.key, "version", Artifact.NONEXISTENT_VERSION);
+    }
+
 
     get caps() {
         return {
