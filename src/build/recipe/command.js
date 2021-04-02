@@ -396,8 +396,8 @@ export const CommandRecipe = self = class CommandRecipe extends Recipe
 
     /**
      * @param {RuleBuilder~DefinerParams} R
-     * @param {(CommandRecipe~simpleDescriptorBuilder)|string} provider
-     * @return CommandRecipe~SimpleDescriptor
+     * @param {CommandRecipe~simpleDescriptorBuilder|string} provider
+     * @return {CommandRecipe~SimpleDescriptor}
      */
     static #redeemDescriptorProvider(R,provider)
     {

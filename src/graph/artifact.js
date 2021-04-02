@@ -2,7 +2,8 @@ import md5 from "md5";
 import {UnimplementedAbstract} from "../error/unimplemented-abstract.js";
 
 /**
- * @typedef {Function & { type: string|undefined }} Artifact~ClassConstructor
+ * @typedef {Function} Artifact~ClassConstructor
+ * @property {?string} type
  */
 
 /**
@@ -461,8 +462,8 @@ export const ArtifactFactory = class ArtifactFactory
 
     /**
      * @param {Artifact~Reference} ref
-     * @param {*[] | undefined} extraArgs
-     * @return {*[]}
+     * @param {Array?} extraArgs
+     * @return {Array}
      */
     prependRequiredConstructorArgs(ref, extraArgs)
     {

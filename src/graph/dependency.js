@@ -23,14 +23,12 @@ export const Dependency = class Dependency
     /**
      * Absence of the artifact depended upon is to be considered an error
      * @return {number}
-     * @constructor
      */
     static get ABSENT_VIOLATION() { return 0; }
 
     /**
      * Absence of the artifact depended upon is to be considered a valid state (version) of that artifact
      * @return {number}
-     * @constructor
      */
     static get ABSENT_STATE() { return 1; }
 }

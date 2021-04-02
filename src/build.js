@@ -7,7 +7,11 @@ import {Artifact, ArtifactManager} from "./graph/artifact.js";
 import {FileArtifact} from "./graph/artifact/file.js";
 import {Dependency} from "./graph/dependency.js";
 
+/**
+ * Class that manages transient information necessary to fulfill a particular build request.
+ */
 export const Build = class Build extends EventEmitter  {
+
 
     #built;
     #whichRulesReliedOnArtifactVersion = {};
@@ -17,6 +21,7 @@ export const Build = class Build extends EventEmitter  {
      * @param {Graph} graph
      * @param {Db} db
      * @param {ArtifactManager} artifactManager
+     *
      */
     constructor(graph, db, artifactManager)
     {
@@ -209,8 +214,8 @@ export const Build = class Build extends EventEmitter  {
     }
 
     /**
-     * @param {{output: Artifact, version: string}[]} outputInfos
-     * @param {{dependency: Dependency, version: string}[]} depInfos
+     * @param {Array.<{output: Artifact, version: string}>} outputInfos
+     * @param {Array.<{dependency: Dependency, version: string}>} depInfos
      * @param {Job} job
      */
     createRecordVersionInfoTransaction(outputInfos, depInfos, job) {

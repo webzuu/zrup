@@ -120,7 +120,7 @@ function obtainArtifactReferenceFrom(resolvable) {
  * @param {Module} module,
  * @param {boolean} skipStrings
  * @param {...(Artifact~Resolvable)} refs
- * @return {(string|{toString: function(): string})[]}
+ * @return {Array.<string|{toString: function(): string}>}
  */
 export function resolveArtifacts(
     artifactManager,
