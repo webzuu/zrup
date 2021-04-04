@@ -70,5 +70,6 @@ describe('Version list idiom', function() {
         const versions = db.listVersions(am.get('dist/delta/gamma.txt').key);
         expect(versions).to.be.an('array');
         expect(versions.length).to.equal(3);
+        expect(versions[0].version).to.be.a('string');
     })
 })
