@@ -106,9 +106,11 @@ export class Rule  {
     {
         const outputs = Object.values(this.outputs);
         switch (outputs.length) {
-            case 0: return `rule "${this.identity}"`;
-            case 1: return `rule for building "${outputs[0].label}"`;
-            default: return `rule for building "${outputs[0].label}" (and more)`;
+            case 0:
+                return `rule "${this.identity}"`;
+            case 1:
+                return `rule for building "${(outputs[0] as Artifact).label}"`;
+            default: return `rule for building "${(outputs[0] as Artifact).label}" (and more)`;
         }
     }
 

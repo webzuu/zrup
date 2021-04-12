@@ -54,7 +54,7 @@ export class JobSet {
         return Object.values(this.#jobs);
     }
 
-    get job(): Job
+    get job(): Job | undefined
     {
         return this.jobs[0];
     }

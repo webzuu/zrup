@@ -82,7 +82,7 @@ function obtainArtifactReferenceFrom(resolvable : Artifact.Resolvable) : string 
     throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
 }
 
-interface ResolveArtifactResult {
+export interface ResolveArtifactResult {
     toString() : string,
     artifact: Artifact
 }

@@ -1,8 +1,12 @@
 import md5 from "md5";
 import {Dependency} from "./dependency";
+import {ResolveArtifactResult} from "../module";
 
 export namespace Artifact {
-    export type ClassConstructor = Function & { new(...args : any) : Artifact; type?: string; };
+    export type ClassConstructor = {
+        new(aid: Artifact.Reference, ...args : any) : Artifact,
+        type?: string
+    }
     export type Caps = {
         canWrite: boolean;
         canRemove: boolean;
@@ -10,7 +14,7 @@ export namespace Artifact {
     }
     export type Reference = string | AID;
     export type References = Reference | References[];
-    export type Resolvable = Reference | Artifact | Dependency | { artifact : Artifact };
+    export type Resolvable = Reference | Artifact | Dependency | ResolveArtifactResult;
     export type Resolvables = Resolvable | Resolvables[];
     export type Descriptor = {
         type?: string;
@@ -31,7 +35,7 @@ export abstract class Artifact  {
 
     get type() : string
     {
-        return (AID.parse(this.#identity) as AID).type as string;
+        return (AID.parse(this.#identity) as AID).type || '';
     }
 
     static computeKey(type: string, identity: string) : string
@@ -126,9 +130,10 @@ export class AID
         let defaultsUsed = false;
         for(let key of ["type","module","ref"])
         {
-            if ((key in descriptor) && !result[key]) {
+            const value = descriptor[key as keyof Artifact.Descriptor];
+            if (value!==undefined && !result[key]) {
                 defaultsUsed = true;
-                result[key] = (descriptor as Record<string,string>)[key];
+                result[key] = value;
             }
         }
         return (
@@ -166,9 +171,12 @@ export class AID
         //TODO: handle escaped '+' in ref
         const matches = (''+aid).match(/^(?:(?<type>[-a-z]+):)?(?:(?<module>[A-Za-z_$][-0-9A-Za-z_$]*)\+)?(?<ref>[^+]*)$/);
         if (!(matches && matches.groups)) return false;
-        const result : Artifact.Descriptor & {[k: string]: string} = { ref: "" };
+        const result : Artifact.Descriptor = { ref: "" };
         for(let key of ["type","module","ref"]) {
-            if (undefined !== matches.groups[key]) result[key] = matches.groups[key];
+            const value = matches.groups[key];
+            if (undefined !== value) {
+                result[key as keyof Artifact.Descriptor] = value;
+            }
         }
         return result;
     }
@@ -240,7 +248,7 @@ export class ArtifactManager
 
     find(ref : Artifact.Reference) : Artifact|null
     {
-        return this.#index.artifact.identity[""+ref];
+        return this.#index.artifact.identity[""+ref] ?? null;
     }
 
     get(ref : Artifact.Reference) : Artifact
@@ -313,7 +321,7 @@ export abstract class ArtifactFactory
         manager : ArtifactManager,
         artifactConstructor : Artifact.ClassConstructor,
         artifactResolver : ArtifactResolver,
-        type : string
+        type? : string
     )
     {
         this.#manager = manager;
@@ -376,8 +384,8 @@ export abstract class ArtifactFactory
         return this.#artifactResolver;
     }
 
-    static get type()
+    static get type() : string
     {
-        return undefined;
+        throw new Error("Unimplemented static abstract ArtifactFactory::get type()");
     }
 }

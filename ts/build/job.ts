@@ -10,13 +10,10 @@ import {resolveArtifacts} from "../module.js";
 import {Rule} from "../graph/rule";
 import {ArtifactRecord} from "../db";
 
+type VersionFileListEntry = [string, string];
+
 /**
- * @property {Promise<Job>|null} promise
- * @property {boolean} finished
- * @property {Dependency[]} dependencies
- * @property {Artifact[]} outputs
- * @property {Artifact[]} dynamicOutputs
- * @property {Error} error
+ *
  */
 export class Job  {
 
@@ -159,25 +156,27 @@ export class Job  {
 
     private getMergedDependencies(): Dependency[] {
         const merged : Record<string, Dependency> = {};
-        for(let dep of [
+        const concatenated : Dependency[] = [
             ...this.recordedDependencies,
             ...this.dependencies
-        ]) {
+        ];
+        for(let dep of concatenated) {
             const key = dep.artifact.key;
-            if (merged.hasOwnProperty(key)) {
-                if (merged[key] === dep) {
-                    continue;
-                }
-                if (
-                    merged[key].whenAbsent === Dependency.ABSENT_STATE
-                    && dep.whenAbsent !== Dependency.ABSENT_STATE
-                ) {
-                    merged[key]=dep;
-                    continue;
-                }
-                if(merged[key].whenAbsent !== dep.whenAbsent) {
-                    throw new Error("Non-existence policy conflict between two dependencies on the same artifact");
-                }
+            const mergedDep = merged[key]
+            if (merged[key] === dep) continue;
+            if (!mergedDep) {
+                merged[key] = dep;
+                continue;
+            }
+            if (
+                mergedDep.whenAbsent === Dependency.ABSENT_STATE
+                && dep.whenAbsent !== Dependency.ABSENT_STATE
+            ) {
+                merged[key]=dep;
+                continue;
+            }
+            if(mergedDep.whenAbsent !== dep.whenAbsent) {
+                throw new Error("Non-existence policy conflict between two dependencies on the same artifact");
             }
             merged[key] = dep;
         }
@@ -219,7 +218,7 @@ export class Job  {
                 if (version !== versionAfterRewrite) {
                     violationsFound = true;
                     violations[version] = (
-                        Object.values(reliancesByVersion[version])
+                        Object.values(reliancesByVersion[version] ?? {})
                             .map(rule => rule.label)
                     );
                 }
@@ -229,7 +228,7 @@ export class Job  {
             let msg = `Rewrite after use: ${this.rule.label} wrote ${outputArtifact.identity}, but`;
             for(let version of Object.keys(violations)) {
                 msg += "\n\t" + `version ${version} had previously been relied on by:`;
-                msg += "\n\t" + violations[version].join("\n\t");
+                msg += "\n\t" + (violations[version] ?? []).join("\n\t");
             }
             return msg;
         }
@@ -302,7 +301,7 @@ export class Job  {
        );
    }
 
-   async readVersionFileList(ref : Artifact.Reference, artifactType="file")
+   async readVersionFileList(ref : Artifact.Reference, artifactType="file") : Promise<VersionFileListEntry[]>
    {
        const resolveResult = resolveArtifacts(
            this.build.artifactManager,
@@ -313,24 +312,28 @@ export class Job  {
        if (
            resolveResult.length < 1
            || 'string' === typeof resolveResult[0]
+           || 'object' !== typeof resolveResult[0]
            || !(resolveResult[0].artifact instanceof FileArtifact)
        ) {
            throw new Error(`${ref} does not refer to a file artifact`);
        }
        const artifact = resolveResult[0].artifact;
        // noinspection UnnecessaryLocalVariableJS
-       const debugResult = (
+       const debugResult : VersionFileListEntry[] = (
            (await artifact.contents)
                .trim()
                .split("\n")
                .map(_ => _.trim())
                .filter(_ => _ !== '')
-               .map(_ => {
+               .map((_, n: number) => {
                    let [version, ...refParts] = _.split(' ');
-                   const ref = refParts.join(' ').trim();
+                   if (!version || !refParts[0]) {
+                       throw new Error(`In file ${ref} at line ${n+1} - invalid filelist line`)
+                   }
+                   const refField = refParts.join(' ').trim();
                    return [
                        version,
-                       `${artifactType}:${this.rule.module.name}+${ref}`
+                       `${artifactType}:${this.rule.module.name}+${refField}`
                    ];
                })
        );

@@ -2,13 +2,12 @@ import {Job} from "./job.js";
 import hash from "object-hash";
 
 export abstract class Recipe
-
 {
     abstract concretizeSpecFor(job : Job) : Promise<Object>;
 
     abstract executeFor(job : Job, spec : Object) : Promise<void>;
 
-    hashSpec(spec : Object) : Promise<string>
+    hashSpec(spec : Record<string,any>) : Promise<string>
     {
         return (async () => hash.MD5({
             class: this.constructor.name,

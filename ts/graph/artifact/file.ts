@@ -2,12 +2,12 @@ import {AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver} from 
 import md5File from "md5-file";
 import fs from "fs";
 const fsp = fs.promises;
-import {Module} from "../../module.js";
+import {Module} from "../../module";
 import * as pathUtils from "path";
 import isSubdir from "is-subdir";
 import {Project} from "../../project";
 
-export const FileArtifact = class FileArtifact extends Artifact  {
+export class FileArtifact extends Artifact  {
 
     readonly #resolvedPath : string;
 
@@ -86,7 +86,7 @@ export class FileArtifactResolver extends ArtifactResolver
 
     readonly #type : string
 
-    constructor(project: Project, infix: string, type: string)
+    constructor(project: Project, infix?: string, type?: string)
     {
         super();
         this.#project=project
@@ -220,11 +220,10 @@ export class FileArtifactResolver extends ArtifactResolver
 }
 
 export class FileArtifactFactory extends ArtifactFactory
-
 {
     #project: Project;
 
-    constructor(manager: ArtifactManager, project: Project, type: string, infix: string) {
+    constructor(manager: ArtifactManager, project: Project, type?: string, infix?: string) {
         super(manager, FileArtifact, new FileArtifactResolver(project, infix, type), type);
         this.#project = project;
     }
