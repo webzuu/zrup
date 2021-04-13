@@ -1,71 +1,13 @@
 import {Rule} from "../graph/rule.js";
-import {Module, resolveArtifacts} from "../module.js";
-import {AID, Artifact} from "../graph/artifact.js";
-import {Dependency} from "../graph/dependency.js";
-import {reassemble, templateStringTag} from "../util/tagged-template.js";
-
-import {ArtifactManager} from "../graph/artifact.js";
+import {Module, resolveArtifacts} from "../module";
+import {AID, Artifact} from "../graph/artifact";
+import {Dependency} from "../graph/dependency";
+import {reassemble, templateStringTag} from "../util/tagged-template";
+import {ArtifactManager} from "../graph/artifact";
 import {Recipe} from "../build/recipe.js";
 import EventEmitter from "events";
-import {Project} from "../project";
-import {ModuleBuilder} from "./module-builder";
-
-/**
- * @callback RuleBuilder~definerAcceptor
- * @param {(string|RuleBuilder~definer)} nameOrDefiner
- * @param {RuleBuilder~definer} [definerIfNameGiven]
- */
-
-/**
- * @callback RuleBuilder~definer
- * @param {RuleBuilder~DefinerParams} params
- * @return {Recipe}
- */
-
-/**
- * @typedef {Object.<string,*>} RuleBuilder~DefinerParams
- * @property {Rule} rule
- * @property {RuleBuilder~artifactNominator} depends
- * @property {RuleBuilder~artifactNominator} produces
- * @property {RuleBuilder~ruleNominator} after
- * @property {RuleBuilder~flagSetter} always
- * @property {templateStringTag} T
- */
-
-/**
- * @callback RuleBuilder~artifactNominator
- * @param {...Artifact~References} artifactRefs
- */
-
-/**
- * @callback RuleBuilder~ruleNominator
- * @param {...string} ruleRefs
- */
-
-/**
- * @callback RuleBuilder~flagSetter
- * @param {boolean} [value]
- */
-
-/**
- * @callback RuleBuilder~boundDefiner
- * @return {Recipe}
- */
-
-/**
- * @typedef {Object} RuleBuilder~Declaration
- * @property {Module} module
- * @property {Rule} rule
- * @property {RuleBuilder~boundDefiner} boundDefiner
- */
-
-/**
- * @typedef RuleBuilder~LocateResult
- * @extends {Object}
- * @property {(Rule|null)} rule,
- * @property {string} resolvedRef
- */
-
+import {Project} from "../project.js";
+import {ModuleBuilder} from "./module-builder.js";
 
 /**
  *

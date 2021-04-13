@@ -1,5 +1,5 @@
 /***/
-import {Job} from "../job";
+import {Job} from "../job.js";
 /***/
 import {ChildProcessWithoutNullStreams, spawn} from "child_process";
 import fs from "fs";
@@ -14,33 +14,28 @@ import {Recipe} from "../recipe.js";
 import outputListener = CommandRecipe.outputListener;
 import builder = CommandRecipe.builder;
 import CommandSpecifier = CommandRecipe.CommandSpecifier;
-import OutputSinks = CommandRecipe.OutputSinks;
 import Config = CommandRecipe.Config;
 import ConcretizedSpec = CommandRecipe.ConcretizedSpec;
 import outputSinkDescriber = CommandRecipe.outputSinkDescriber;
 import jobOutputListener = CommandRecipe.jobOutputListener;
 import describedOutputListener = CommandRecipe.describedOutputListener;
 import simpleDescriptorBuilder = CommandRecipe.simpleDescriptorBuilder;
-import CommandSegment = CommandRecipe.CommandSegment;
 import CommandSpecifiers = CommandRecipe.CommandSpecifiers;
 import ArgumentSpecifier = CommandRecipe.ArgumentSpecifier;
 import OutputSink = CommandRecipe.OutputSink;
 import outputListenerAcceptor = CommandRecipe.outputListenerAcceptor;
-import {RuleBuilder} from "../../front/rule-builder";
+import {RuleBuilder} from "../../front/rule-builder.js";
 
 
 /***/
 export class CommandRecipe extends Recipe {
     readonly #commandBuilder: builder;
 
-    /** @type {string[]} */
-    #stdout = [];
+    #stdout : string[] = [];
 
-    /** @type {string[]} */
-    #stderr = [];
+    #stderr : string[] = [];
 
-    /** @type {string[]} */
-    #combined = [];
+    #combined : string[] = [];
 
     constructor(commandBuilder: builder) {
         super();
@@ -133,7 +128,6 @@ export class CommandRecipe extends Recipe {
         job: Job,
         sink: CommandRecipe.OutputSink | CommandRecipe.jobOutputListener
     ): CommandRecipe.outputListener {
-        const resolve = job.build.artifactManager.resolveToExternalIdentifier.bind(job.build.artifactManager);
         if (Array.isArray(sink)) {
             throw new OutputSinkIsArray();
         }
@@ -286,15 +280,14 @@ export class CommandRecipe extends Recipe {
         ruleBuilder.acceptDefiner(
             module,
             ruleName,
-            CommandRecipe.createShellCommandRuleDefiner(ruleBuilder, module, descriptorProvider)
+            CommandRecipe.createShellCommandRuleDefiner(module, descriptorProvider)
         )
     }
 
     private static createShellCommandRuleDefiner(
-        ruleBuilder: RuleBuilder,
         module: Module,
         descriptorProvider: CommandRecipe.simpleDescriptorBuilder
-    ) : RuleBuilder.definer {
+    ): RuleBuilder.definer {
         return (R : RuleBuilder.DefinerParams) => {
             return CommandRecipe.fromSimpleDescriptor(module, CommandRecipe.redeemDescriptorProvider(R, descriptorProvider));
         };
@@ -342,7 +335,8 @@ export class CommandRecipe extends Recipe {
     }
 
 
-    private static validateCommandDescriptorSchema(descriptor: any) {
+    // noinspection JSUnusedLocalSymbols
+    private static validateCommandDescriptorSchema(descriptor: any) : boolean {
         return true;
     }
 }
