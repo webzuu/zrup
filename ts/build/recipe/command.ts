@@ -14,16 +14,14 @@ import builder = CommandRecipe.builder;
 import CommandSpecifier = CommandRecipe.CommandSpecifier;
 import Config = CommandRecipe.Config;
 import ConcretizedSpec = CommandRecipe.ConcretizedSpec;
-import outputSinkDescriber = CommandRecipe.outputSinkDescriber;
 import jobOutputListener = CommandRecipe.jobOutputListener;
-import describedOutputListener = CommandRecipe.describedOutputListener;
 import simpleDescriptorBuilder = CommandRecipe.simpleDescriptorBuilder;
 import CommandSpecifiers = CommandRecipe.CommandSpecifiers;
 import ArgumentSpecifier = CommandRecipe.ArgumentSpecifier;
 import OutputSink = CommandRecipe.OutputSink;
 import outputListenerAcceptor = CommandRecipe.outputListenerAcceptor;
 import {RuleBuilder} from "../../front/rule-builder.js";
-
+import OutputListenerDescriptor = CommandRecipe.OutputListenerDescriptor;
 
 /***/
 export class CommandRecipe extends Recipe {
@@ -141,10 +139,9 @@ export class CommandRecipe extends Recipe {
         }
 
         if (isJobListener(sink)) {
-            const listener: jobOutputListener = sink;
             return Object.assign(
                 function (chunk: string, ...rest: string[]): any {
-                    listener(job, chunk, ...rest);
+                    sink(job, chunk, ...rest);
                 },
                 {
                     //FIXME: NEED MECHANISM TO SUPPLY DESCRIPTOR FOR THIS CASE!!!!!!!!!!
@@ -243,35 +240,16 @@ export class CommandRecipe extends Recipe {
     }
 
     describeSpec(spec: ConcretizedSpec) {
+        const getDescriber = (sink: outputListener) : OutputListenerDescriptor => sink.descriptor;
         const result: Record<string, any> = {};
         result.exec = spec.exec;
         result.shell = spec.shell;
         result.args = spec.args;
         result.cwd = spec.cwd;
-        result.out = spec.out.map(this.#makeSinkDescriber("stdout", spec));
-        result.err = spec.err.map(this.#makeSinkDescriber("stderr", spec));
-        result.combined = spec.combined.map(this.#makeSinkDescriber("combined", spec));
+        result.out = spec.out.map(getDescriber);
+        result.err = spec.err.map(getDescriber);
+        result.combined = spec.combined.map(getDescriber);
         return result;
-    }
-
-    #makeSinkDescriber = (streamName: string, spec: ConcretizedSpec): outputSinkDescriber => {
-        function isDescribedListener(listener: outputListener): listener is describedOutputListener {
-            return 'descriptor' in listener;
-        }
-
-        return (sink: outputListener) => {
-            if (isDescribedListener(sink)) return sink.descriptor;
-            spec.job.build.emit(
-                "warning",
-                "outputSink.descriptor.missing",
-                streamName,
-                spec,
-                spec.job
-            );
-            return {
-                action: sink.toString()
-            };
-        }
     }
 
     static to(ruleBuilder: RuleBuilder, module: Module, ruleName: string, descriptorProvider: simpleDescriptorBuilder) {
@@ -355,8 +333,9 @@ export namespace CommandRecipe {
         artifact: string
     }
     export type Described = { descriptor: OutputListenerDescriptor; }
-    export type outputListener = ((chunk: string) => any);
-    export type describedOutputListener = outputListener & Described;
+    export type outputListener = ((chunk: string) => any) & Described;
+    /** @deprecated */
+    export type describedOutputListener = outputListener;
     export type jobOutputListener = ((job: Job, chunk: string, ...rest : string[]) => any);
     export type outputListenerAcceptor = (listener: OutputSink) => any;
     export type cwdAcceptor = (cwd: string) => any;
@@ -433,11 +412,11 @@ export class CommandError extends Error
     }
 }
 
-export function captureTo(artifactRef: Artifact.Reference,job: Job): describedOutputListener
+export function captureTo(artifactRef: Artifact.Reference,job: Job): outputListener
 {
     const outputFilePath = job.build.artifactManager.resolveToExternalIdentifier(artifactRef);
     let append = false;
-    const result : CommandRecipe.describedOutputListener = chunk => {
+    const result : outputListener = chunk => {
         if(!append) {
             fs.mkdirSync(path.dirname(outputFilePath),{mode: 0o755, recursive: true});
             fs.writeFileSync(outputFilePath, chunk);
