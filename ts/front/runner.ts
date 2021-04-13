@@ -21,9 +21,12 @@ async function main()
         return;
     }
     const there = await Zrup.locateRoot(process.cwd());
-    const request = {
+
+    const opts = cli.opts();
+    Zrup.Schema.RequestOptions.assert(opts);
+    const request : Zrup.Request = {
         goals:          cli.args,
-        options:        cli.opts()
+        options:        opts
     }
     const zrup = new Zrup(there, await Zrup.loadConfig(there), request);
     await zrup.run();

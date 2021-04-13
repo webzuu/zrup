@@ -1,5 +1,5 @@
-import {Rule} from "../graph/rule";
-import {Artifact} from "../graph/artifact";
+import {Rule} from "../graph/rule.js";
+import {Artifact} from "../graph/artifact.js";
 
 const inspect = Symbol.for('nodejs.util.inspect.custom');
 

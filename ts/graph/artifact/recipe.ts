@@ -16,7 +16,7 @@ export class RecipeArtifact extends Artifact
         throw new UnsupportedOperation(RecipeArtifact.name, 'rm');
     }
 
-    constructor(aid : string, job : Job)
+    constructor(aid : Artifact.Reference, job : Job)
     {
         super(aid);
         this.job = job;
@@ -78,7 +78,7 @@ export class RecipeArtifactResolver extends ArtifactResolver
     }
 }
 
-export const RecipeArtifactFactory = class RecipeArtifactFactory extends ArtifactFactory
+export class RecipeArtifactFactory extends ArtifactFactory
 
 {
     readonly #project: Project;

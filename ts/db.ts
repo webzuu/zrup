@@ -27,74 +27,64 @@ function openDb(filename: string) : Database
     return db;
 }
 
-export type StatementKey =
-    "has"
-    | "hasVersion" | "listVersions" | "listVersionSources"
-    | "record" | "retract" | "retractTarget" | "retractRule"
-    | "listRuleSources" | "listRuleTargets" | "getProducingRule"
-    | "recordArtifact" | "getArtifact" | "pruneArtifacts"
-;
+const queries = {
+    has:
+        'SELECT COUNT(*) AS c FROM states WHERE target = @target',
+    hasVersion:
+        'SELECT COUNT(*) AS c FROM states WHERE target = @target AND target_version = @version',
+    listVersions:
+        'SELECT target_version AS version FROM states WHERE target = @target',
+    listVersionSources:
+        'SELECT source, source_version AS version FROM states WHERE target = @target AND target_version = @version',
+    record: `
+        INSERT INTO states (target, target_version, rule, source, source_version)
+        VALUES (@target, @targetVersion, @rule, @source, @sourceVersion)
+        ON CONFLICT(target,target_version,source) DO UPDATE SET source_version = @sourceVersion
+    `,
+    retract:
+        'DELETE FROM states WHERE target = @target AND target_version = @version',
+    retractTarget:
+        'DELETE FROM states WHERE target = @target',
+    retractRule:
+        'DELETE FROM states WHERE rule = @rule',
+    listRuleSources: `
+        SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity
+        FROM states
+            INNER JOIN artifacts ON artifacts.key = states.source
+        WHERE states.rule = @rule
+    `,
+    listRuleTargets: `
+        SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity
+        FROM states
+            INNER JOIN artifacts ON artifacts.key = states.target
+        WHERE states.rule = @rule
+    `,
+    getProducingRule:
+        `SELECT DISTINCT rule FROM states WHERE target=@target AND target_version=@version`,
+    recordArtifact: `
+        INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)
+        VALUES (@key, @type, @identity)
+    `,
+    getArtifact:
+        'SELECT key, artifact_type AS type, identity FROM artifacts WHERE key = @key',
+    pruneArtifacts: `
+        DELETE FROM artifacts
+        WHERE NOT EXISTS (
+            SELECT 1 FROM states WHERE states.source = artifacts.key OR states.target = artifacts.key
+        )
+    `
+};
 
-const queries : {[k: string]: string}= {};
-queries.has =
-    'SELECT COUNT(*) AS c FROM states WHERE target = @target';
-queries.hasVersion =
-    'SELECT COUNT(*) AS c FROM states WHERE target = @target AND target_version = @version';
+export type StatementKey = keyof typeof queries;
+
 
 export type VersionRecord = {version: string};
-queries.listVersions =
-    'SELECT target_version AS version FROM states WHERE target = @target';
-
 export type VersionSourcesRecord = { source: string, version: string };
-queries.listVersionSources =
-    'SELECT source, source_version AS version FROM states WHERE target = @target AND target_version = @version';
-
-queries.record = `
-    INSERT INTO states (target, target_version, rule, source, source_version)
-    VALUES (@target, @targetVersion, @rule, @source, @sourceVersion)
-    ON CONFLICT(target,target_version,source) DO UPDATE SET source_version = @sourceVersion
-`;
-queries.retract =
-    'DELETE FROM states WHERE target = @target AND target_version = @version';
-queries.retractTarget =
-    'DELETE FROM states WHERE target = @target';
-queries.retractRule =
-    'DELETE FROM states WHERE rule = @rule';
-
 export type RuleSourcesRecord = {key: string, type: string, identity: string};
-queries.listRuleSources = `
-    SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity
-    FROM states
-        INNER JOIN artifacts ON artifacts.key = states.source
-    WHERE states.rule = @rule
-`;
-
 export type RuleTargetsRecord = {key: string, type: string, identity: string};
-queries.listRuleTargets= `
-    SELECT DISTINCT artifacts.key, artifacts.artifact_type as type, artifacts.identity
-    FROM states
-        INNER JOIN artifacts ON artifacts.key = states.target
-    WHERE states.rule = @rule
-`;
-
 export type ProducingRuleRecord = {rule: string};
-queries.getProducingRule =
-    `SELECT DISTINCT rule FROM states WHERE target=@target AND target_version=@version`;
-
-queries.recordArtifact = `
-    INSERT OR IGNORE INTO artifacts (key, artifact_type, identity)
-    VALUES (@key, @type, @identity)
-`;
-
 export type ArtifactRecord = {key: string, type: string, identity: string};
-queries.getArtifact = 'SELECT key, artifact_type AS type, identity FROM artifacts WHERE key = @key';
 
-queries.pruneArtifacts =`
-    DELETE FROM artifacts
-    WHERE NOT EXISTS (
-        SELECT 1 FROM states WHERE states.source = artifacts.key OR states.target = artifacts.key
-    )
-`;
 
 function __statementGetter(this: Statements, key: StatementKey) : Statement
 {

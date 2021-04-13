@@ -1,4 +1,4 @@
-import {RuleBuilder} from "./rule-builder";
+import {RuleBuilder} from "./rule-builder.js";
 
 /**
  *

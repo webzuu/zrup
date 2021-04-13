@@ -302,9 +302,10 @@ export class Build extends EventEmitter  {
     getArtifactReliances(artifactKey: string) : Record<string, Record<string, Rule>>
     {
         const result : Record<string, Record<string, Rule>> = {};
-        for(let version of Object.getOwnPropertyNames(this.#whichRulesReliedOnArtifactVersion[artifactKey] || {}))
+        const artifactReliances = this.#whichRulesReliedOnArtifactVersion[artifactKey] || {};
+        for(let version of Object.getOwnPropertyNames(artifactReliances))
         {
-            result[version] = Object.assign({},this.#whichRulesReliedOnArtifactVersion[artifactKey][version]);
+            result[version] = Object.assign({},artifactReliances[version]);
         }
         return result;
     }
@@ -318,8 +319,9 @@ export class Build extends EventEmitter  {
 
         const version = await artifact.version;
 
-        if (version in reliancesByVersion) {
-            reliancesByVersion[version][rule.key] = rule;
+        const versionReliances = reliancesByVersion[version];
+        if (versionReliances) {
+            versionReliances[rule.key] = rule;
         }
         else if (Object.getOwnPropertyNames(reliancesByVersion).length > 0) {
             throw new BuildError(this.formatRelianceConflictMessage(
@@ -342,10 +344,7 @@ export class Build extends EventEmitter  {
 
     getVersionReliedOn(rule: Rule, artifact: Artifact, required: boolean): string | undefined
     {
-        let result;
-        if (rule.key in this.#whichArtifactVersionDidRuleRelyOn) {
-            result = this.#whichArtifactVersionDidRuleRelyOn[rule.key][artifact.key];
-        }
+        const result = this.#whichArtifactVersionDidRuleRelyOn?.[rule.key]?.[artifact.key];
         if (!result && required) {
             throw new BuildError(
                 `Internal error: unrecorded reliance info for rule ${rule.label} on ${artifact.identity} was requested`
@@ -365,11 +364,11 @@ export class Build extends EventEmitter  {
             `Build conflict: ${rule.label} relied on ${artifact.label}@${version}, but previous reliances`
             +` on different versions were recorded:`
         );
-        for (let previousVersion in Object.getOwnPropertyNames(relianceInfo))
+        for (let previousVersion of Object.getOwnPropertyNames(relianceInfo))
         {
             msg += "\n" + `@${version} was relied upon by:`
             msg += "\n\t" + (
-                Object.values(relianceInfo[previousVersion])
+                Object.values(relianceInfo[previousVersion] || {})
                     .map(_ => _.label)
                     .join("\n\t")
             )

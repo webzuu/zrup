@@ -1,6 +1,4 @@
-/***/
 import {Job} from "../job.js";
-/***/
 import {ChildProcessWithoutNullStreams, spawn} from "child_process";
 import fs from "fs";
 import * as path from "path";

@@ -1,5 +1,5 @@
 import {Recipe} from "../recipe.js";
-import {Job} from "../job";
+import {Job} from "../job.js";
 
 export namespace DelayedRecipe {
     export type Parameters = {

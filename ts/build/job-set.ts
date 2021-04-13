@@ -1,4 +1,4 @@
-import {Job} from "./job";
+import {Job} from "./job.js";
 
 export class JobSet {
 

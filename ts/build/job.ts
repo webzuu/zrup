@@ -1,14 +1,14 @@
-import {RecipeArtifact} from "../graph/artifact/recipe";
-import {BuildError} from "./error";
-import {Dependency} from "../graph/dependency";
-import {AID} from "../graph/artifact";
-import {Build} from "../build";
+import {RecipeArtifact} from "../graph/artifact/recipe.js";
+import {BuildError} from "./error.js";
+import {Dependency} from "../graph/dependency.js";
+import {AID} from "../graph/artifact.js";
+import {Build} from "../build.js";
 import {FileArtifact} from "../graph/artifact/file.js";
 import {Artifact} from "../graph/artifact.js";
 import {JobSet} from "./job-set.js";
 import {resolveArtifacts} from "../module.js";
-import {Rule} from "../graph/rule";
-import {ArtifactRecord} from "../db";
+import {Rule} from "../graph/rule.js";
+import {ArtifactRecord} from "../db.js";
 
 type VersionFileListEntry = [string, string];
 

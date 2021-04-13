@@ -1,48 +1,32 @@
+import type {HyperVal} from 'hyperval';
+import {struct, array, string, record, boolean} from 'hyperval';
+
 import findUp from "find-up";
 import fs from "fs/promises";
-import {JobSet} from "../build/job-set";
-import {Job} from "../build/job";
-import {NopRecipe, Recipe} from "../build/recipe";
-import {CommandRecipe} from "../build/recipe/command";
-import {DelayedRecipe} from "../build/recipe/delayed";
-import {WrapperRecipe} from "../build/recipe/wrapper";
-import {MockArtifact, MockFileFactory} from "../graph/artifact/mock";
-import {RecipeArtifact, RecipeArtifactFactory, RecipeArtifactResolver} from "../graph/artifact/recipe";
-import {Project} from "../project";
-import {Db} from "../db";
-import {AID, Artifact, ArtifactFactory, ArtifactManager} from "../graph/artifact";
-import {FileArtifact, FileArtifactFactory, FileArtifactResolver} from "../graph/artifact/file";
-import {RuleBuilder} from "./rule-builder";
-import {ModuleBuilder} from "./module-builder";
+import {JobSet} from "../build/job-set.js";
+import {Job} from "../build/job.js";
+import {NopRecipe, Recipe} from "../build/recipe.js";
+import {CommandRecipe} from "../build/recipe/command.js";
+import {DelayedRecipe} from "../build/recipe/delayed.js";
+import {WrapperRecipe} from "../build/recipe/wrapper.js";
+import {MockArtifact, MockFileFactory} from "../graph/artifact/mock.js";
+import {RecipeArtifact, RecipeArtifactFactory, RecipeArtifactResolver} from "../graph/artifact/recipe.js";
+import {Project} from "../project.js";
+import {Db} from "../db.js";
+import {AID, Artifact, ArtifactFactory, ArtifactManager} from "../graph/artifact.js";
+import {FileArtifact, FileArtifactFactory, FileArtifactResolver} from "../graph/artifact/file.js";
+import {RuleBuilder} from "./rule-builder.js";
+import {ModuleBuilder} from "./module-builder.js";
 import path from "path";
-import {Build} from "../build";
+import {Build} from "../build.js";
 import * as util from "util";
-import {Verbosity} from "./verbosity";
-import {resolveArtifacts} from "../module";
-import {Rule} from "../graph/rule";
-
-export namespace Zrup {
-    export type Config = {
-        zrupDir: string,
-        dataDir: string,
-        channels: Record<string,string>
-    }
-    export type RequestOptions = {
-        init: boolean,
-        verbose: boolean
-    }
-    export type Request = {
-        goals: string[],
-        options: RequestOptions
-    }
-    export type Options = {
-        goals: string[]
-    }
-}
+import {Verbosity} from "./verbosity.js";
+import {resolveArtifacts} from "../module.js";
+import {Rule} from "../graph/rule.js";
+import Config = Zrup.Config;
 
 /***/
 export class Zrup
-
 {
     #request: Zrup.Request;
 
@@ -125,10 +109,6 @@ export class Zrup
         }
     }
 
-    /**
-     * @param {string} [absDirectory]
-     * @return {Promise<void>}
-     */
     static async init(absDirectory: string): Promise<void>
     {
         absDirectory = absDirectory || process.cwd();
@@ -145,22 +125,13 @@ export class Zrup
         await fs.writeFile(path.join(absDirectory,".zrup.json"),json);
     }
 
-    /**
-     *
-     * @param {string} fromWhere
-     * @return {Promise<void>}
-     */
-    static async loadConfig(fromWhere: string): Promise<void>
+    static async loadConfig(fromWhere: string): Promise<Config>
     {
         const cfgPath = path.join(fromWhere,'.zrup.json');
         const json = await fs.readFile(cfgPath,'utf-8');
         return JSON.parse(json);
     }
 
-    /**
-     * @param cwd
-     * @return {Promise<string>}
-     */
     static async locateRoot(cwd: string): Promise<string>
     {
         const foundUp = await findUp('.zrup.json', {cwd, type: 'file'});
@@ -170,6 +141,42 @@ export class Zrup
         }
         return path.dirname(foundUp);
     }
+}
+
+const
+    schema_Config = struct({
+        zrupDir: string(),
+        dataDir: string(),
+        channels: record(string(), string())
+    }),
+    schema_RequestOptions = struct({
+        init: boolean(),
+        verbose: boolean()
+    }),
+    schema_Request = struct({
+        goals: array(string()),
+        options: schema_RequestOptions
+    }),
+    schema_Options = struct({
+        goals: array(string())
+    });
+
+export namespace Zrup {
+    export type Config = HyperVal<typeof schema_Config>;
+    export type RequestOptions = HyperVal<typeof schema_RequestOptions>;
+    export type Request = HyperVal<typeof schema_Request>;
+    export type Options = HyperVal<typeof schema_Options>;
+    export const Schema : {
+        Config: typeof schema_Config,
+        RequestOptions: typeof schema_RequestOptions,
+        Request: typeof schema_Request,
+        Options: typeof schema_Options
+    } = {
+        Config: schema_Config,
+        RequestOptions: schema_RequestOptions,
+        Request: schema_Request,
+        Options: schema_Options
+    };
 }
 
 export class ZrupAPI
