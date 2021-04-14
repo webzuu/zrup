@@ -34,7 +34,7 @@ export class CommandRecipe extends Recipe {
         let { exec, shell, args, cwd, out, err, combined } = config;
         const options = {};
         //resolve cwd
-        const resolved = resolveArtifacts(job.build.artifactManager, job.rule.module, false, ...[cwd ?? (job.rule.module.name + '+')].flat())[0];
+        const resolved = resolveArtifacts(job.build.artifactManager, job.rule.module, false, ...[cwd ?? (job.rule.module.name + '+')].flat(Infinity))[0];
         if (undefined === resolved) {
             throw new Error(`Could not resolve ${cwd} as working directory specification`);
         }
@@ -144,14 +144,14 @@ export class CommandRecipe extends Recipe {
         const builderParams = {
             exec: (cmdString, ...argItems) => {
                 spec.exec = cmdString;
-                spec.args.push(...resolveExceptStrings(...argItems.flat()).map(_ => '' + _));
+                spec.args.push(...resolveExceptStrings(...argItems.flat(Infinity)).map(_ => '' + _));
             },
             shell: (...argItems) => {
-                spec.exec = resolveExceptStrings(...argItems.flat()).map(_ => '' + _).join(" ");
+                spec.exec = resolveExceptStrings(...argItems.flat(Infinity)).map(_ => '' + _).join(" ");
                 spec.shell = true;
             },
             args: (...argItems) => {
-                spec.args.push(...resolveExceptStrings(...argItems.flat()).map(_ => '' + _));
+                spec.args.push(...resolveExceptStrings(...argItems.flat(Infinity)).map(_ => '' + _));
             },
             cwd: cwdValue => {
                 spec.cwd = cwdValue;
@@ -199,17 +199,17 @@ export class CommandRecipe extends Recipe {
     static fromSimpleDescriptor(module, descriptor) {
         return new CommandRecipe((C) => {
             CommandRecipe.validateCommandDescriptorSchema(descriptor);
-            const commandSegments = [descriptor.cmd].flat();
+            const commandSegments = [descriptor.cmd].flat(Infinity);
             const firstCommandSegment = commandSegments[0];
             if (undefined === firstCommandSegment) {
                 throw new Error(`Invalid command recipe: command cannot be empty`);
             }
             C.shell(firstCommandSegment, ...commandSegments.slice(1));
             if ('args' in descriptor) {
-                C.args(...[descriptor.args].flat());
+                C.args(...[descriptor.args].flat(Infinity));
             }
             if ('cwd' in descriptor) {
-                const cwd = [descriptor.cwd].flat();
+                const cwd = [descriptor.cwd].flat(Infinity);
                 if (cwd.length !== 1) {
                     //TODO: throw InvalidSpecification
                     throw new Error("Invalid specification: cwd must be a single item");
@@ -217,11 +217,11 @@ export class CommandRecipe extends Recipe {
                 C.cwd(cwd[0]);
             }
             if ('out' in descriptor)
-                [descriptor.out].flat().forEach(C.out.bind(C));
+                [descriptor.out].flat(Infinity).forEach(C.out.bind(C));
             if ('err' in descriptor)
-                [descriptor.err].flat().forEach(C.err.bind(C));
+                [descriptor.err].flat(Infinity).forEach(C.err.bind(C));
             if ('combined' in descriptor)
-                [descriptor.combined].flat().forEach(C.combined.bind(C));
+                [descriptor.combined].flat(Infinity).forEach(C.combined.bind(C));
         });
     }
     // noinspection JSUnusedLocalSymbols

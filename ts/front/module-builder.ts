@@ -1,4 +1,13 @@
 import {RuleBuilder} from "./rule-builder.js";
+import {Artifact} from "../graph/artifact.js";
+import fs from "fs";
+import {CommandRecipe} from "../build/recipe/command.js";
+import {Module, ResolveArtifactResult, resolveArtifacts} from "../module.js";
+import * as path from "path";
+import {ZrupAPI} from "./zrup.js";
+import EventEmitter from "events";
+import {Project} from "../project.js";
+import simpleDescriptorBuilderAcceptor = CommandRecipe.simpleDescriptorBuilderAcceptor;
 
 /**
  *
@@ -27,16 +36,6 @@ export namespace ModuleBuilder {
     }
 }
 
-import fs from "fs";
-/***/
-import {CommandRecipe} from "../build/recipe/command.js";
-import {Module, ResolveArtifactResult, resolveArtifacts} from "../module.js";
-import * as path from "path";
-import {ZrupAPI} from "./zrup.js";
-import EventEmitter from "events";
-import {Artifact} from "../graph/artifact";
-import {Project} from "../project";
-import simpleDescriptorBuilderAcceptor = CommandRecipe.simpleDescriptorBuilderAcceptor;
 
 export class ModuleBuilder extends EventEmitter
 {

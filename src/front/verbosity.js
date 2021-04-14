@@ -47,7 +47,7 @@ export class Verbosity {
             });
             // noinspection JSUnusedLocalSymbols
             build.on('spawning.command', (job, rawExec, args, child) => {
-                console.log(`${job.rule.module.name}+${job.rule.name}: spawning ${rawExec} ${[args].flat().join(' ')}`);
+                console.log(`${job.rule.module.name}+${job.rule.name}: spawning ${rawExec} ${[args].flat(Infinity).join(' ')}`);
             });
             build.on('spawned.command', (job, child) => {
                 console.log(`${job.rule.module.name}+${job.rule.name}: spawned ${child.spawnfile} ${child.spawnargs}`);

@@ -8,6 +8,8 @@ import {Recipe} from "../build/recipe.js";
 import EventEmitter from "events";
 import {Project} from "../project.js";
 import {ModuleBuilder} from "./module-builder.js";
+import artifactNominator = RuleBuilder.artifactNominator;
+import ruleNominator = RuleBuilder.ruleNominator;
 
 /**
  *
@@ -20,21 +22,21 @@ export namespace RuleBuilder {
     export type definer = (params: DefinerParams) => Recipe;
     export type DefinerParams = {
         rule: Rule,
-        depends: artifactNominator,
-        produces: artifactNominator,
-        after: ruleNominator,
-        always: flagSetter,
+        depends: RuleBuilder.artifactNominator,
+        produces: RuleBuilder.artifactNominator,
+        after: RuleBuilder.ruleNominator,
+        always: RuleBuilder.flagSetter,
         resolve: ModuleBuilder.resolve,
         T: templateStringTag
     }
-    export type artifactNominator = (...artifactRefs: Artifact.Reference[]) => any;
+    export type artifactNominator = (...artifactRefs: Artifact.References[]) => any;
     export type ruleNominator = (...ruleRefs: string[]) => any;
     export type flagSetter = (value?: boolean) => any;
     export type boundDefiner = (...args: any[]) => Recipe;
     export type Declaration = {
         module: Module,
         rule: Rule,
-        boundDefiner: boundDefiner
+        boundDefiner: RuleBuilder.boundDefiner
     }
     export type LocateResult = {
         rule: Rule|null,
@@ -111,11 +113,11 @@ export class RuleBuilder extends EventEmitter
         }
     }
 
-    depends = (...artifactRefs: Artifact.References[]) : Dependency[] =>
+    depends : RuleBuilder.artifactNominator = (...artifactRefs: Artifact.References[]) : Dependency[] =>
     {
         const rule = this.requireCurrentRule('depends'), module = rule.module;
         const result = [];
-        for (let ref of artifactRefs.flat()) {
+        for (let ref of artifactRefs.flat(Infinity)) {
             const artifact = this.artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }));
             const dependency = rule.addDependency(artifact, Dependency.ABSENT_VIOLATION);
             result.push(dependency);
@@ -124,11 +126,11 @@ export class RuleBuilder extends EventEmitter
         return result;
     }
 
-    produces = (...artifactRefs: Artifact.References[]) : Artifact[] =>
+    produces : RuleBuilder.artifactNominator = (...artifactRefs: Artifact.References[]) : Artifact[] =>
     {
         const rule = this.requireCurrentRule('produces'), module = rule.module;
         const result = [];
-        for(let ref of artifactRefs.flat()) {
+        for(let ref of artifactRefs.flat(Infinity)) {
             const artifact = this.artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }))
             rule.addOutput(artifact);
             result.push(artifact);
@@ -137,12 +139,12 @@ export class RuleBuilder extends EventEmitter
         return result;
     }
 
-    after = (...prerequisiteRuleRefs: string[]) : void =>
+    after : RuleBuilder.ruleNominator = (...prerequisiteRuleRefs: string[]) : void =>
     {
         this.declareRuleEdges(this.#afterEdges, 'after', ...prerequisiteRuleRefs);
     }
 
-    also = (...peerRuleRefs: string[]) : void =>
+    also : RuleBuilder.ruleNominator = (...peerRuleRefs: string[]) : void =>
     {
         this.declareRuleEdges(this.#alsoEdges, 'also', ...peerRuleRefs);
     }

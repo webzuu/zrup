@@ -35,6 +35,7 @@ import * as util from "util";
 import { Verbosity } from "./verbosity.js";
 import { resolveArtifacts } from "../module.js";
 import { Rule } from "../graph/rule.js";
+import { Dependency } from "../graph/dependency.js";
 /***/
 export class Zrup {
     constructor(projectRoot, config, request) {
@@ -148,6 +149,7 @@ export class ZrupAPI {
         this.FileArtifact = FileArtifact;
         this.RecipeArtifact = RecipeArtifact;
         this.MockArtifact = MockArtifact;
+        this.Dependency = Dependency;
         this.ArtifactManager = ArtifactManager;
         this.ArtifactFactory = ArtifactFactory;
         this.FileArtifactFactory = FileArtifactFactory;

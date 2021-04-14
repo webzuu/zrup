@@ -16,6 +16,7 @@ import { Build } from "../build.js";
 import { resolveArtifacts } from "../module.js";
 import { Rule } from "../graph/rule.js";
 import Config = Zrup.Config;
+import { Dependency } from "../graph/dependency.js";
 /***/
 export declare class Zrup {
     #private;
@@ -61,6 +62,7 @@ export declare class ZrupAPI {
     FileArtifact: typeof FileArtifact;
     RecipeArtifact: typeof RecipeArtifact;
     MockArtifact: typeof MockArtifact;
+    Dependency: typeof Dependency;
     ArtifactManager: typeof ArtifactManager;
     ArtifactFactory: typeof ArtifactFactory;
     FileArtifactFactory: typeof FileArtifactFactory;

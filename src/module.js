@@ -81,7 +81,7 @@ function obtainArtifactReferenceFrom(resolvable) {
     throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
 }
 export function resolveArtifacts(artifactManager, module, skipStrings, ...refs) {
-    return refs.flat().map(ref => {
+    return refs.flat(Infinity).map(ref => {
         if ('string' === typeof ref && skipStrings)
             return ref;
         const artifact = artifactManager.get(new AID(obtainArtifactReferenceFrom(ref)).withDefaults({ module: module.name }));

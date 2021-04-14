@@ -2,7 +2,6 @@
 import { Rule } from "../graph/rule.js";
 import { Module } from "../module.js";
 import { Artifact } from "../graph/artifact.js";
-import { Dependency } from "../graph/dependency.js";
 import { templateStringTag } from "../util/tagged-template.js";
 import { ArtifactManager } from "../graph/artifact.js";
 import { Recipe } from "../build/recipe.js";
@@ -17,21 +16,21 @@ export declare namespace RuleBuilder {
     type definer = (params: DefinerParams) => Recipe;
     type DefinerParams = {
         rule: Rule;
-        depends: artifactNominator;
-        produces: artifactNominator;
-        after: ruleNominator;
-        always: flagSetter;
+        depends: RuleBuilder.artifactNominator;
+        produces: RuleBuilder.artifactNominator;
+        after: RuleBuilder.ruleNominator;
+        always: RuleBuilder.flagSetter;
         resolve: ModuleBuilder.resolve;
         T: templateStringTag;
     };
-    type artifactNominator = (...artifactRefs: Artifact.Reference[]) => any;
+    type artifactNominator = (...artifactRefs: Artifact.References[]) => any;
     type ruleNominator = (...ruleRefs: string[]) => any;
     type flagSetter = (value?: boolean) => any;
     type boundDefiner = (...args: any[]) => Recipe;
     type Declaration = {
         module: Module;
         rule: Rule;
-        boundDefiner: boundDefiner;
+        boundDefiner: RuleBuilder.boundDefiner;
     };
     type LocateResult = {
         rule: Rule | null;
@@ -50,10 +49,10 @@ export declare class RuleBuilder extends EventEmitter {
     private createDeclaration;
     private bindDefiner;
     private bindDefinerArgs;
-    depends: (...artifactRefs: Artifact.References[]) => Dependency[];
-    produces: (...artifactRefs: Artifact.References[]) => Artifact[];
-    after: (...prerequisiteRuleRefs: string[]) => void;
-    also: (...peerRuleRefs: string[]) => void;
+    depends: RuleBuilder.artifactNominator;
+    produces: RuleBuilder.artifactNominator;
+    after: RuleBuilder.ruleNominator;
+    also: RuleBuilder.ruleNominator;
     private declareRuleEdges;
     always: RuleBuilder.flagSetter;
     requireCurrentRule(bindingName: string): Rule;

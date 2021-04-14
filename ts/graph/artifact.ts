@@ -1,10 +1,11 @@
 import md5 from "md5";
 import {Dependency} from "./dependency.js";
 import {ResolveArtifactResult} from "../module.js";
+import {ValueOrArray} from "../util/types.js";
 
 export namespace Artifact {
     export type ClassConstructor = {
-        new(aid: Artifact.Reference, ...args : any) : Artifact,
+        new(aid: Reference, ...args : any) : Artifact,
         type?: string
     }
     export type Caps = {
@@ -13,9 +14,9 @@ export namespace Artifact {
         canBuild: boolean;
     }
     export type Reference = string | AID;
-    export type References = Reference | References[];
+    export type References = ValueOrArray<Reference>;
     export type Resolvable = Reference | Artifact | Dependency | ResolveArtifactResult;
-    export type Resolvables = Resolvable | Resolvables[];
+    export type Resolvables = ValueOrArray<Resolvable>;
     export type Descriptor = {
         type?: string;
         module?: string;

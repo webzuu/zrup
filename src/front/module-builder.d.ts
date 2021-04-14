@@ -1,5 +1,11 @@
 /// <reference types="node" />
 import { RuleBuilder } from "./rule-builder.js";
+import { Artifact } from "../graph/artifact.js";
+import { CommandRecipe } from "../build/recipe/command.js";
+import { Module, ResolveArtifactResult } from "../module.js";
+import { ZrupAPI } from "./zrup.js";
+import EventEmitter from "events";
+import { Project } from "../project.js";
 /**
  *
  */
@@ -26,13 +32,6 @@ export declare namespace ModuleBuilder {
         definer: definer;
     };
 }
-/***/
-import { CommandRecipe } from "../build/recipe/command.js";
-import { Module, ResolveArtifactResult } from "../module.js";
-import { ZrupAPI } from "./zrup.js";
-import EventEmitter from "events";
-import { Artifact } from "../graph/artifact";
-import { Project } from "../project";
 export declare class ModuleBuilder extends EventEmitter {
     #private;
     constructor(project: Project, ruleBuilder: RuleBuilder);

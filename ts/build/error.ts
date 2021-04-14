@@ -5,7 +5,7 @@ const inspect = Symbol.for('nodejs.util.inspect.custom');
 
 export class BuildError extends Error
 {
-    public reason: Error | undefined;
+    reason: Error | undefined;
     constructor(message : string, reason?: Error) {
         super(message);
         this.reason = reason;

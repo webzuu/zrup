@@ -13,7 +13,6 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _project, _ruleBuilder;
 import fs from "fs";
-/***/
 import { CommandRecipe } from "../build/recipe/command.js";
 import { Module, resolveArtifacts } from "../module.js";
 import * as path from "path";

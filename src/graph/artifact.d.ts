@@ -1,8 +1,9 @@
 import { Dependency } from "./dependency.js";
 import { ResolveArtifactResult } from "../module.js";
+import { ValueOrArray } from "../util/types.js";
 export declare namespace Artifact {
     type ClassConstructor = {
-        new (aid: Artifact.Reference, ...args: any): Artifact;
+        new (aid: Reference, ...args: any): Artifact;
         type?: string;
     };
     type Caps = {
@@ -11,9 +12,9 @@ export declare namespace Artifact {
         canBuild: boolean;
     };
     type Reference = string | AID;
-    type References = Reference | References[];
+    type References = ValueOrArray<Reference>;
     type Resolvable = Reference | Artifact | Dependency | ResolveArtifactResult;
-    type Resolvables = Resolvable | Resolvables[];
+    type Resolvables = ValueOrArray<Resolvable>;
     type Descriptor = {
         type?: string;
         module?: string;

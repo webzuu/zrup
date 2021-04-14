@@ -24,6 +24,7 @@ import {Verbosity} from "./verbosity.js";
 import {resolveArtifacts} from "../module.js";
 import {Rule} from "../graph/rule.js";
 import Config = Zrup.Config;
+import {Dependency} from "../graph/dependency.js";
 
 /***/
 export class Zrup
@@ -187,7 +188,9 @@ export class ZrupAPI
         AID = AID;
         FileArtifact = FileArtifact;
         RecipeArtifact = RecipeArtifact;
-        MockArtifact = MockArtifact
+        MockArtifact = MockArtifact;
+
+    Dependency = Dependency;
 
     ArtifactManager = ArtifactManager;
 

@@ -97,7 +97,7 @@ export function resolveArtifacts(
     ...refs                                 : Artifact.Resolvables[]
 ) : (string|ResolveArtifactResult)[] {
 
-    return (refs.flat() as Artifact.Resolvable[]).map(ref => {
+    return (refs.flat(Infinity) as Artifact.Resolvable[]).map(ref => {
         if ('string'===typeof ref && skipStrings) return ref;
         const artifact = artifactManager.get(
             new AID(obtainArtifactReferenceFrom(ref)).withDefaults({module: module.name})

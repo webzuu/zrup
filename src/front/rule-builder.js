@@ -29,7 +29,7 @@ export class RuleBuilder extends EventEmitter {
         this.depends = (...artifactRefs) => {
             const rule = this.requireCurrentRule('depends'), module = rule.module;
             const result = [];
-            for (let ref of artifactRefs.flat()) {
+            for (let ref of artifactRefs.flat(Infinity)) {
                 const artifact = this.artifactManager.get(new AID(ref + '').withDefaults({ module: module.name }));
                 const dependency = rule.addDependency(artifact, Dependency.ABSENT_VIOLATION);
                 result.push(dependency);
@@ -40,7 +40,7 @@ export class RuleBuilder extends EventEmitter {
         this.produces = (...artifactRefs) => {
             const rule = this.requireCurrentRule('produces'), module = rule.module;
             const result = [];
-            for (let ref of artifactRefs.flat()) {
+            for (let ref of artifactRefs.flat(Infinity)) {
                 const artifact = this.artifactManager.get(new AID(ref + '').withDefaults({ module: module.name }));
                 rule.addOutput(artifact);
                 result.push(artifact);
