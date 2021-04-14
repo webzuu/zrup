@@ -36,10 +36,10 @@ const MakeItExistRecipe = class MakeItExistRecipe extends Recipe
     }
 
     async executeFor(job, spec) {
-        const onlyTarget = this.job.outputs[0];
+        const onlyTarget = job.outputs[0];
         const key = onlyTarget.key;
         const sourceVersions = await Promise.all(
-            this.job.dependencies.map(
+            job.dependencies.map(
                 dep => (async () => [
                     ["key", dep.artifact.key],
                     ["version", await dep.artifact.version]

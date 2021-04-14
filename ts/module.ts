@@ -42,7 +42,10 @@ export class Module
 
     get pathFromRoot() : string { return fsPath.relative(this.validProject.path, this.#absolutePath); }
 
-    get name() : string { return this.#name || `<${this.pathFromRoot.split('/').join('•')}>`; }
+    get name() : string {
+        // noinspection HtmlUnknownTag
+        return this.#name || `<${this.pathFromRoot.split('/').join('•')}>`;
+    }
 
     get absolutePath() : string { return this.#absolutePath; }
 

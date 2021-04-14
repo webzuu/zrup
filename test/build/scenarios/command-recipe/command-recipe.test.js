@@ -239,7 +239,11 @@ describe("CommandRecipe", () => {
         let monkey = undefined;
         const chunks = [];
         try {
-            monkey = stdout((str, enc, cb) => { chunks.push(str); });
+            monkey = stdout(
+                (str, enc, cb) => {
+                    chunks.push(str);
+                }
+            );
             const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
 
             await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();

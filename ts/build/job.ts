@@ -326,15 +326,17 @@ export class Job  {
                .map(_ => _.trim())
                .filter(_ => _ !== '')
                .map((_, n: number) => {
-                   let [version, ...refParts] = _.split(' ');
-                   if (!version || !refParts[0]) {
-                       throw new Error(`In file ${ref} at line ${n+1} - invalid filelist line`)
+                   const matches = _.match(/^([0-9A-Fa-f]{32}) [ *](.*)$/);
+                   if (Array.isArray(matches)) {
+                       const [line, version, refField] = matches;
+                       if (undefined !== version && undefined !== refField) {
+                           return [
+                               version,
+                               `${artifactType}:${this.rule.module.name}+${refField}`
+                           ];
+                       }
                    }
-                   const refField = refParts.join(' ').trim();
-                   return [
-                       version,
-                       `${artifactType}:${this.rule.module.name}+${refField}`
-                   ];
+                   throw new Error(`In file ${ref} at line ${n+1} - invalid filelist line "${_}"`)
                })
        );
        return debugResult;

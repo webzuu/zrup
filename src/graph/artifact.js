@@ -1,518 +1,259 @@
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _identity, _type, _module, _ref, _index, _defaultType, _manager, _artifactConstructor, _type_1, _artifactResolver;
 import md5 from "md5";
-import {UnimplementedAbstract} from "../error/unimplemented-abstract.js";
-
-/**
- * @typedef {Function} Artifact~ClassConstructor
- * @property {?string} type
- */
-
-/**
- * @typedef {Object} Artifact~Caps
- * @property {boolean} canWrite - if true, artifact's contents can be affected by builds
- * @property {boolean} canRemove - if true, artifact can be removed (for strict builds)
- * @property {boolean} canBuild - if false, consider the artifact to be a source and skip searching for producing rule
- */
-
-/***/
-export const Artifact = class Artifact  {
-
-    /** @type {string} */
-    #identity;
-
-    /** @param {Artifact~Reference} aid */
-    constructor(aid)
-    {
-        this.#identity = ''+aid;
+export class Artifact {
+    constructor(aid) {
+        _identity.set(this, void 0);
+        __classPrivateFieldSet(this, _identity, '' + aid);
+        this.validate();
     }
-
-    /** @return {string} */
-    get type()
-    {
-        return AID.parse(this.#identity).type;
+    get type() {
+        return AID.parse(__classPrivateFieldGet(this, _identity)).type || '';
     }
-
-    /** @return {string} */
-    static computeKey(type, identity)
-    {
+    static computeKey(type, identity) {
         return md5(JSON.stringify([
             ["type", type],
             ["identity", identity]
-        ]))
+        ]));
     }
-
-    /** @return {string} */
-    get key()
-    {
+    get key() {
         return Artifact.computeKey(this.type, this.identity);
     }
-
-    /**
-     * @return {Promise<string|null>}
-     * @abstract
-     */
-    get version()
-    {
-        throw new UnimplementedAbstract();
+    get identity() {
+        return __classPrivateFieldGet(this, _identity);
     }
-
-    /**
-     * @return {Promise<boolean>}
-     * @abstract
-     */
-    get exists()
-    {
-        throw new UnimplementedAbstract();
-    }
-
-    /** @return {string} */
-    get identity()
-    {
-        return this.#identity;
-    }
-
-    /** @return {string} */
-    get label()
-    {
+    get label() {
         return `${this.type} ${this.identity}`;
     }
-
-    /** @return {Promise<void>} */
-    async rm()
-    {
-        throw new UnimplementedAbstract();
-    }
-
-    /** @return {string} */
-    static get NONEXISTENT_VERSION() { return "[nonexistent]"; }
-
-    /** @return {Artifact~Caps} */
-    get caps()
-    {
+    get caps() {
         return {
             canWrite: false,
             canRemove: false,
             canBuild: false
         };
     }
+    validate() {
+        const aid = AID.parse(__classPrivateFieldGet(this, _identity));
+        if (false === aid) {
+            throw new Error(`Invalid AID string ${__classPrivateFieldGet(this, _identity)} used to construct an Artifact instance`);
+        }
+    }
 }
-
-/***/
-export const AID = class AID
-
-{
-    /** @type {string|undefined} */
-    #type;
-    /** @type {string|undefined} */
-    #module;
-    /** @type {string} */
-    #ref;
-    constructor(aidString)
-    {
+_identity = new WeakMap();
+Artifact.NONEXISTENT_VERSION = "[nonexistent]";
+export class AID {
+    constructor(aidString) {
+        _type.set(this, void 0);
+        _module.set(this, void 0);
+        _ref.set(this, void 0);
         const descriptor = AID.parse(aidString);
-        if (false===descriptor) throw new Error(`Invalid AID string ${aidString}`);
-        this.#type = descriptor.type;
-        this.#module = descriptor.module;
-        this.#ref = descriptor.ref;
+        if (false === descriptor)
+            throw new Error(`Invalid AID string ${aidString}`);
+        __classPrivateFieldSet(this, _type, descriptor.type);
+        __classPrivateFieldSet(this, _module, descriptor.module);
+        __classPrivateFieldSet(this, _ref, descriptor.ref);
     }
-
-    /** @return {string|undefined} */
-    get type() { return this.#type; }
-
-    /** @return {string|undefined} */
-    get module() { return this.#module; }
-
-    /** @return {string} */
-    get ref() { return this.#ref || ''; }
-
-    /**
-     * @param {string|undefined} [type]
-     * @return {AID}
-     */
-    withType(type)
-    {
-        return new AID(AID.descriptorToString(Object.assign(this.descriptor,{type})));
+    get type() { return __classPrivateFieldGet(this, _type); }
+    get module() { return __classPrivateFieldGet(this, _module); }
+    get ref() { return __classPrivateFieldGet(this, _ref) || ''; }
+    withType(type) {
+        return new AID(AID.descriptorToString(Object.assign(this.descriptor, { type })));
     }
-
-    /**
-     * @param {string|undefined} [module]
-     * @return {AID}
-     */
-    withModule(module)
-    {
-        return new AID(AID.descriptorToString(Object.assign(this.descriptor,{module})));
+    withModule(module) {
+        return new AID(AID.descriptorToString(Object.assign(this.descriptor, { module })));
     }
-
-    /**
-     * @param {string} ref
-     * @return {AID}
-     */
-    withRef(ref)
-    {
-        return new AID(AID.descriptorToString(Object.assign(this.descriptor,{ref})));
+    withRef(ref) {
+        return new AID(AID.descriptorToString(Object.assign(this.descriptor, { ref })));
     }
-
-    /**
-     * @param {Object} descriptor
-     */
-    withDefaults(descriptor)
-    {
-        const result = AID.parse(this.toString());
+    withDefaults(descriptor) {
+        const result = AID.parseCorrectly(this.toString());
         let defaultsUsed = false;
-        for(let key of ["type","module","ref"])
-        {
-            if ((key in descriptor) && !result[key]) {
+        for (let key of ["type", "module", "ref"]) {
+            const value = descriptor[key];
+            if (value !== undefined && !result[key]) {
                 defaultsUsed = true;
-                result[key] = descriptor[key];
+                result[key] = value;
             }
         }
-        return (
-            defaultsUsed
-                ? new AID(AID.descriptorToString(result))
-                : this
-        );
+        return (defaultsUsed
+            ? new AID(AID.descriptorToString(result))
+            : this);
     }
-
-    /** @return {Artifact~Descriptor} */
-    get descriptor()
-    {
+    get descriptor() {
         return {
             type: this.type,
             module: this.module,
             ref: this.ref
         };
     }
-
-    /**
-     * @param {Artifact~Descriptor} descriptor
-     * @return {string}
-     */
-    static descriptorToString(descriptor)
-    {
-        return (
-            (descriptor.type ? `${descriptor.type}:` : "")
+    static descriptorToString(descriptor) {
+        return ((descriptor.type ? `${descriptor.type}:` : "")
             + (descriptor.module ? `${descriptor.module}+` : "")
-            + (descriptor.ref || "")
-        );
+            + (descriptor.ref || ""));
     }
-
-    /**
-     * @return {string}
-     */
-    toString()
-    {
+    toString() {
         return AID.descriptorToString(this);
     }
-
-    /**
-     * @param {string} aid
-     * @return {Artifact~Descriptor|boolean}
-     */
-    static parse(aid)
-    {
+    static parse(aid) {
         //TODO: handle escaped '+' in ref
-        const matches = (''+aid).match(/^(?:(?<type>[-a-z]+):)?(?:(?<module>[A-Za-z_$][-0-9A-Za-z_$]*)\+)?(?<ref>[^+]*)$/);
-        if (!matches) return false;
-        const result = {};
-        for(let key of ['type','module','ref']) if (undefined !== matches.groups[key]) result[key] = matches.groups[key];
+        const matches = ('' + aid).match(/^(?:(?<type>[-a-z]+):)?(?:(?<module>[A-Za-z_$][-0-9A-Za-z_$]*)\+)?(?<ref>[^+]*)$/);
+        if (!(matches && matches.groups))
+            return false;
+        const result = { ref: "" };
+        for (let key of ["type", "module", "ref"]) {
+            const value = matches.groups[key];
+            if (undefined !== value) {
+                result[key] = value;
+            }
+        }
+        return result;
+    }
+    static parseCorrectly(aid) {
+        const result = AID.parse(aid);
+        if (false === result)
+            throw new Error(`Could not parse "${aid}" as an AID string`);
         return result;
     }
 }
-
-/***/
-export const ArtifactManager = class ArtifactManager
-{
-    #index = {
-        factory: {
-            type: {}
-        },
-        artifact: {
-            key: {},
-            identity: {}
-        }
-    };
-
-    /** @type {string} */
-    #defaultType = "file";
-
-    /** @param {string|undefined} [defaultType] */
-    constructor(defaultType)
-    {
-        this.#defaultType = defaultType || "file";
+_type = new WeakMap(), _module = new WeakMap(), _ref = new WeakMap();
+export class ArtifactManager {
+    constructor(defaultType) {
+        _index.set(this, {
+            factory: {
+                type: {}
+            },
+            artifact: {
+                key: {},
+                identity: {}
+            }
+        });
+        _defaultType.set(this, "file");
+        __classPrivateFieldSet(this, _defaultType, defaultType || "file");
     }
-
-    /** @param {ArtifactFactory} factory */
-    addFactory(factory)
-    {
-        if (factory.type in this.#index.factory.type) {
+    addFactory(factory) {
+        if (factory.type in __classPrivateFieldGet(this, _index).factory.type) {
             throw new Error(`Attempt to register more than one factory for artifact type "${factory.type}"`);
         }
-        this.#index.factory.type[factory.type] = factory;
+        __classPrivateFieldGet(this, _index).factory.type[factory.type] = factory;
     }
-
-    /**
-     * @param {string|null} type
-     * @param {boolean|undefined} [require]
-     * @return {ArtifactFactory|null}
-     */
-    getFactoryForType(type, require)
-    {
-        const result = this.#index.factory.type[type || this.#defaultType] || null;
-        if (!result && true===require) {
+    getFactoryForType(type, require) {
+        const result = __classPrivateFieldGet(this, _index).factory.type[type || __classPrivateFieldGet(this, _defaultType)] || null;
+        if (!result && true === require) {
             throw new Error(`No factory was registered for artifact type "${type}"`);
         }
         return result;
     }
-
-    /**
-     * @param {AID} aid
-     * @return {AID}
-     */
-    normalizeAID(aid)
-    {
+    requireFactoryForType(type) {
+        return this.getFactoryForType(type, true);
+    }
+    normalizeAID(aid) {
         const factory = this.getFactoryForType(aid.type, true);
         return factory ? factory.normalize(aid) : aid;
     }
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @return {Artifact|null}
-     */
-    find(ref)
-    {
-        return this.#index.artifact.identity[""+ref];
+    find(ref) {
+        return __classPrivateFieldGet(this, _index).artifact.identity["" + ref] ?? null;
     }
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @return {Artifact}
-     */
-    get(ref)
-    {
-        const aid = new AID(""+ref);
-        const factory = this.getFactoryForType(aid.type, true);
+    get(ref) {
+        const aid = new AID("" + ref);
+        const factory = this.requireFactoryForType(aid.type);
         const normalized = factory.normalize(aid);
-        return this.find(normalized) || this.#create(factory, normalized);
+        return this.find(normalized) || this.create(factory, normalized);
     }
-
-    /** @param {Artifact} artifact */
-    put(artifact)
-    {
+    put(artifact) {
         const found = this.find(artifact.identity);
-        if (found === artifact) return;
+        if (found === artifact)
+            return;
         if (found) {
             throw new Error(`Attempted to store another artifact with already registered identity ${artifact.identity}`);
         }
-        this.#putNew(artifact);
+        this.putNew(artifact);
     }
-
-    /** @param {Artifact} artifact */
-    #putNew(artifact)
-    {
-        this.#index.artifact.key[artifact.key] = this.#index.artifact.identity[artifact.identity] = artifact;
+    putNew(artifact) {
+        __classPrivateFieldGet(this, _index).artifact.key[artifact.key] = __classPrivateFieldGet(this, _index).artifact.identity[artifact.identity] = artifact;
     }
-
-    /**
-     * @return {string[]}
-     */
-    get allReferences()
-    {
-        return Object.keys(this.#index.artifact.identity);
+    ;
+    get allReferences() {
+        return Object.keys(__classPrivateFieldGet(this, _index).artifact.identity);
     }
-
-    /**
-     * @param {ArtifactFactory} factory
-     * @param {AID} aid
-     * @return {Artifact}
-     */
-    #create(factory, aid)
-    {
+    create(factory, aid) {
         const artifact = factory.make(aid);
-        this.#putNew(artifact);
+        this.putNew(artifact);
         return artifact;
     }
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @return {string}
-     */
-    resolveToExternalIdentifier(ref)
-    {
-        const aid = this.normalizeAID(new AID(ref));
-        return this.getFactoryForType(aid.type, true).resolveToExternalIdentifier(aid);
+    resolveToExternalIdentifier(ref) {
+        const aid = this.normalizeAID(new AID('' + ref));
+        return this.requireFactoryForType(aid.type).resolveToExternalIdentifier(aid);
     }
 }
-
-/**
- * @abstract
- */
-export const ArtifactResolver = class ArtifactResolver
-
-{
-    /**
-     * @param {AID} aid
-     * @return {AID}
-     */
-    normalize(aid)
-    {
+_index = new WeakMap(), _defaultType = new WeakMap();
+export class ArtifactResolver {
+    normalize(aid) {
         return aid.withType(this.type);
     }
-
-    /**
-     * @return {string}
-     * @abstract
-     */
-    get type()
-    {
-        throw new UnimplementedAbstract();
-    }
-
-    /**
-     * @param {AID} aid
-     * @return {string}
-     * @abstract
-     */
-    resolveToExternalIdentifier(aid)
-    {
-        throw new UnimplementedAbstract();
-    }
-
 }
-
-export const ArtifactFactory = class ArtifactFactory
-
-{
-    /** @type {ArtifactManager} */
-    #manager;
-
-    /** @type {Artifact~ClassConstructor} */
-    #artifactConstructor;
-
-    /** @type {string} */
-    #type;
-
-    /** @type {ArtifactResolver} */
-    #artifactResolver;
-
-    /**
-     * @param {ArtifactManager} manager
-     * @param {Artifact~ClassConstructor} artifactConstructor
-     * @param {ArtifactResolver} artifactResolver
-     * @param {string} [type]
-     */
-    constructor(
-        manager,
-        artifactConstructor,
-        artifactResolver,
-        type
-    )
-    {
-        this.#manager = manager;
-        this.#artifactResolver = artifactResolver;
-        this.#artifactConstructor = artifactConstructor;
-        this.#type = type || artifactResolver.type || this.constructor.type || artifactConstructor.type || null;
-        if ("string" !== typeof this.#type) {
-            throw new Error(
-                "Resolver object or factory constructor must have a string property named \"type\", or the type argument must be given"
-            );
+export class ArtifactFactory {
+    constructor(manager, artifactConstructor, artifactResolver, type) {
+        /** @type {ArtifactManager} */
+        _manager.set(this, void 0);
+        /** @type {Artifact~ClassConstructor} */
+        _artifactConstructor.set(this, void 0);
+        _type_1.set(this, void 0);
+        /** @type {ArtifactResolver} */
+        _artifactResolver.set(this, void 0);
+        __classPrivateFieldSet(this, _manager, manager);
+        __classPrivateFieldSet(this, _artifactResolver, artifactResolver);
+        __classPrivateFieldSet(this, _artifactConstructor, artifactConstructor);
+        const resolvedType = (type
+            || artifactResolver.type
+            || this.constructor.type
+            || artifactConstructor.type
+            || undefined);
+        if ("string" !== typeof resolvedType) {
+            throw new Error("Resolver object or factory constructor must have a string property named \"type\", or the type argument must be given");
         }
-        this.#manager.addFactory(this);
+        __classPrivateFieldSet(this, _type_1, resolvedType);
+        __classPrivateFieldGet(this, _manager).addFactory(this);
     }
-
-    /** @return {Artifact~ClassConstructor} */
-    get artifactConstructor()
-    {
-        return this.#artifactConstructor;
+    get artifactConstructor() {
+        return __classPrivateFieldGet(this, _artifactConstructor);
     }
-
-    /** @return {string} */
-    get type()
-    {
-        return this.#type;
+    get type() {
+        return __classPrivateFieldGet(this, _type_1);
     }
-
-    /**
-     * @param {AID} aid
-     * @return {AID}
-     */
-    normalize(aid)
-    {
+    normalize(aid) {
         return this.resolver.normalize(aid);
     }
-
-    /**
-     * @param {AID|string} aidOrAIDString
-     * @param extra
-     * @return {Artifact}
-     */
-    make(aidOrAIDString, ...extra)
-    {
-        return this.makeFromNormalized(this.normalize(new AID(""+aidOrAIDString)),...extra);
+    make(aid, ...extra) {
+        return this.makeFromNormalized(this.normalize(new AID("" + aid)), ...extra);
     }
-
-    /**
-     * @param {AID} aid
-     * @param extra
-     * @return {Artifact}
-     */
-    makeFromNormalized(aid, ...extra)
-    {
+    makeFromNormalized(aid, ...extra) {
         const ctor = this.artifactConstructor;
         return new ctor(aid, ...this.prependRequiredConstructorArgs(aid, extra));
     }
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @param {Array?} extraArgs
-     * @return {Array}
-     */
-    prependRequiredConstructorArgs(ref, extraArgs)
-    {
+    prependRequiredConstructorArgs(ref, extraArgs) {
         return extraArgs || [];
     }
-
-    /**
-     * @param {AID} aid
-     * @return {string}
-     */
-    resolveToExternalIdentifier(aid)
-    {
+    resolveToExternalIdentifier(aid) {
         return this.resolver.resolveToExternalIdentifier(aid);
     }
-
-    /** @return {ArtifactResolver} */
-    get resolver()
-    {
-        return this.#artifactResolver;
+    get resolver() {
+        return __classPrivateFieldGet(this, _artifactResolver);
     }
-
-    /**
-     * @return {string|undefined}
-     */
-    static get type()
-    {
-        return undefined;
+    static get type() {
+        throw new Error("Unimplemented static abstract ArtifactFactory::get type()");
     }
 }
-
-/**
- * @typedef {(string|AID)} Artifact~Reference
- */
-
-/**
- * @typedef {(Artifact~Reference|Artifact~References[])} Artifact~References
- */
-
-/**
- * @typedef {Object} Artifact~Descriptor
- * @property {string|undefined} [type]
- * @property {string|undefined} [module]
- * @property {string|undefined} [ref]
- */
-
-/**
- * @typedef {(Artifact~Reference|Artifact|Dependency)} Artifact~Resolvable
- */
-
-/**
- * @typedef {(Artifact~Resolvable|Artifact~Resolvables[])} Artifact~Resolvables
- */
+_manager = new WeakMap(), _artifactConstructor = new WeakMap(), _type_1 = new WeakMap(), _artifactResolver = new WeakMap();
+//# sourceMappingURL=artifact.js.map

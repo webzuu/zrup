@@ -1,61 +1,49 @@
-import {AID, Artifact, ArtifactManager, ArtifactFactory} from "../artifact.js";
-import {PromiseKeeper} from "../../util/promise-keeper.js";
-import {FileArtifactFactory, FileArtifactResolver} from "./file.js";
-
-export const MockArtifact = class MockArtifact extends Artifact
-
-{
-    /** @type {PromiseKeeper} */
-    #pk;
-    #type;
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @param {string} type
-     * @param {PromiseKeeper} pk
-     */
-    constructor(ref, type, pk)
-    {
-        super(new AID(ref).withType(type).toString());
-        this.#pk=pk;
-        this.#type=type;
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
     }
-
-    get type()
-    {
-        return this.#type;
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
     }
-
-    get exists()
-    {
-        return this.#pk.about(this.key, "exists").promise;
+    return privateMap.get(receiver);
+};
+var _pk, _type, _project, _pk_1;
+import { AID, Artifact, ArtifactFactory } from "../artifact";
+import { FileArtifactFactory, FileArtifactResolver } from "./file";
+export class MockArtifact extends Artifact {
+    constructor(ref, type, pk) {
+        super(new AID(ref + '').withType(type).toString());
+        _pk.set(this, void 0);
+        _type.set(this, void 0);
+        __classPrivateFieldSet(this, _pk, pk);
+        __classPrivateFieldSet(this, _type, type || 'file');
     }
-
-    get version()
-    {
-        return this.#pk.about(this.key, "version").promise;
+    get type() {
+        return __classPrivateFieldGet(this, _type);
     }
-
-    async getContents()
-    {
-        return await this.#pk.about(this.key, "contents").promise;
+    get exists() {
+        return __classPrivateFieldGet(this, _pk).about(this.key, "exists").promise;
     }
-
-    async putContents(contents)
-    {
-        this.#pk.set(this.key, "contents", contents);
+    get version() {
+        return __classPrivateFieldGet(this, _pk).about(this.key, "version").promise;
     }
-
-    async rm()
-    {
-        this.#pk.forget(this.key, "exists");
-        this.#pk.forget(this.key, "version");
-        this.#pk.forget(this.key, "contents");
-        this.#pk.set(this.key, "exists", false);
-        this.#pk.set(this.key, "version", Artifact.NONEXISTENT_VERSION);
+    async getContents() {
+        return await __classPrivateFieldGet(this, _pk).about(this.key, "contents").promise;
     }
-
-
+    async putContents(contents) {
+        __classPrivateFieldGet(this, _pk).set(this.key, "contents", contents);
+    }
+    async rm() {
+        __classPrivateFieldGet(this, _pk).forget(this.key, "exists");
+        __classPrivateFieldGet(this, _pk).forget(this.key, "version");
+        __classPrivateFieldGet(this, _pk).forget(this.key, "contents");
+        __classPrivateFieldGet(this, _pk).set(this.key, "exists", false);
+        __classPrivateFieldGet(this, _pk).set(this.key, "version", Artifact.NONEXISTENT_VERSION);
+    }
     get caps() {
         return {
             canWrite: true,
@@ -63,47 +51,30 @@ export const MockArtifact = class MockArtifact extends Artifact
             canBuild: true
         };
     }
-
     static get type() {
-        throw new Error(
-            "MockArtifact has dynamic artifact type. If you are trying to subclass ArtifactFactory to make instances"
-            +" of MockArtifact mocking a specific type, you need to override the type property on the factory" +
-            +" class constructor"
-        );
+        throw new Error("MockArtifact has dynamic artifact type. If you are trying to subclass ArtifactFactory to make instances"
+            + " of MockArtifact mocking a specific type, you need to override the type property on the factory" +
+            +" class constructor");
     }
+    static get constructorOfThisClass() { return this; }
 }
-
-export const MockFileFactory = class MockFileFactory extends ArtifactFactory
-{
-    /** @type {Project} */
-    #project
-
-    /** @type {PromiseKeeper} */
-    #pk;
-
-    /**
-     * @param {ArtifactManager} manager
-     * @param {Project} project
-     * @param {PromiseKeeper} pk
-     */
-    constructor(manager, project, pk)
-    {
-        super(manager, MockArtifact, new FileArtifactResolver(project));
-        this.#project = project;
-        this.#pk = pk;
+_pk = new WeakMap(), _type = new WeakMap();
+export class MockFileFactory extends ArtifactFactory {
+    constructor(manager, project, pk) {
+        super(manager, MockArtifact, new FileArtifactResolver(project), "file");
+        _project.set(this, void 0);
+        _pk_1.set(this, void 0);
+        __classPrivateFieldSet(this, _project, project);
+        __classPrivateFieldSet(this, _pk_1, pk);
     }
-
-    prependRequiredConstructorArgs(aid, extraArgs)
-    {
-        return [MockFileFactory.type, this.#pk, ...super.prependRequiredConstructorArgs(aid, extraArgs)];
+    prependRequiredConstructorArgs(aid, extraArgs) {
+        return [MockFileFactory.type, __classPrivateFieldGet(this, _pk_1), ...super.prependRequiredConstructorArgs(aid, extraArgs)];
     }
-
-    static get type() { return "file"; };
+    static get type() { return "file"; }
+    ;
 }
-
-Object.assign(
-    MockFileFactory.prototype,
-    {
-        normalize: FileArtifactFactory.prototype.normalize
-    }
-)
+_project = new WeakMap(), _pk_1 = new WeakMap();
+Object.assign(MockFileFactory.prototype, {
+    normalize: FileArtifactFactory.prototype.normalize
+});
+//# sourceMappingURL=mock.js.map

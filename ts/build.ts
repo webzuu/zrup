@@ -8,6 +8,7 @@ import {Dependency} from "./graph/dependency.js";
 import {Graph} from "./graph";
 import throwThe from "./util/throw-error";
 import {Rule} from "./graph/rule";
+import {Transaction} from "better-sqlite3";
 
 interface BuildIndex {
     rule : {
@@ -190,7 +191,7 @@ export class Build extends EventEmitter  {
         outputInfos: { output: Artifact; version: string; }[],
         depInfos: { dependency: Dependency; version: string; }[],
         job: Job
-    ) {
+    ) : Transaction {
         return this.db.db.transaction(() => {
             this.recordArtifacts([
                 ...outputInfos.map(_ => _.output),

@@ -1,157 +1,107 @@
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _module, _name, _label, _recipe;
 import md5 from "md5";
-import {Module} from "../module.js";
-import {Dependency} from "./dependency.js";
-import {Artifact} from "./artifact.js";
-import {Recipe} from "../build/recipe.js";
-
+import { Dependency } from "./dependency";
 /**
  * @callback BuilderCallback
  * @this {Rule}
  * @param {Graph|undefined} graph,
  * @param {Recipe|undefined} recipe
  */
-
 /**
  * @property {Object.<string,Dependency>} dependencies
  * @property {Object.<string,Artifact>} outputs
  * @property {Object.<string,Rule>} after - Rules that are order-only dependencies
  * @property {boolean} always
  */
-export const Rule = class Rule  {
-
-    /** @type {Module} */
-    #module;
-
-    /** @type {string|null} */
-    #name;
-
-    /** @type {string|null} */
-    #label;
-
-    /** @type {Recipe|null} */
-    #recipe;
-
-    /**
-     * @param {Module} module
-     * @param {string} name
-     */
-    constructor(module, name)
-    {
-        this.#module = module;
-        this.#name = name.replace(/\W/g, '-');
-        this.#label = name;
-        this.#recipe = null;
+export class Rule {
+    constructor(module, name) {
+        _module.set(this, void 0);
+        _name.set(this, void 0);
+        _label.set(this, void 0);
+        _recipe.set(this, void 0);
+        __classPrivateFieldSet(this, _module, module);
+        __classPrivateFieldSet(this, _name, name.replace(/\W/g, '-'));
+        __classPrivateFieldSet(this, _label, name);
+        __classPrivateFieldSet(this, _recipe, null);
         this.outputs = {};
         this.dependencies = {};
         this.also = {};
         this.after = {};
         this.always = false;
     }
-
-    /** @return {Module} */
-    get module()
-    {
-        return this.#module;
+    get module() {
+        return __classPrivateFieldGet(this, _module);
     }
-
-    /** @return {string|null} */
-    get name()
-    {
-        return this.#name;
+    get name() {
+        return __classPrivateFieldGet(this, _name);
     }
-
-    /** @return {string} */
-    get identity()
-    {
+    get identity() {
         return `rule:${this.module.name}+${this.name}`;
     }
-
-    /** @return {Recipe|null} */
-    get recipe()
-    {
-        return this.#recipe;
+    get recipe() {
+        return __classPrivateFieldGet(this, _recipe);
     }
-
-    /** @param {Recipe|null} recipe */
-    set recipe(recipe)
-    {
-        if (this.#recipe) {
+    get validRecipe() {
+        const result = this.recipe;
+        if (!result)
+            throw new Error(`Attempt to access recipe property that wasn't set`);
+        return result;
+    }
+    set recipe(recipe) {
+        if (__classPrivateFieldGet(this, _recipe)) {
             throw new Error(`Attempt to ${recipe ? "reassign" : "unset"} the recipe of ${this.label}`);
         }
-        this.#recipe = recipe;
+        __classPrivateFieldSet(this, _recipe, recipe);
     }
-
-    /**
-     * @param {string} identityString
-     * @return {string}
-     */
-    static computeKey(identityString)
-    {
-        return md5(JSON.stringify({identity: identityString}));
+    static computeKey(identityString) {
+        return md5(JSON.stringify({ identity: identityString }));
     }
-
-    /** @return {string} */
-    get key()
-    {
+    get key() {
         return Rule.computeKey(this.identity);
     }
-
-    /** @param {string|null} label */
-    set label(label)
-    {
-        this.#label = label;
+    set label(label) {
+        __classPrivateFieldSet(this, _label, label);
     }
-
-    /** @return {string} */
-    get label()
-    {
-        return this.#label || this.formatDefaultLabel();
+    get label() {
+        return __classPrivateFieldGet(this, _label) || this.formatDefaultLabel();
     }
-
-    /** @return {string} */
-    formatDefaultLabel()
-    {
+    formatDefaultLabel() {
         const outputs = Object.values(this.outputs);
         switch (outputs.length) {
-            case 0: return `rule "${this.identity}"`;
-            case 1: return `rule for building "${outputs[0].label}"`;
+            case 0:
+                return `rule "${this.identity}"`;
+            case 1:
+                return `rule for building "${outputs[0].label}"`;
             default: return `rule for building "${outputs[0].label}" (and more)`;
         }
     }
-
-    /**
-     * @param {Artifact} artifact
-     * @param {number|undefined} [whenAbsent]
-     * @return {Dependency}
-     */
-    addDependency(artifact, whenAbsent)
-    {
+    addDependency(artifact, whenAbsent) {
         let dependency = this.dependencies[artifact.key];
-        if (!dependency || whenAbsent !== Dependency.ABSENT_STATE) {
-            this.dependencies[artifact.key] = dependency = new Dependency(
-                artifact,
-                whenAbsent === Dependency.ABSENT_STATE ? Dependency.ABSENT_STATE : Dependency.ABSENT_VIOLATION
-            );
+        if (!dependency || whenAbsent !== Dependency.Absent.State) {
+            this.dependencies[artifact.key] = dependency = new Dependency(artifact, whenAbsent);
         }
         return dependency;
     }
-
-    /**
-     * @param {Rule} rule
-     */
-    addAlso(rule)
-    {
+    addAlso(rule) {
         this.also[rule.key] = rule;
     }
-
-    /**
-     * @param {Artifact} artifact
-     */
-    addOutput(artifact)
-    {
-        return (
-            this.outputs[artifact.key]
-            || (this.outputs[artifact.key] = artifact)
-        );
+    addOutput(artifact) {
+        return (this.outputs[artifact.key]
+            || (this.outputs[artifact.key] = artifact));
     }
 }
+_module = new WeakMap(), _name = new WeakMap(), _label = new WeakMap(), _recipe = new WeakMap();
+//# sourceMappingURL=rule.js.map

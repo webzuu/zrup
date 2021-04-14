@@ -79,10 +79,7 @@ export abstract class Artifact  {
 
     private validate() {
         const aid = AID.parse(this.#identity);
-        if (
-            false === aid
-            || !aid.type
-        ) {
+        if (false === aid) {
             throw new Error(`Invalid AID string ${this.#identity} used to construct an Artifact instance`);
         }
     }

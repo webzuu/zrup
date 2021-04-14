@@ -1,143 +1,96 @@
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _project, _parent, _name, _path, _absolutePath, _exports;
 import fsPath from "path";
-import {AID, Artifact, ArtifactManager} from "./graph/artifact.js";
-import {Dependency} from "./graph/dependency.js";
-
-export const Module = class Module
-
-{
-    /** @type {Project} */
-    #project;
-
-    /** @type {Module|null} */
-    #parent;
-
-    /** @type {string|null} */
-    #name;
-
-    /** @type {string} */
-    #path;
-
-    /** @type {string} */
-    #absolutePath;
-
-    #exports = {};
-
-    /**
-     *
-     * @param {Module|null} parent
-     * @param {string} path
-     * @param {string|undefined} [name]
-     */
-    constructor(parent, path, name)
-    {
-        this.#project = parent ? parent.project : null;
-        this.#parent = parent;
-        this.#path = path;
-        this.#name = name || null;
-        this.#absolutePath = this.parent ? fsPath.resolve(this.parent.absolutePath,path) : fsPath.resolve('/',path);
-        if (this.project) this.project.addModule(this);
+import { AID, Artifact } from "./graph/artifact.js";
+import { Dependency } from "./graph/dependency.js";
+export class Module {
+    constructor(parent, path, name) {
+        // noinspection TypeScriptFieldCanBeMadeReadonly
+        _project.set(this, void 0);
+        _parent.set(this, void 0);
+        _name.set(this, void 0);
+        _path.set(this, void 0);
+        _absolutePath.set(this, void 0);
+        _exports.set(this, {});
+        __classPrivateFieldSet(this, _project, parent ? parent.project : null);
+        __classPrivateFieldSet(this, _parent, parent);
+        __classPrivateFieldSet(this, _path, path);
+        __classPrivateFieldSet(this, _name, name);
+        __classPrivateFieldSet(this, _absolutePath, this.parent ? fsPath.resolve(this.parent.absolutePath, path) : fsPath.resolve('/', path));
+        if (this.project)
+            this.project.addModule(this);
     }
-
-    /** @return {Project} */
-    get project() { return this.#project; }
-
-    /** @return {Module|null} */
-    get parent() { return this.#parent; }
-
-    /** @return {string} */
-    get pathFromRoot() { return fsPath.relative(this.project.path, this.#absolutePath); }
-
-    /** @return {string|null} */
-    get name() { return this.#name || `<${this.pathFromRoot.replaceAll('/','•')}>`; }
-
-    /** @return {string} */
-    get absolutePath() { return this.#absolutePath; }
-
-    /**
-     * @param {Artifact~Reference} ref
-     * @return {string}
-     */
-    resolve(ref) {
-        const aid = new AID(''+ref);
-        if (aid.module && aid.module !== this.name) {
-            return this.project.getModuleByName(aid.module,true).resolve(aid.withModule((_=>_)()));
+    get project() { return __classPrivateFieldGet(this, _project); }
+    get validProject() {
+        if (!__classPrivateFieldGet(this, _project)) {
+            throw new Error("Project reference must be set on the module for this operation");
         }
-        return fsPath.resolve(this.#absolutePath, aid.ref);
+        return __classPrivateFieldGet(this, _project);
     }
-
-    /**
-     * @param {Object.<string,*>} exports
-     */
-    export(exports)
-    {
-        this.#exports = Object.assign({}, this.#exports, exports);
+    get parent() { return __classPrivateFieldGet(this, _parent); }
+    get pathFromRoot() { return fsPath.relative(this.validProject.path, __classPrivateFieldGet(this, _absolutePath)); }
+    get name() {
+        // noinspection HtmlUnknownTag
+        return __classPrivateFieldGet(this, _name) || `<${this.pathFromRoot.split('/').join('•')}>`;
     }
-
-    get exports()
-    {
-        return Object.assign({}, this.#exports);
+    get absolutePath() { return __classPrivateFieldGet(this, _absolutePath); }
+    resolve(ref) {
+        const aid = new AID('' + ref);
+        if (aid.module && aid.module !== this.name) {
+            return this.validProject.requireModuleByName(aid.module).resolve(aid.withModule((_ => _)()));
+        }
+        return fsPath.resolve(__classPrivateFieldGet(this, _absolutePath), aid.ref);
     }
-
-    /**
-     *
-     * @param {Project} project
-     * @param {string} name
-     * @return {Module}
-     */
-    static createRoot(project, name)
-    {
+    export(exports) {
+        __classPrivateFieldSet(this, _exports, Object.assign({}, __classPrivateFieldGet(this, _exports), exports));
+    }
+    get exports() {
+        return Object.assign({}, __classPrivateFieldGet(this, _exports));
+    }
+    static createRoot(project, name) {
         const rootModule = new Module(null, project.path, name);
-        rootModule.#project = project;
+        __classPrivateFieldSet(rootModule, _project, project);
         project.addModule(rootModule);
         return rootModule;
     }
 }
-
-/** @param {ModuleBuilder~definer} definer */
-export function module(definer) {
-}
-
-/**
- * @param {Artifact~Resolvable} resolvable
- * @return {string}
- */
+_project = new WeakMap(), _parent = new WeakMap(), _name = new WeakMap(), _path = new WeakMap(), _absolutePath = new WeakMap(), _exports = new WeakMap();
 function obtainArtifactReferenceFrom(resolvable) {
-    if ("string" === typeof resolvable) return resolvable;
-    if (resolvable instanceof Artifact) return resolvable.identity;
-    if (resolvable instanceof Dependency) return resolvable.artifact.identity;
-    if (resolvable instanceof AID) return resolvable.toString();
-    if (
-        null!==resolvable
-        && resolvable instanceof Object
-        && resolvable.artifact instanceof Artifact
-    )
+    if ("string" === typeof resolvable)
+        return resolvable;
+    if (resolvable instanceof Artifact)
+        return resolvable.identity;
+    if (resolvable instanceof Dependency)
+        return resolvable.artifact.identity;
+    if (resolvable instanceof AID)
+        return resolvable.toString();
+    if (null !== resolvable)
         return resolvable.artifact.identity;
     throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
 }
-
-/**
- * @param {ArtifactManager} artifactManager
- * @param {Module} module,
- * @param {boolean} skipStrings
- * @param {...(Artifact~Resolvable)} refs
- * @return {Array.<string|{toString: function(): string}>}
- */
-export function resolveArtifacts(
-    artifactManager,
-    module,
-    skipStrings,
-    ...refs
-) {
+export function resolveArtifacts(artifactManager, module, skipStrings, ...refs) {
     return refs.flat().map(ref => {
-        if ('string'===typeof ref) {
-            if (skipStrings) return ref;
-        }
-        const artifact = artifactManager.get(
-            new AID(obtainArtifactReferenceFrom(ref)).withDefaults({module: module.name})
-        );
+        if ('string' === typeof ref && skipStrings)
+            return ref;
+        const artifact = artifactManager.get(new AID(obtainArtifactReferenceFrom(ref)).withDefaults({ module: module.name }));
         const externalIdentifier = artifactManager.resolveToExternalIdentifier(artifact.identity);
-        const result = {toString: () => externalIdentifier};
-        Object.defineProperty(result, "artifact", {get: () => artifact});
+        const result = {
+            toString: () => externalIdentifier
+        };
+        Object.defineProperty(result, "artifact", { get: () => artifact });
         return result;
     });
 }
+//# sourceMappingURL=module.js.map

@@ -1,214 +1,114 @@
-/**
- * @callback ModuleBuilder~definerAcceptor
- * @param {string|ModuleBuilder~definer} nameOrDefiner
- * @param {ModuleBuilder~definer|undefined} [definerOpt]
- */
-
-/**
- * @callback ModuleBuilder~definer
- * @param {ModuleBuilder~DefinerParams} params
- */
-
-/**
- * @typedef {Object.<string,*>} ModuleBuilder~DefinerParams
- * @property {Module} module
- * @property {ModuleBuilder~includeNominator} include
- * @property {RuleBuilder~definerAcceptor} rule
- * @property {RuleBuilder~artifactNominator} depends
- * @property {RuleBuilder~artifactNominator} produces
- * @property {RuleBuilder~ruleNominator} after
- * @property {CommandRecipe~simpleDescriptorBuilderAcceptor} to
- * @property {RuleBuilder~flagSetter} always
- * @property {RuleBuilder~ruleNominator} also
- * @property {ModuleBuilder~resolve} resolve
- * @property {ZrupAPI} API
- */
-
-/**
- * @callback ModuleBuilder~resolve
- * @param {Artifact~Resolvables} items
- * @return [string]
- */
-
-/**
- * @callback ModuleBuilder~includeNominator
- * @param {...string} includes
- * @return {Promise<void>}
- */
-
-/**
- * @typedef {Object} ModuleBuilder~Descriptor
- * @property {string} name
- * @property {ModuleBuilder~definer} definer
- */
-
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _project, _ruleBuilder;
 import fs from "fs";
 /***/
-import {CommandRecipe} from "../build/recipe/command.js";
-import {Module, resolveArtifacts} from "../module.js";
+import { CommandRecipe } from "../build/recipe/command.js";
+import { Module, resolveArtifacts } from "../module.js";
 import * as path from "path";
-import {ZrupAPI} from "./zrup.js";
+import { ZrupAPI } from "./zrup.js";
 import EventEmitter from "events";
-
-let self;
-export const ModuleBuilder = self = class ModuleBuilder extends EventEmitter
-{
-    /** @type {Project} */
-    #project;
-    /** @type {RuleBuilder} */
-    #ruleBuilder;
-
-    /**
-     * @param {Project} project
-     * @param {RuleBuilder} ruleBuilder
-     */
-    constructor(project, ruleBuilder)
-    {
+export class ModuleBuilder extends EventEmitter {
+    constructor(project, ruleBuilder) {
         super();
-        this.#project = project;
-        this.#ruleBuilder = ruleBuilder;
+        _project.set(this, void 0);
+        _ruleBuilder.set(this, void 0);
+        __classPrivateFieldSet(this, _project, project);
+        __classPrivateFieldSet(this, _ruleBuilder, ruleBuilder);
     }
-
     get project() {
-        return this.#project;
+        return __classPrivateFieldGet(this, _project);
     }
-
-    /**
-     * @param {Module|null} parentModule
-     * @param {string} path
-     * @param {string} name
-     * @param {ModuleBuilder~definer} definer
-     */
-    async define(parentModule, path, name, definer)
-    {
-        const moduleToBeDefined = (
-            parentModule
-                ? this.#project.addModule(new Module(parentModule, path, name))
-                : Module.createRoot(this.#project, name)
-        );
-        this.emit('defining.module',moduleToBeDefined,path,name);
-        await definer(this.#bindDefinerArgs(moduleToBeDefined));
-        this.emit('defined.module',moduleToBeDefined,path,name);
+    async define(parentModule, path, name, definer) {
+        const moduleToBeDefined = (parentModule
+            ? __classPrivateFieldGet(this, _project).addModule(new Module(parentModule, path, name))
+            : Module.createRoot(__classPrivateFieldGet(this, _project), name));
+        this.emit('defining.module', moduleToBeDefined, path, name);
+        await definer(this.bindDefinerArgs(moduleToBeDefined));
+        this.emit('defined.module', moduleToBeDefined, path, name);
     }
-
-    /**
-     * @param {Module} module
-     * @return {ModuleBuilder~DefinerParams}
-     */
-    #bindDefinerArgs(module)
-    {
+    bindDefinerArgs(module) {
         return {
             module,
-            /** @type {ModuleBuilder~includeNominator} */
             include: this.includeMany.bind(this, module),
-            /** @type {RuleBuilder~definerAcceptor} */
-            rule: this.#ruleBuilder.bindDefinerAcceptor(module),
-            depends: this.#ruleBuilder.depends,
-            produces: this.#ruleBuilder.produces,
-            after: this.#ruleBuilder.after,
-            /** @type {CommandRecipe~simpleDescriptorBuilderAcceptor} */
-            to: CommandRecipe.to.bind(null, this.#ruleBuilder, module),
-            always: this.#ruleBuilder.always,
-            resolve: resolveArtifacts.bind(null, this.#ruleBuilder.artifactManager, module, false),
-            also: this.#ruleBuilder.also,
+            rule: __classPrivateFieldGet(this, _ruleBuilder).bindDefinerAcceptor(module),
+            depends: __classPrivateFieldGet(this, _ruleBuilder).depends,
+            produces: __classPrivateFieldGet(this, _ruleBuilder).produces,
+            after: __classPrivateFieldGet(this, _ruleBuilder).after,
+            to: CommandRecipe.to.bind(null, __classPrivateFieldGet(this, _ruleBuilder), module),
+            always: __classPrivateFieldGet(this, _ruleBuilder).always,
+            resolve: resolveArtifacts.bind(null, __classPrivateFieldGet(this, _ruleBuilder).artifactManager, module, false),
+            also: __classPrivateFieldGet(this, _ruleBuilder).also,
             API: new ZrupAPI()
         };
     }
-
-    /**
-     *
-     * @param {Module} parentModule
-     * @param {...string} subpaths
-     * @return {Promise<string[]>}
-     */
-    async includeMany(parentModule, ...subpaths)
-    {
-        return await Promise.all(subpaths.map(this.loadModule.bind(this,parentModule)));
+    async includeMany(parentModule, ...subpaths) {
+        return await Promise.all(subpaths.map(this.loadModule.bind(this, parentModule)));
     }
-
-    /**
-     * @param {Module} parentModule
-     * @param {string} subpath
-     * @return {Promise<string>}
-     */
-    async loadModule(parentModule, subpath)
-    {
-        const definer = ModuleBuilder.#normalizeDefiner(await this.#import(this.#resolveModuleBase(parentModule, subpath)));
+    async loadModule(parentModule, subpath) {
+        const definer = ModuleBuilder.normalizeDefiner(await this.import(this.resolveModuleBase(parentModule, subpath)));
         await this.define(parentModule, subpath, definer.name, definer.definer);
         return definer.name;
     }
-
-    async loadRootModule()
-    {
-        const definer = ModuleBuilder.#normalizeDefiner(await this.#import(this.#project.path));
-        await this.define(null, this.#project.path, definer.name, definer.definer);
+    async loadRootModule() {
+        const definer = ModuleBuilder.normalizeDefiner(await this.import(__classPrivateFieldGet(this, _project).path));
+        await this.define(null, __classPrivateFieldGet(this, _project).path, definer.name, definer.definer);
     }
-
-    /**
-     * @param {ModuleBuilder~definer|ModuleBuilder~Descriptor} definerOrDescriptor
-     * @return {ModuleBuilder~Descriptor}
-     */
-    static #normalizeDefiner(definerOrDescriptor)
-    {
-        return (
-            "function"===typeof definerOrDescriptor
-                ? ModuleBuilder.#describeDefiner(definerOrDescriptor)
-                : definerOrDescriptor
-        );
+    static normalizeDefiner(definerOrDescriptor) {
+        return ("function" === typeof definerOrDescriptor
+            ? ModuleBuilder.describeDefiner(definerOrDescriptor)
+            : definerOrDescriptor);
     }
-
-    /**
-     * @param {ModuleBuilder~definer} definer
-     * @return {ModuleBuilder~Descriptor}
-     */
-    static #describeDefiner(definer)
-    {
+    static describeDefiner(definer) {
         return {
             name: definer.name,
             definer
         };
     }
-
-    /**
-     * @param {string} containingDir
-     * @return {Promise<ModuleBuilder~definer|ModuleBuilder~Descriptor>}
-     */
-    async #import(containingDir)
-    {
-        const base = path.join(containingDir, this.#getSpecFileBasename());
+    async import(containingDir) {
+        const base = path.join(containingDir, this.getSpecFileBasename());
         let importedModule = null;
-        this.emit('loading.module',base);
-        for(let ext of ["mjs","cjs","js"]) {
+        this.emit('loading.module', base);
+        for (let ext of ["mjs", "cjs", "js"]) {
             const fullPath = `${base}.${ext}`;
             try {
                 importedModule = (await import(fullPath)).default;
                 this.emit('loaded.module', fullPath);
                 return importedModule;
             }
-            catch(e) {
-                if ("ERR_MODULE_NOT_FOUND" !== e.code) throw e;
+            catch (e) {
+                if ("ERR_MODULE_NOT_FOUND" !== e.code)
+                    throw e;
                 let butItExistsBooHoo = false;
-                try { butItExistsBooHoo = (await fs.promises.stat(fullPath)).isFile(); } catch(v) {}
-                if (butItExistsBooHoo) throw e;
+                try {
+                    butItExistsBooHoo = (await fs.promises.stat(fullPath)).isFile();
+                }
+                catch (v) { }
+                if (butItExistsBooHoo)
+                    throw e;
             }
         }
         throw new Error(`No zrup module definition file found in ${containingDir}`);
     }
-
     // noinspection JSMethodCanBeStatic
-    #getSpecFileBasename()
-    {
+    getSpecFileBasename() {
         return ".zrup"; //TODO: make configurable
     }
-
     // noinspection JSMethodCanBeStatic
-    /**
-     * @param {Module} parentModule
-     * @param {string} subpathSegments
-     * @return {string}
-     */
-    #resolveModuleBase(parentModule,...subpathSegments)
-    {
+    resolveModuleBase(parentModule, ...subpathSegments) {
         return parentModule.resolve(path.join(...subpathSegments));
     }
 }
+_project = new WeakMap(), _ruleBuilder = new WeakMap();
+//# sourceMappingURL=module-builder.js.map

@@ -1,91 +1,68 @@
-import {Module} from "./module.js";
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _index, _rootDirectory, _graph, _rootModule;
 import fsPath from "path";
-import {Graph} from "./graph.js";
-
-/**
- * @callback
- */
-export const Project = class Project
-
-{
-    #index = {
-        module: {
-            /** @type {Object.<string, Module>} */
-            name: {},
-            /** @type {Object.<string, Module>} */
-            path: {}
-        }
+import { Graph } from "./graph";
+export class Project {
+    constructor(rootDirectory) {
+        _index.set(this, {
+            module: {
+                name: {},
+                path: {}
+            }
+        });
+        _rootDirectory.set(this, void 0);
+        _graph.set(this, void 0);
+        _rootModule.set(this, void 0);
+        __classPrivateFieldSet(this, _rootDirectory, rootDirectory);
+        __classPrivateFieldSet(this, _graph, new Graph());
+        __classPrivateFieldSet(this, _rootModule, null);
     }
-
-    /** @type {string} */
-    #rootDirectory;
-
-    /** @type {Graph} */
-    #graph;
-
-    /** @type {Module|null} */
-    #rootModule;
-
-    /** @param {string} rootDirectory */
-    constructor(rootDirectory)
-    {
-        this.#rootDirectory=rootDirectory;
-        this.#graph = new Graph();
-    }
-
     /** @return {Graph} */
-    get graph()
-    {
-        return this.#graph;
+    get graph() {
+        return __classPrivateFieldGet(this, _graph);
     }
-
-    /**
-     * @param {Module} module
-     * @return {Module}
-     */
-    addModule(module)
-    {
-        this.#index.module.name[module.name]
-            = this.#index.module.path[fsPath.relative(this.path, module.absolutePath)]
-            = module;
-        if (!this.#rootModule && !module.parent) this.#rootModule = module;
+    addModule(module) {
+        __classPrivateFieldGet(this, _index).module.name[module.name]
+            = __classPrivateFieldGet(this, _index).module.path[fsPath.relative(this.path, module.absolutePath)]
+                = module;
+        if (!__classPrivateFieldGet(this, _rootModule) && !module.parent)
+            __classPrivateFieldSet(this, _rootModule, module);
         return module;
     }
-
-    /**
-     * @param {string} name
-     * @param {boolean|undefined} [require]
-     * @return {Module|null}
-     */
-    getModuleByName(name,require)
-    {
-        return this.#index.module.name[name] || null;
+    getModuleByName(name, require) {
+        const result = __classPrivateFieldGet(this, _index).module.name[name];
+        if (!result && require) {
+            throw new Error(`Unknown module ${name}`);
+        }
+        return result || null;
     }
-
-    /** @return {Module[]} */
-    get allModules()
-    {
-        return Object.values(this.#index.module.name);
+    requireModuleByName(name) {
+        return this.getModuleByName(name, true);
     }
-
-    /**
-     * @param {string} path
-     * @return {Module|null}
-     */
-    getModuleByPath(path)
-    {
-        return this.#index.module.path[path] || null;
+    get allModules() {
+        return Object.values(__classPrivateFieldGet(this, _index).module.name);
     }
-
-    /** @return {Module|null} */
-    get rootModule()
-    {
-        return this.#rootModule;
+    getModuleByPath(path) {
+        return __classPrivateFieldGet(this, _index).module.path[path] || null;
     }
-
-    /** @return {string} */
-    get path()
-    {
-        return this.#rootDirectory;
+    get rootModule() {
+        return __classPrivateFieldGet(this, _rootModule);
+    }
+    get path() {
+        return __classPrivateFieldGet(this, _rootDirectory);
     }
 }
+_index = new WeakMap(), _rootDirectory = new WeakMap(), _graph = new WeakMap(), _rootModule = new WeakMap();
+//# sourceMappingURL=project.js.map

@@ -1,8 +1,6 @@
-export const UnimplementedAbstract = class UnimplementedAbstract extends Error
-
-{
-    constructor()
-    {
+export class UnimplementedAbstract extends Error {
+    constructor() {
         super(`Unimplemented abstract`);
     }
 }
+//# sourceMappingURL=unimplemented-abstract.js.map

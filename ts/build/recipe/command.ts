@@ -27,11 +27,11 @@ import OutputListenerDescriptor = CommandRecipe.OutputListenerDescriptor;
 export class CommandRecipe extends Recipe {
     readonly #commandBuilder: builder;
 
-    #stdout : string[] = [];
+    private readonly stdoutChunks : string[] = [];
 
-    #stderr : string[] = [];
+    private readonly stderrChunks : string[] = [];
 
-    #combined : string[] = [];
+    private readonly combinedChunks : string[] = [];
 
     constructor(commandBuilder: builder) {
         super();
@@ -73,18 +73,18 @@ export class CommandRecipe extends Recipe {
         combined: outputListener[]
     ) {
 
-        this.#stdout = [];
-        this.#stderr = [];
-        this.#combined = [];
+        this.stdoutChunks.length=0;
+        this.stderrChunks.length=0;
+        this.combinedChunks.length=0;
 
         let stdoutRedirected = out.length > 0,
             stderrRedirected = err.length > 0,
             combinedRedirected = stdoutRedirected || stderrRedirected || combined.length > 0;
 
         const
-            outSpec = !stdoutRedirected ? [captureToArray(this.#stdout)] : out,
-            errSpec = !stderrRedirected ? [captureToArray(this.#stderr)] : err,
-            combinedSpec = !combinedRedirected ? [captureToArray(this.#combined)] : combined;
+            outSpec = !stdoutRedirected ? [captureToArray(this.stdoutChunks)] : out,
+            errSpec = !stderrRedirected ? [captureToArray(this.stderrChunks)] : err,
+            combinedSpec = !combinedRedirected ? [captureToArray(this.combinedChunks)] : combined;
 
         for (let listener of outSpec) addDataListenerToStreams(listener, child, child.stdout);
         for (let listener of errSpec) addDataListenerToStreams(listener, child, child.stderr);
@@ -92,19 +92,19 @@ export class CommandRecipe extends Recipe {
     }
 
     get stdout(): string {
-        return this.#stdout.join('');
+        return this.stdoutChunks.join('');
     }
 
     get stderr(): string {
-        return this.#stderr.join('');
+        return this.stderrChunks.join('');
     }
 
     get combined(): string {
-        return this.#combined.join('');
+        return this.combinedChunks.join('');
     }
 
     get consoleOutput(): string {
-        return this.#combined.length ? this.combined : this.stdout + this.stderr;
+        return this.combinedChunks.length ? this.combined : this.stdout + this.stderr;
     }
 
     createCompletionPromise(child: ChildProcessWithoutNullStreams, job: Job, config: CommandRecipe.Config): Promise<void> {
@@ -144,10 +144,7 @@ export class CommandRecipe extends Recipe {
                     sink(job, chunk, ...rest);
                 },
                 {
-                    //FIXME: NEED MECHANISM TO SUPPLY DESCRIPTOR FOR THIS CASE!!!!!!!!!!
-                    descriptor: {
-                        action: "KURRRRRRRRRRRRWAAAAAAAAAAAAAAA"
-                    }
+                    descriptor: sink.descriptor
                 }
             )
         }
@@ -214,9 +211,9 @@ export class CommandRecipe extends Recipe {
             cwd: cwdValue => {
                 spec.cwd = cwdValue;
             },
-            out: createOutputListenerAcceptor(spec.out, job, this.#stdout),
-            err: createOutputListenerAcceptor(spec.err, job, this.#stderr),
-            combined: createOutputListenerAcceptor(spec.combined, job, this.#combined),
+            out: createOutputListenerAcceptor(spec.out, job, this.stdoutChunks),
+            err: createOutputListenerAcceptor(spec.err, job, this.stderrChunks),
+            combined: createOutputListenerAcceptor(spec.combined, job, this.combinedChunks),
             resolve,
             T: reassemble.bind(
                 null,
@@ -273,14 +270,13 @@ export class CommandRecipe extends Recipe {
         R: RuleBuilder.DefinerParams,
         provider: CommandRecipe.simpleDescriptorBuilder | string
     ): CommandRecipe.SimpleDescriptor {
-        if ('string' === typeof provider) {
-            return {
-                cmd: provider
-            };
-        } else if ('function' === typeof provider) {
-            return provider(R);
-        }
-        throw new Error("Invalid provider of command recipe descriptor");
+        //TODO: provider comes from outside, validate it more!
+        return this.normalizeDescriptor('function' === typeof provider ? provider(R) : provider);
+    }
+
+    private static normalizeDescriptor(descriptor: CommandRecipe.SimpleDescriptor | string) : CommandRecipe.SimpleDescriptor
+    {
+        return 'string' === typeof descriptor ? { cmd: descriptor } : descriptor;
     }
 
     static fromSimpleDescriptor(module: Module, descriptor: CommandRecipe.SimpleDescriptor) {
@@ -334,9 +330,7 @@ export namespace CommandRecipe {
     }
     export type Described = { descriptor: OutputListenerDescriptor; }
     export type outputListener = ((chunk: string) => any) & Described;
-    /** @deprecated */
-    export type describedOutputListener = outputListener;
-    export type jobOutputListener = ((job: Job, chunk: string, ...rest : string[]) => any);
+    export type jobOutputListener = ((job: Job, chunk: string, ...rest : string[]) => any) & Described;
     export type outputListenerAcceptor = (listener: OutputSink) => any;
     export type cwdAcceptor = (cwd: string) => any;
     export type templateTransformer = (strings: string[], ...variables: any[]) => string
@@ -387,7 +381,7 @@ export namespace CommandRecipe {
         combined?:              OutputSinks
     }
     export type builder<P=BuilderParams, T=any> = (params: P) => T;
-    export type simpleDescriptorBuilder = builder<RuleBuilder.DefinerParams, SimpleDescriptor>;
+    export type simpleDescriptorBuilder = builder<RuleBuilder.DefinerParams, SimpleDescriptor | string>;
     export type simpleDescriptorBuilderAcceptor =
         (ruleName: string, descriptorProvider: simpleDescriptorBuilder | string) => any
         | string;
@@ -416,7 +410,7 @@ export function captureTo(artifactRef: Artifact.Reference,job: Job): outputListe
 {
     const outputFilePath = job.build.artifactManager.resolveToExternalIdentifier(artifactRef);
     let append = false;
-    const result : outputListener = chunk => {
+    const result : outputListener = (chunk : string|Buffer) => {
         if(!append) {
             fs.mkdirSync(path.dirname(outputFilePath),{mode: 0o755, recursive: true});
             fs.writeFileSync(outputFilePath, chunk);
@@ -434,9 +428,20 @@ export function captureTo(artifactRef: Artifact.Reference,job: Job): outputListe
     return result;
 }
 
-function captureToArray(dest : string[]) {
+function stringifyChunk(chunk: string|Buffer) : string {
+    return (
+        'string'===typeof chunk
+            ? chunk
+            : chunk.toString("utf-8")
+    );
+}
+
+function captureToArray(dest : (string)[]) {
     return Object.assign(
-        (chunk : string) => dest.push(chunk),
+        (chunk : string|Buffer) => {
+            const debugStringifiedChunk = stringifyChunk(chunk);
+            dest.push(debugStringifiedChunk);
+        },
         {
             descriptor: {
                 action: "Capture stream to internal buffer"

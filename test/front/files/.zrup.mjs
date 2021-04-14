@@ -1,4 +1,4 @@
-export default function
+export default async function
 root({include}) {
-    include('submodule');
+    await include('submodule');
 }

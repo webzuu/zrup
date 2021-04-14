@@ -28,11 +28,13 @@ export abstract class Recipe
 
 export class NopRecipe extends Recipe
 {
+    // noinspection JSUnusedLocalSymbols
     async executeFor(job : Job, spec : Object) : Promise<void>
     {
         //well, this is a NOP
     }
 
+    // noinspection JSUnusedLocalSymbols
     async concretizeSpecFor(job : Job) : Promise<Object>
     {
         return {};

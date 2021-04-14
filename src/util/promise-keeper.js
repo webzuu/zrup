@@ -1,96 +1,66 @@
-/**
- * @typedef {Object} PromiseKeeper~Descriptor
- * @property {string} key
- * @property {string} topic
- * @property {Function} resolve
- * @property {Function} reject
- * @property {Promise<*>} promise
- * @property {boolean} done
- * @property {Error|null} error
- */
-
-export const PromiseKeeper = class PromiseKeeper  {
-
-    #descriptors = {};
-
-    /**
-     * @param key
-     * @param topic
-     * @return {PromiseKeeper~Descriptor}
-     */
-    about(key, topic)
-    {
-        return this.#retrieve(key, topic) || this.#make(key, topic);
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
     }
-
-    forget(key, topic)
-    {
-        if (!(key in this.#descriptors)) return this;
-        if (!(topic in this.#descriptors[key])) return this;
-        delete this.#descriptors[key][topic];
+    return privateMap.get(receiver);
+};
+var _descriptors;
+export class PromiseKeeper {
+    constructor() {
+        _descriptors.set(this, {});
+    }
+    about(key, topic) {
+        return this.retrieve(key, topic) || this.make(key, topic);
+    }
+    forget(key, topic) {
+        const topicsForKey = __classPrivateFieldGet(this, _descriptors)[key];
+        if (topicsForKey) {
+            delete topicsForKey[topic];
+        }
         return this;
     }
-
-    init(key, topic, value)
-    {
+    init(key, topic, value) {
         const descriptor = this.about(key, topic);
         if (!descriptor.done) {
-            descriptor[value instanceof Error ? 'reject' : 'resolve'].call(null,value);
+            descriptor[value instanceof Error ? 'reject' : 'resolve'].call(null, value);
         }
     }
-
-    set(key, topic, value)
-    {
+    set(key, topic, value) {
         this.forget(key, topic);
         this.init(key, topic, value);
     }
-
-    /**
-     * @param {string} key
-     * @param {string} topic
-     * @return {(PromiseKeeper~Descriptor|null)}
-     */
-    #retrieve(key, topic)
-    {
-        if(!(key in this.#descriptors)) return null;
-        if (!(topic in this.#descriptors[key])) return null;
-        return this.#descriptors[key][topic];
+    retrieve(key, topic) {
+        const topicsForKey = __classPrivateFieldGet(this, _descriptors)[key];
+        if (topicsForKey) {
+            if (!(topic in topicsForKey))
+                return null;
+            return topicsForKey[topic] || null;
+        }
+        return null;
     }
-
-    /**
-     * @param {string} key
-     * @param {string} topic
-     * @return {PromiseKeeper~Descriptor}
-     */
-    #make(key, topic) {
+    make(key, topic) {
         const descriptor = {
             key,
             topic,
-            resolve: null,
-            reject: null,
-            promise: null,
             done: false,
             error: null
         };
-        descriptor.promise = new Promise(
-            /**
-             * @param {Function} resolve
-             * @param {Function} reject
-             */
-            (resolve, reject) => {
-                descriptor.resolve = resolve;
-                descriptor.reject = reject;
-            }
-        );
-        descriptor.promise.then(v => { descriptor.done = true; return v; }).catch(e => { descriptor.error=e; throw e; });
-        this.#store(descriptor);
+        descriptor.promise = new Promise((resolve, reject) => {
+            descriptor.resolve = resolve;
+            descriptor.reject = reject;
+        });
+        descriptor.promise.then(v => { descriptor.done = true; return v; }).catch(e => { descriptor.error = e; throw e; });
+        return this.store(descriptor);
+    }
+    store(descriptor) {
+        const { key, topic } = descriptor;
+        if (!(key in __classPrivateFieldGet(this, _descriptors)))
+            __classPrivateFieldGet(this, _descriptors)[key] = {};
+        const topics = __classPrivateFieldGet(this, _descriptors)[key];
+        if (topics && !(topic in topics))
+            topics[topic] = descriptor;
         return descriptor;
     }
-
-    #store(descriptor)
-    {
-        const {key, topic} = descriptor;
-        if (!(key in this.#descriptors)) this.#descriptors[key] = {}
-        if (!(topic in this.#descriptors[key])) this.#descriptors[key][topic] = descriptor;
-    }
 }
+_descriptors = new WeakMap();
+//# sourceMappingURL=promise-keeper.js.map

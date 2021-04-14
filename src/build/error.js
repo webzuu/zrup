@@ -1,64 +1,29 @@
 const inspect = Symbol.for('nodejs.util.inspect.custom');
-
-export const BuildError = class BuildError extends Error
-
-{
-    /**
-     * @param {string} message
-     * @param {Error} [reason]
-     */
+export class BuildError extends Error {
     constructor(message, reason) {
         super(message);
         this.reason = reason;
     }
-
-    getBuildTraceAsString()
-    {
+    getBuildTraceAsString() {
         let trace = this.message;
-        if (this.reason instanceof BuildError) trace = trace + "\n"+`because ${this.reason.getBuildTraceAsString()}`;
-        else if (this.reason instanceof Error) trace = trace + "\n"+`because ${this.reason.message}\n${this.reason.stack}`;
+        if (this.reason instanceof BuildError)
+            trace = trace + "\n" + `because ${this.reason.getBuildTraceAsString()}`;
+        else if (this.reason instanceof Error)
+            trace = trace + "\n" + `because ${this.reason.message}\n${this.reason.stack}`;
         return trace;
     }
-
-    [inspect]()
-    {
+    [inspect]() {
         return this.getBuildTraceAsString();
     }
-
-    /**
-     * @param {Rule} rule
-     * @param {Error} e
-     */
-    static formatRuleFailure(rule, e)
-    {
-        return (
-            `Rule ${rule.label} failed to build`
-        )
+    // noinspection JSUnusedLocalSymbols
+    static formatRuleFailure(rule, e) {
+        return (`Rule ${rule.label} failed to build`);
     }
 }
-
-export const TargetCollision = class TargetCollision extends Error
-
-{
-    artifact;
-    previousRule;
-    previousVersion;
-    offendingRule;
-    offendingVersion;
-    /**
-     *
-     * @param {Artifact} artifact
-     * @param {Rule} previousRule
-     * @param {string} previousVersion
-     * @param {Rule} offendingRule
-     * @param {string} offendingVersion
-     */
-    constructor(artifact, previousRule, previousVersion, offendingRule, offendingVersion)
-    {
-        super(
-            `Rule collision: ${offendingRule.label} produced ${artifact.label}` +
-            ` after it was already produced by ${previousRule.label}`
-        );
+export class TargetCollision extends Error {
+    constructor(artifact, previousRule, previousVersion, offendingRule, offendingVersion) {
+        super(`Rule collision: ${offendingRule.label} produced ${artifact.label}` +
+            ` after it was already produced by ${previousRule.label}`);
         this.artifact = artifact;
         this.previousRule = previousRule;
         this.previousVersion = previousVersion;
@@ -66,3 +31,4 @@ export const TargetCollision = class TargetCollision extends Error
         this.offendingVersion = offendingVersion;
     }
 }
+//# sourceMappingURL=error.js.map

@@ -1,14 +1,5 @@
 import inspect from "object-inspect";
-
-/**
- *
- * @param {Map} map
- * @param key
- * @param value
- * @param indexName
- */
-export function uniqueAdd(map, key, value, indexName)
-{
+export function uniqueAdd(map, key, value, indexName) {
     if (map.has(key)) {
         throw new Error([
             `Unique violation adding key ${key} to ${indexName || 'index'}`,
@@ -17,3 +8,4 @@ export function uniqueAdd(map, key, value, indexName)
     }
     map.set(key, value);
 }
+//# sourceMappingURL=indexing.js.map
