@@ -12,8 +12,8 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _pk, _type, _project, _pk_1;
-import { AID, Artifact, ArtifactFactory } from "../artifact";
-import { FileArtifactFactory, FileArtifactResolver } from "./file";
+import { AID, Artifact, ArtifactFactory } from "../artifact.js";
+import { FileArtifactFactory, FileArtifactResolver } from "./file.js";
 export class MockArtifact extends Artifact {
     constructor(ref, type, pk) {
         super(new AID(ref + '').withType(type).toString());

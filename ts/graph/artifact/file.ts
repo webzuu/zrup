@@ -2,10 +2,10 @@ import {AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver} from 
 import md5File from "md5-file";
 import fs from "fs";
 const fsp = fs.promises;
-import {Module} from "../../module";
+import {Module} from "../../module.js";
 import * as pathUtils from "path";
 import isSubdir from "is-subdir";
-import {Project} from "../../project";
+import {Project} from "../../project.js";
 
 export class FileArtifact extends Artifact  {
 

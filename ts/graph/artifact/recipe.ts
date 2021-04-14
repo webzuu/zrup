@@ -1,9 +1,9 @@
-import {AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver} from "../artifact";
-import {Rule} from "../rule";
-import {UnsupportedOperation} from "../../error/unsupported-operation";
-import {Job} from "../../build/job";
-import {Project} from "../../project";
-import throwThe from "../../util/throw-error";
+import {AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver} from "../artifact.js";
+import {Rule} from "../rule.js";
+import {UnsupportedOperation} from "../../error/unsupported-operation.js";
+import {Job} from "../../build/job.js";
+import {Project} from "../../project.js";
+import throwThe from "../../util/throw-error.js";
 
 export class RecipeArtifact extends Artifact
 

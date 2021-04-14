@@ -13,7 +13,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _index, _rootDirectory, _graph, _rootModule;
 import fsPath from "path";
-import { Graph } from "./graph";
+import { Graph } from "./graph.js";
 export class Project {
     constructor(rootDirectory) {
         _index.set(this, {

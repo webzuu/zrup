@@ -1,7 +1,7 @@
-import {AID, Artifact, ArtifactManager, ArtifactFactory} from "../artifact";
-import {PromiseKeeper} from "../../util/promise-keeper";
-import {FileArtifactFactory, FileArtifactResolver} from "./file";
-import {Project} from "../../project";
+import {AID, Artifact, ArtifactManager, ArtifactFactory} from "../artifact.js";
+import {PromiseKeeper} from "../../util/promise-keeper.js";
+import {FileArtifactFactory, FileArtifactResolver} from "./file.js";
+import {Project} from "../../project.js";
 
 export class MockArtifact extends Artifact
 

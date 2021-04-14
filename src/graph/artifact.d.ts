@@ -1,5 +1,5 @@
-import { Dependency } from "./dependency";
-import { ResolveArtifactResult } from "../module";
+import { Dependency } from "./dependency.js";
+import { ResolveArtifactResult } from "../module.js";
 export declare namespace Artifact {
     type ClassConstructor = {
         new (aid: Artifact.Reference, ...args: any): Artifact;

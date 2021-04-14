@@ -1,7 +1,7 @@
 import {Artifact} from "../artifact.js";
 
 import hash from "object-hash";
-import {UnsupportedOperation} from "../../error/unsupported-operation";
+import {UnsupportedOperation} from "../../error/unsupported-operation.js";
 
 export class ArtifactList extends Artifact {
 

@@ -13,10 +13,10 @@ var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (
 };
 var _declarations, _afterEdges, _alsoEdges, _currentRule;
 import { Rule } from "../graph/rule.js";
-import { resolveArtifacts } from "../module";
-import { AID } from "../graph/artifact";
-import { Dependency } from "../graph/dependency";
-import { reassemble } from "../util/tagged-template";
+import { resolveArtifacts } from "../module.js";
+import { AID } from "../graph/artifact.js";
+import { Dependency } from "../graph/dependency.js";
+import { reassemble } from "../util/tagged-template.js";
 import EventEmitter from "events";
 /***/
 export class RuleBuilder extends EventEmitter {

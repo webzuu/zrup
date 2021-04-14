@@ -1,6 +1,6 @@
 import md5 from "md5";
-import {Dependency} from "./dependency";
-import {ResolveArtifactResult} from "../module";
+import {Dependency} from "./dependency.js";
+import {ResolveArtifactResult} from "../module.js";
 
 export namespace Artifact {
     export type ClassConstructor = {

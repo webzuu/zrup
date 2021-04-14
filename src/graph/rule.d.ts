@@ -1,7 +1,7 @@
-import { Module } from "../module";
-import { Dependency } from "./dependency";
-import { Artifact } from "./artifact";
-import { Recipe } from "../build/recipe";
+import { Module } from "../module.js";
+import { Dependency } from "./dependency.js";
+import { Artifact } from "./artifact.js";
+import { Recipe } from "../build/recipe.js";
 /**
  * @callback BuilderCallback
  * @this {Rule}

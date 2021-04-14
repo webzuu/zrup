@@ -1,9 +1,9 @@
 import {Rule} from "../graph/rule.js";
-import {Module, resolveArtifacts} from "../module";
-import {AID, Artifact} from "../graph/artifact";
-import {Dependency} from "../graph/dependency";
-import {reassemble, templateStringTag} from "../util/tagged-template";
-import {ArtifactManager} from "../graph/artifact";
+import {Module, resolveArtifacts} from "../module.js";
+import {AID, Artifact} from "../graph/artifact.js";
+import {Dependency} from "../graph/dependency.js";
+import {reassemble, templateStringTag} from "../util/tagged-template.js";
+import {ArtifactManager} from "../graph/artifact.js";
 import {Recipe} from "../build/recipe.js";
 import EventEmitter from "events";
 import {Project} from "../project.js";

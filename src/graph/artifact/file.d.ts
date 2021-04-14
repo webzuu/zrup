@@ -1,6 +1,6 @@
 import { AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver } from "../artifact.js";
-import { Module } from "../../module";
-import { Project } from "../../project";
+import { Module } from "../../module.js";
+import { Project } from "../../project.js";
 export declare class FileArtifact extends Artifact {
     #private;
     constructor(ref: Artifact.Reference, resolvedPath: string);

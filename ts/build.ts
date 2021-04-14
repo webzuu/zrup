@@ -5,9 +5,9 @@ import {Job} from "./build/job.js";
 import {Db} from "./db.js";
 import {Artifact, ArtifactManager} from "./graph/artifact.js";
 import {Dependency} from "./graph/dependency.js";
-import {Graph} from "./graph";
-import throwThe from "./util/throw-error";
-import {Rule} from "./graph/rule";
+import {Graph} from "./graph.js";
+import throwThe from "./util/throw-error.js";
+import {Rule} from "./graph/rule.js";
 import {Transaction} from "better-sqlite3";
 
 interface BuildIndex {

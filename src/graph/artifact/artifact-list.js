@@ -14,7 +14,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _items;
 import { Artifact } from "../artifact.js";
 import hash from "object-hash";
-import { UnsupportedOperation } from "../../error/unsupported-operation";
+import { UnsupportedOperation } from "../../error/unsupported-operation.js";
 export class ArtifactList extends Artifact {
     constructor(identity) {
         super(identity);

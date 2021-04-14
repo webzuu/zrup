@@ -1,5 +1,5 @@
-import { Module } from "./module";
-import { Graph } from "./graph";
+import { Module } from "./module.js";
+import { Graph } from "./graph.js";
 export declare class Project {
     #private;
     constructor(rootDirectory: string);

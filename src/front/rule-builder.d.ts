@@ -1,10 +1,10 @@
 /// <reference types="node" />
 import { Rule } from "../graph/rule.js";
-import { Module } from "../module";
-import { Artifact } from "../graph/artifact";
-import { Dependency } from "../graph/dependency";
-import { templateStringTag } from "../util/tagged-template";
-import { ArtifactManager } from "../graph/artifact";
+import { Module } from "../module.js";
+import { Artifact } from "../graph/artifact.js";
+import { Dependency } from "../graph/dependency.js";
+import { templateStringTag } from "../util/tagged-template.js";
+import { ArtifactManager } from "../graph/artifact.js";
 import { Recipe } from "../build/recipe.js";
 import EventEmitter from "events";
 import { Project } from "../project.js";

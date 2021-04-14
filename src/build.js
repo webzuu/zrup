@@ -9,7 +9,7 @@ import EventEmitter from "events";
 import { BuildError } from "./build/error.js";
 import { JobSet } from "./build/job-set.js";
 import { Job } from "./build/job.js";
-import throwThe from "./util/throw-error";
+import throwThe from "./util/throw-error.js";
 /**
  * Class that manages transient information necessary to fulfill a particular build request.
  */

@@ -1,7 +1,7 @@
-import { AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver } from "../artifact";
-import { Rule } from "../rule";
-import { Job } from "../../build/job";
-import { Project } from "../../project";
+import { AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver } from "../artifact.js";
+import { Rule } from "../rule.js";
+import { Job } from "../../build/job.js";
+import { Project } from "../../project.js";
 export declare class RecipeArtifact extends Artifact {
     #private;
     readonly job: Job;

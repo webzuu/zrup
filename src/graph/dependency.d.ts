@@ -1,4 +1,4 @@
-import { Artifact } from "./artifact";
+import { Artifact } from "./artifact.js";
 export declare class Dependency {
     #private;
     constructor(artifact: Artifact, whenAbsent: Dependency.Absent);

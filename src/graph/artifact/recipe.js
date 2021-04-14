@@ -12,10 +12,10 @@ var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (
     return value;
 };
 var _specPromise, _versionPromise, _project;
-import { AID, Artifact, ArtifactFactory, ArtifactResolver } from "../artifact";
-import { Rule } from "../rule";
-import { UnsupportedOperation } from "../../error/unsupported-operation";
-import throwThe from "../../util/throw-error";
+import { AID, Artifact, ArtifactFactory, ArtifactResolver } from "../artifact.js";
+import { Rule } from "../rule.js";
+import { UnsupportedOperation } from "../../error/unsupported-operation.js";
+import throwThe from "../../util/throw-error.js";
 export class RecipeArtifact extends Artifact {
     constructor(aid, job) {
         super(aid);

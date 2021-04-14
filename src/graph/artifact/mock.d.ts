@@ -1,6 +1,6 @@
-import { Artifact, ArtifactManager, ArtifactFactory } from "../artifact";
-import { PromiseKeeper } from "../../util/promise-keeper";
-import { Project } from "../../project";
+import { Artifact, ArtifactManager, ArtifactFactory } from "../artifact.js";
+import { PromiseKeeper } from "../../util/promise-keeper.js";
+import { Project } from "../../project.js";
 export declare class MockArtifact extends Artifact {
     #private;
     constructor(ref: Artifact.Reference, type: string | undefined, pk: PromiseKeeper);
