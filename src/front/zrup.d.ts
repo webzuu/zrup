@@ -30,13 +30,15 @@ declare const schema_Config: import("hyperval").HyperObject<{
     dataDir: import("hyperval").Hyper<string, string>;
     channels: import("hyperval").HyperRecord<import("hyperval").Hyper<string, string>, import("hyperval").Hyper<string, string>>;
 }>, schema_RequestOptions: import("hyperval").HyperObject<{
-    init: import("hyperval").Hyper<boolean, boolean>;
-    verbose: import("hyperval").Hyper<boolean, boolean>;
+    version: import("hyperval").Hyper<string, string>;
+    init: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
+    verbose: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
 }>, schema_Request: import("hyperval").HyperObject<{
     goals: import("hyperval").HyperArray<import("hyperval").Hyper<string, string>>;
     options: import("hyperval").HyperObject<{
-        init: import("hyperval").Hyper<boolean, boolean>;
-        verbose: import("hyperval").Hyper<boolean, boolean>;
+        version: import("hyperval").Hyper<string, string>;
+        init: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
+        verbose: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
     }>;
 }>, schema_Options: import("hyperval").HyperObject<{
     goals: import("hyperval").HyperArray<import("hyperval").Hyper<string, string>>;

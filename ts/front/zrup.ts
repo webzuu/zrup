@@ -1,5 +1,5 @@
 import type {HyperVal} from 'hyperval';
-import {struct, array, string, record, boolean} from 'hyperval';
+import {struct, array, string, record, boolean, optional} from 'hyperval';
 
 import findUp from "find-up";
 import fs from "fs/promises";
@@ -68,7 +68,7 @@ export class Zrup
                 (infix || '').replace(/<zrupDir>/, zrupDir)
             )
         }
-        this.#verbosity = new Verbosity(request.options.verbose);
+        this.#verbosity = new Verbosity(request.options.verbose || false);
         this.#verbosity.hookRuleBuilder(
             this.#ruleBuilder = new RuleBuilder(this.#project, this.#artifactManager),
             this.#artifactManager
@@ -151,8 +151,9 @@ const
         channels: record(string(), string())
     }),
     schema_RequestOptions = struct({
-        init: boolean(),
-        verbose: boolean()
+        version: string(),
+        init: optional(boolean()),
+        verbose: optional(boolean())
     }),
     schema_Request = struct({
         goals: array(string()),

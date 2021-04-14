@@ -12,7 +12,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _request, _projectRoot, _config, _project, _db, _artifactManager, _ruleBuilder, _moduleBuilder, _verbosity;
-import { struct, array, string, record, boolean } from 'hyperval';
+import { struct, array, string, record, boolean, optional } from 'hyperval';
 import findUp from "find-up";
 import fs from "fs/promises";
 import { JobSet } from "../build/job-set.js";
@@ -58,7 +58,7 @@ export class Zrup {
         for (let [channel, infix] of Object.entries(channels)) {
             new FileArtifactFactory(__classPrivateFieldGet(this, _artifactManager), __classPrivateFieldGet(this, _project), channel, (infix || '').replace(/<zrupDir>/, zrupDir));
         }
-        __classPrivateFieldSet(this, _verbosity, new Verbosity(request.options.verbose));
+        __classPrivateFieldSet(this, _verbosity, new Verbosity(request.options.verbose || false));
         __classPrivateFieldGet(this, _verbosity).hookRuleBuilder(__classPrivateFieldSet(this, _ruleBuilder, new RuleBuilder(__classPrivateFieldGet(this, _project), __classPrivateFieldGet(this, _artifactManager))), __classPrivateFieldGet(this, _artifactManager));
         __classPrivateFieldGet(this, _verbosity).hookModuleBuilder(__classPrivateFieldSet(this, _moduleBuilder, new ModuleBuilder(__classPrivateFieldGet(this, _project), __classPrivateFieldGet(this, _ruleBuilder))));
     }
@@ -124,8 +124,9 @@ const schema_Config = struct({
     dataDir: string(),
     channels: record(string(), string())
 }), schema_RequestOptions = struct({
-    init: boolean(),
-    verbose: boolean()
+    version: string(),
+    init: optional(boolean()),
+    verbose: optional(boolean())
 }), schema_Request = struct({
     goals: array(string()),
     options: schema_RequestOptions
