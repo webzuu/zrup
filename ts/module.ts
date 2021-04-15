@@ -1,7 +1,7 @@
 import fsPath from "path";
 import {AID, Artifact, ArtifactManager} from "./graph/artifact.js";
-import {Dependency} from "./graph/dependency.js";
-import {Project} from "./project";
+import {Project} from "./project.js";
+import {obtainArtifactReferenceFrom} from "./util/casts.js";
 
 export class Module
 
@@ -76,14 +76,6 @@ export class Module
     }
 }
 
-function obtainArtifactReferenceFrom(resolvable : Artifact.Resolvable) : string {
-    if ("string" === typeof resolvable) return resolvable;
-    if (resolvable instanceof Artifact) return resolvable.identity;
-    if (resolvable instanceof Dependency) return resolvable.artifact.identity;
-    if (resolvable instanceof AID) return resolvable.toString();
-    if (null!==resolvable) return resolvable.artifact.identity;
-    throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
-}
 
 export interface ResolveArtifactResult {
     toString() : string,

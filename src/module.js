@@ -13,8 +13,8 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _project, _parent, _name, _path, _absolutePath, _exports;
 import fsPath from "path";
-import { AID, Artifact } from "./graph/artifact.js";
-import { Dependency } from "./graph/dependency.js";
+import { AID } from "./graph/artifact.js";
+import { obtainArtifactReferenceFrom } from "./util/casts.js";
 export class Module {
     constructor(parent, path, name) {
         // noinspection TypeScriptFieldCanBeMadeReadonly
@@ -67,19 +67,6 @@ export class Module {
     }
 }
 _project = new WeakMap(), _parent = new WeakMap(), _name = new WeakMap(), _path = new WeakMap(), _absolutePath = new WeakMap(), _exports = new WeakMap();
-function obtainArtifactReferenceFrom(resolvable) {
-    if ("string" === typeof resolvable)
-        return resolvable;
-    if (resolvable instanceof Artifact)
-        return resolvable.identity;
-    if (resolvable instanceof Dependency)
-        return resolvable.artifact.identity;
-    if (resolvable instanceof AID)
-        return resolvable.toString();
-    if (null !== resolvable)
-        return resolvable.artifact.identity;
-    throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
-}
 export function resolveArtifacts(artifactManager, module, skipStrings, ...refs) {
     return refs.flat(Infinity).map(ref => {
         if ('string' === typeof ref && skipStrings)

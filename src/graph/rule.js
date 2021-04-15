@@ -14,18 +14,6 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _module, _name, _label, _recipe;
 import md5 from "md5";
 import { Dependency } from "./dependency.js";
-/**
- * @callback BuilderCallback
- * @this {Rule}
- * @param {Graph|undefined} graph,
- * @param {Recipe|undefined} recipe
- */
-/**
- * @property {Object.<string,Dependency>} dependencies
- * @property {Object.<string,Artifact>} outputs
- * @property {Object.<string,Rule>} after - Rules that are order-only dependencies
- * @property {boolean} always
- */
 export class Rule {
     constructor(module, name) {
         _module.set(this, void 0);

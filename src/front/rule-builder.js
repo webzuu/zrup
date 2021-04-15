@@ -18,6 +18,7 @@ import { AID } from "../graph/artifact.js";
 import { Dependency } from "../graph/dependency.js";
 import { reassemble } from "../util/tagged-template.js";
 import EventEmitter from "events";
+import { obtainArtifactReferenceFrom } from "../util/casts.js";
 /***/
 export class RuleBuilder extends EventEmitter {
     constructor(project, artifactManager) {
@@ -26,27 +27,23 @@ export class RuleBuilder extends EventEmitter {
         _afterEdges.set(this, {});
         _alsoEdges.set(this, {});
         _currentRule.set(this, null);
-        this.depends = (...artifactRefs) => {
+        this.depends = (...resolvables) => {
             const rule = this.requireCurrentRule('depends'), module = rule.module;
-            const result = [];
-            for (let ref of artifactRefs.flat(Infinity)) {
+            return resolvables.flat(Infinity).map(obtainArtifactReferenceFrom).map((ref) => {
                 const artifact = this.artifactManager.get(new AID(ref + '').withDefaults({ module: module.name }));
                 const dependency = rule.addDependency(artifact, Dependency.ABSENT_VIOLATION);
-                result.push(dependency);
                 this.emit("depends", module, rule, dependency);
-            }
-            return result;
+                return dependency;
+            });
         };
-        this.produces = (...artifactRefs) => {
+        this.produces = (...resolvables) => {
             const rule = this.requireCurrentRule('produces'), module = rule.module;
-            const result = [];
-            for (let ref of artifactRefs.flat(Infinity)) {
+            return resolvables.flat(Infinity).map(obtainArtifactReferenceFrom).map((ref) => {
                 const artifact = this.artifactManager.get(new AID(ref + '').withDefaults({ module: module.name }));
                 rule.addOutput(artifact);
-                result.push(artifact);
                 this.emit("produces", module, rule, artifact);
-            }
-            return result;
+                return artifact;
+            });
         };
         this.after = (...prerequisiteRuleRefs) => {
             this.declareRuleEdges(__classPrivateFieldGet(this, _afterEdges), 'after', ...prerequisiteRuleRefs);

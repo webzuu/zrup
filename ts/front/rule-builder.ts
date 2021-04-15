@@ -8,8 +8,8 @@ import {Recipe} from "../build/recipe.js";
 import EventEmitter from "events";
 import {Project} from "../project.js";
 import {ModuleBuilder} from "./module-builder.js";
-import artifactNominator = RuleBuilder.artifactNominator;
-import ruleNominator = RuleBuilder.ruleNominator;
+import {obtainArtifactReferenceFrom} from "../util/casts.js";
+
 
 /**
  *
@@ -29,7 +29,7 @@ export namespace RuleBuilder {
         resolve: ModuleBuilder.resolve,
         T: templateStringTag
     }
-    export type artifactNominator = (...artifactRefs: Artifact.References[]) => any;
+    export type artifactNominator = (...resolvables: Artifact.Resolvables[]) => any;
     export type ruleNominator = (...ruleRefs: string[]) => any;
     export type flagSetter = (value?: boolean) => any;
     export type boundDefiner = (...args: any[]) => Recipe;
@@ -113,30 +113,26 @@ export class RuleBuilder extends EventEmitter
         }
     }
 
-    depends : RuleBuilder.artifactNominator = (...artifactRefs: Artifact.References[]) : Dependency[] =>
+    depends : RuleBuilder.artifactNominator = (...resolvables: Artifact.Resolvables[]) : Dependency[] =>
     {
         const rule = this.requireCurrentRule('depends'), module = rule.module;
-        const result = [];
-        for (let ref of artifactRefs.flat(Infinity)) {
+        return resolvables.flat(Infinity).map(obtainArtifactReferenceFrom).map((ref : string) : Dependency => {
             const artifact = this.artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }));
             const dependency = rule.addDependency(artifact, Dependency.ABSENT_VIOLATION);
-            result.push(dependency);
             this.emit("depends", module, rule, dependency);
-        }
-        return result;
+            return dependency;
+        });
     }
 
-    produces : RuleBuilder.artifactNominator = (...artifactRefs: Artifact.References[]) : Artifact[] =>
+    produces : RuleBuilder.artifactNominator = (...resolvables: Artifact.Resolvables[]) : Artifact[] =>
     {
         const rule = this.requireCurrentRule('produces'), module = rule.module;
-        const result = [];
-        for(let ref of artifactRefs.flat(Infinity)) {
+        return resolvables.flat(Infinity).map(obtainArtifactReferenceFrom).map((ref : string) : Artifact => {
             const artifact = this.artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }))
             rule.addOutput(artifact);
-            result.push(artifact);
             this.emit("produces", module, rule, artifact);
-        }
-        return result;
+            return artifact;
+        });
     }
 
     after : RuleBuilder.ruleNominator = (...prerequisiteRuleRefs: string[]) : void =>

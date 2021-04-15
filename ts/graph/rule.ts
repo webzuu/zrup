@@ -4,21 +4,6 @@ import {Dependency} from "./dependency.js";
 import {Artifact} from "./artifact.js";
 import {Recipe} from "../build/recipe.js";
 
-
-/**
- * @callback BuilderCallback
- * @this {Rule}
- * @param {Graph|undefined} graph,
- * @param {Recipe|undefined} recipe
- */
-
-/**
- * @property {Object.<string,Dependency>} dependencies
- * @property {Object.<string,Artifact>} outputs
- * @property {Object.<string,Rule>} after - Rules that are order-only dependencies
- * @property {boolean} always
- */
-
 export class Rule  {
 
     readonly #module                : Module;

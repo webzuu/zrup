@@ -22,6 +22,7 @@ import OutputSink = CommandRecipe.OutputSink;
 import outputListenerAcceptor = CommandRecipe.outputListenerAcceptor;
 import {RuleBuilder} from "../../front/rule-builder.js";
 import OutputListenerDescriptor = CommandRecipe.OutputListenerDescriptor;
+import {ValueOrArray} from "../../util/types.js";
 
 /***/
 export class CommandRecipe extends Recipe {
@@ -366,10 +367,10 @@ export namespace CommandRecipe {
         combined: outputListener[]
     }
     export type OutputSink = Artifact.Resolvable|outputListener|boolean;
-    export type OutputSinks = OutputSink|OutputSinks[];
+    export type OutputSinks = ValueOrArray<OutputSink>;
     export type outputSinkDescriber = (sink: outputListener) => OutputListenerDescriptor;
     export type CommandSegment = Artifact.Resolvable|string;
-    export type CommandSegments = CommandSegment|CommandSegments[];
+    export type CommandSegments = ValueOrArray<CommandSegment>;
     export type  SimpleDescriptor = {
         cmd:                    CommandSpecifiers,
         args?:                  ArgumentSpecifiers,

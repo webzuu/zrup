@@ -1,0 +1,37 @@
+{
+	"tags":
+	{
+		"allowUnknownTags" : true
+	},
+	"plugins":[
+		 "plugins/markdown",
+		"/home/rulatir/.npm/lib/node_modules/tsdoc/template/plugins/TSDoc.js"
+	],
+	"opts":
+	{
+		"template"	:"/home/rulatir/.npm/lib/node_modules/tsdoc/template",
+		"recurse"	:"true"
+	},
+	"templates" : {
+		"cleverLinks"     : false,
+		"monospaceLinks"  : false
+	},
+	"source":
+	{
+		"includePattern": "(\\.d)?\\.ts$"
+	},
+	"markdown"  : {
+		"parser"   : "gfm",
+		"hardwrap" : true
+	},
+	"tsdoc":{
+		"source"		:"/fasthome/rulatir/works/zrup/ts/",
+		"destination"	:"/fasthome/rulatir/works/zrup/docs",
+		"tutorials"		:"",
+		"systemName"	: "zrup",
+		"footer"		: "",
+		"copyright"		: "zrup Copyright © 2021 rulatir.",
+		"outputSourceFiles" : true,
+		"commentsOnly": true
+	}
+}
