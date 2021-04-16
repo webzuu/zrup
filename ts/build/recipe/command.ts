@@ -284,7 +284,7 @@ export class CommandRecipe extends Recipe {
         return new CommandRecipe((C: CommandRecipe.BuilderParams) => {
 
             CommandRecipe.validateCommandDescriptorSchema(descriptor);
-            const commandSegments: CommandSpecifiers = [descriptor.cmd].flat(Infinity) as CommandSpecifier[];
+            const commandSegments: CommandSpecifier[] = [descriptor.cmd].flat(Infinity) as CommandSpecifier[];
             const firstCommandSegment = commandSegments[0] as CommandSpecifier;
             if (undefined === firstCommandSegment) {
                 throw new Error(`Invalid command recipe: command cannot be empty`);
@@ -317,10 +317,10 @@ export class CommandRecipe extends Recipe {
 /***/
 export namespace CommandRecipe {
     export type CommandSpecifier = string|Artifact|AID|Dependency|ResolveArtifactResult;
-    export type CommandSpecifiers = CommandSpecifier|CommandSpecifiers[];
+    export type CommandSpecifiers = ValueOrArray<CommandSpecifier>;
     export type commandAcceptor = (command: CommandSpecifier, ...args: CommandSpecifier[]) => any;
     export type ArgumentSpecifier = CommandSpecifier;
-    export type ArgumentSpecifiers = ArgumentSpecifier|ArgumentSpecifiers[];
+    export type ArgumentSpecifiers = ValueOrArray<ArgumentSpecifier>;
     export type argumentsAcceptor = (...args: ArgumentSpecifier[]) => any;
     export type OutputListenerDescriptor = {
         action: string,

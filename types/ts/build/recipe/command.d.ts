@@ -41,10 +41,10 @@ export declare class CommandRecipe extends Recipe {
 /***/
 export declare namespace CommandRecipe {
     type CommandSpecifier = string | Artifact | AID | Dependency | ResolveArtifactResult;
-    type CommandSpecifiers = CommandSpecifier | CommandSpecifiers[];
+    type CommandSpecifiers = ValueOrArray<CommandSpecifier>;
     type commandAcceptor = (command: CommandSpecifier, ...args: CommandSpecifier[]) => any;
     type ArgumentSpecifier = CommandSpecifier;
-    type ArgumentSpecifiers = ArgumentSpecifier | ArgumentSpecifiers[];
+    type ArgumentSpecifiers = ValueOrArray<ArgumentSpecifier>;
     type argumentsAcceptor = (...args: ArgumentSpecifier[]) => any;
     type OutputListenerDescriptor = {
         action: string;
