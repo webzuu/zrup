@@ -12,7 +12,7 @@ import Config = CommandRecipe.Config;
 import ConcretizedSpec = CommandRecipe.ConcretizedSpec;
 import simpleDescriptorBuilder = CommandRecipe.simpleDescriptorBuilder;
 import { RuleBuilder } from "../../front/rule-builder.js";
-import { ValueOrArray } from "../../util/types.js";
+import { EmptyWorkaround, ValueOrArray } from "../../util/types.js";
 /***/
 export declare class CommandRecipe extends Recipe {
     #private;
@@ -41,10 +41,10 @@ export declare class CommandRecipe extends Recipe {
 /***/
 export declare namespace CommandRecipe {
     type CommandSpecifier = string | Artifact | AID | Dependency | ResolveArtifactResult;
-    type CommandSpecifiers = ValueOrArray<CommandSpecifier>;
+    type CommandSpecifiers = ValueOrArray<EmptyWorkaround<CommandSpecifier>>;
     type commandAcceptor = (command: CommandSpecifier, ...args: CommandSpecifier[]) => any;
     type ArgumentSpecifier = CommandSpecifier;
-    type ArgumentSpecifiers = ValueOrArray<ArgumentSpecifier>;
+    type ArgumentSpecifiers = ValueOrArray<EmptyWorkaround<ArgumentSpecifier>>;
     type argumentsAcceptor = (...args: ArgumentSpecifier[]) => any;
     type OutputListenerDescriptor = {
         action: string;
@@ -92,10 +92,10 @@ export declare namespace CommandRecipe {
         combined: outputListener[];
     };
     type OutputSink = Artifact.Resolvable | outputListener | boolean;
-    type OutputSinks = ValueOrArray<OutputSink>;
+    type OutputSinks = ValueOrArray<EmptyWorkaround<OutputSink>>;
     type outputSinkDescriber = (sink: outputListener) => OutputListenerDescriptor;
     type CommandSegment = Artifact.Resolvable | string;
-    type CommandSegments = ValueOrArray<CommandSegment>;
+    type CommandSegments = ValueOrArray<EmptyWorkaround<CommandSegment>>;
     type SimpleDescriptor = {
         cmd: CommandSpecifiers;
         args?: ArgumentSpecifiers;

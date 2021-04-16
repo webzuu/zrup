@@ -1,7 +1,7 @@
 import md5 from "md5";
 import {Dependency} from "./dependency.js";
 import {ResolveArtifactResult} from "../module.js";
-import {ValueOrArray} from "../util/types.js";
+import {EmptyWorkaround, ValueOrArray} from "../util/types.js";
 
 export namespace Artifact {
     export type ClassConstructor = {
@@ -14,9 +14,9 @@ export namespace Artifact {
         canBuild: boolean;
     }
     export type Reference = string | AID;
-    export type References = ValueOrArray<Reference>;
+    export type References = ValueOrArray<EmptyWorkaround<Reference>>;
     export type Resolvable = Reference | Artifact | Dependency | ResolveArtifactResult;
-    export type Resolvables = ValueOrArray<Resolvable>;
+    export type Resolvables = ValueOrArray<EmptyWorkaround<Resolvable>>;
     export type Descriptor = {
         type?: string;
         module?: string;

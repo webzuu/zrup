@@ -1,3 +1,3 @@
 class __emptyClassWorkaround {}
-type E<T> = T | __emptyClassWorkaround;
-export type ValueOrArray<T> = E<T> | ValueOrArray<T>[];
+export type EmptyWorkaround<T> = T | __emptyClassWorkaround;
+export type ValueOrArray<T> = T | ValueOrArray<T>[];
