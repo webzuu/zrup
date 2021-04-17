@@ -1,8 +1,9 @@
 {
   "name": "zrup",
-  "version": "0.11.27",
+  "version": "0.12.0",
   "description": "Build system experiment",
   "main": "src/front/runner.js",
+  "typings": "./dist/zrup.d.ts",
   "repository": "git@github.com:/rulatir/zrup.git",
   "author": "Szczepan Hołyszewski <rulatir@wp.pl>",
   "license": "MIT",

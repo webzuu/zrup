@@ -1,4 +1,4 @@
-import type {HyperVal} from 'hyperval';
+import {HyperVal} from 'hyperval';
 import {struct, array, string, record, boolean, optional} from 'hyperval';
 
 import findUp from "find-up";
