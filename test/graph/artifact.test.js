@@ -1,13 +1,13 @@
 import chai from "chai";
 const expect = chai.expect;
-import {AID, ArtifactManager} from "../../src/graph/artifact.js";
-import {Project} from "../../src/project.js";
+import {AID, ArtifactManager} from "../../js/graph/artifact.js";
+import {Project} from "../../js/project.js";
 
 import {fileURLToPath} from 'url';
 import {dirname} from 'path';
-import {MockFileFactory} from "../../src/graph/artifact/mock.js";
-import {PromiseKeeper} from "../../src/util/promise-keeper.js";
-import {Module} from "../../src/module.js";
+import {MockFileFactory} from "../../js/graph/artifact/mock.js";
+import {PromiseKeeper} from "../../js/util/promise-keeper.js";
+import {Module} from "../../js/module.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 

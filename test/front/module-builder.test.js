@@ -8,11 +8,11 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import {RuleBuilder} from "../../src/front/rule-builder.js";
-import {ProjectTesting} from "../../src/util/testing.js";
-import {Rule} from "../../src/graph/rule.js";
+import {RuleBuilder} from "../../js/front/rule-builder.js";
+import {ProjectTesting} from "../../js/util/testing.js";
+import {Rule} from "../../js/graph/rule.js";
 import path from "path";
-import {ModuleBuilder} from "../../src/front/module-builder.js";
+import {ModuleBuilder} from "../../js/front/module-builder.js";
 import copy from "recursive-copy";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});

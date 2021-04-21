@@ -1,4 +1,4 @@
-import {FileArtifact} from "../../../../../src/graph/artifact/file.js";
+import {FileArtifact} from "../../../../../js/graph/artifact/file.js";
 
 /** @type {ModuleBuilder~definer} */
 const test = function test(M) {

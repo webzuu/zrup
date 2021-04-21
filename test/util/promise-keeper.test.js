@@ -1,5 +1,5 @@
 import chai from "chai";
-import {PromiseKeeper} from "../../src/util/promise-keeper.js";
+import {PromiseKeeper} from "../../js/util/promise-keeper.js";
 const expect = chai.expect;
 
 describe("PromiseKeeper",() => {

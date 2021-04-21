@@ -1,6 +1,6 @@
-import {ProjectTesting} from "../../../../src/util/testing.js";
+import {ProjectTesting} from "../../../../js/util/testing.js";
 import path from "path";
-import {RuleBuilder} from "../../../../src/front/rule-builder.js";
+import {RuleBuilder} from "../../../../js/front/rule-builder.js";
 import copy from "recursive-copy";
 
 import {fileURLToPath} from 'url';
@@ -9,9 +9,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import chai from "chai";
 const expect = chai.expect;
-import {ModuleBuilder} from "../../../../src/front/module-builder.js";
-import {Build} from "../../../../src/build.js";
-import {Db} from "../../../../src/db.js";
+import {ModuleBuilder} from "../../../../js/front/module-builder.js";
+import {Build} from "../../../../js/build.js";
+import {Db} from "../../../../js/db.js";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
 

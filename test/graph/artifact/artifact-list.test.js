@@ -1,9 +1,9 @@
 import chai from "chai";
 const expect = chai.expect;
 
-import {MockArtifact} from "../../../src/graph/artifact/mock.js";
-import {PromiseKeeper} from "../../../src/util/promise-keeper.js";
-import {ArtifactList} from "../../../src/graph/artifact/artifact-list.js";
+import {MockArtifact} from "../../../js/graph/artifact/mock.js";
+import {PromiseKeeper} from "../../../js/util/promise-keeper.js";
+import {ArtifactList} from "../../../js/graph/artifact/artifact-list.js";
 
 describe("Artifact list", () => {
 

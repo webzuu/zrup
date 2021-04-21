@@ -1,5 +1,5 @@
-import {CommandRecipe} from "../../../../../src/build/recipe/command.js";
-import {WrapperRecipe} from "../../../../../src/build/recipe/wrapper.js";
+import {CommandRecipe} from "../../../../../js/build/recipe/command.js";
+import {WrapperRecipe} from "../../../../../js/build/recipe/wrapper.js";
 
 export default function test({rule}) {
 

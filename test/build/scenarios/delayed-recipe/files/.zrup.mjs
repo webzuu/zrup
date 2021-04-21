@@ -1,5 +1,5 @@
-import {CommandRecipe} from "../../../../../src/build/recipe/command.js";
-import {DelayedRecipe} from "../../../../../src/build/recipe/delayed.js";
+import {CommandRecipe} from "../../../../../js/build/recipe/command.js";
+import {DelayedRecipe} from "../../../../../js/build/recipe/delayed.js";
 
 export default function test({rule}) {
 

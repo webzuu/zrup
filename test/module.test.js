@@ -6,8 +6,8 @@ const __dirname = dirname(__filename);
 
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import {ModuleTesting} from "../src/util/testing.js";
-import {Module} from "../src/module.js";
+import {ModuleTesting} from "../js/util/testing.js";
+import {Module} from "../js/module.js";
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 

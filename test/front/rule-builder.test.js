@@ -8,11 +8,11 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import {RuleBuilder} from "../../src/front/rule-builder.js";
-import {DummyRecipe, ProjectTesting} from "../../src/util/testing.js";
-import {AID} from "../../src/graph/artifact.js";
-import {Module} from "../../src/module.js";
-import {Rule} from "../../src/graph/rule.js";
+import {RuleBuilder} from "../../js/front/rule-builder.js";
+import {DummyRecipe, ProjectTesting} from "../../js/util/testing.js";
+import {AID} from "../../js/graph/artifact.js";
+import {Module} from "../../js/module.js";
+import {Rule} from "../../js/graph/rule.js";
 import path from "path";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"));

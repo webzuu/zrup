@@ -1,6 +1,6 @@
 import chai from "chai";
 const expect = chai.expect;
-import {reassemble} from "../../src/util/tagged-template.js";
+import {reassemble} from "../../js/util/tagged-template.js";
 
 function replacer() {
     return { toString: () => "replaced" };

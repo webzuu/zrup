@@ -1,8 +1,8 @@
 {
   "name": "zrup",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "Build system experiment",
-  "main": "src/front/runner.js",
+  "main": "js/front/runner.js",
   "typings": "./dist/zrup.d.ts",
   "repository": "git@github.com:/rulatir/zrup.git",
   "author": "Szczepan Hołyszewski <rulatir@wp.pl>",
@@ -49,7 +49,7 @@
   },
   "scripts": {
     "test": "mocha",
-    "dsl": "node src/tools/make-dsl-defs/make-dsl-defs.js > dist/dsl.d.ts",
+    "dsl": "node js/tools/make-dsl-defs/make-dsl-defs.js > dist/dsl.d.ts",
     "build": "tsc && pnpm run dsl"
   },
   "bin": "bin/zrup"
