@@ -33,7 +33,7 @@ export declare class CommandRecipe extends Recipe {
     describeSpec(spec: ConcretizedSpec): Record<string, any>;
     static to(ruleBuilder: RuleBuilder, module: Module, ruleName: string, descriptorProvider: simpleDescriptorBuilder): void;
     private static createShellCommandRuleDefiner;
-    static redeemDescriptorProvider(R: RuleBuilder.DefinerParams, provider: CommandRecipe.simpleDescriptorBuilder | string): CommandRecipe.SimpleDescriptor;
+    static redeemDescriptorProvider(R: RuleBuilder.DefinerAPI, provider: CommandRecipe.simpleDescriptorBuilder | string): CommandRecipe.SimpleDescriptor;
     private static normalizeDescriptor;
     static fromSimpleDescriptor(module: Module, descriptor: CommandRecipe.SimpleDescriptor): CommandRecipe;
     private static validateCommandDescriptorSchema;
@@ -107,7 +107,7 @@ export declare namespace CommandRecipe {
         combined?: OutputSinks;
     };
     type builder<P = BuilderParams, T = any> = (params: P) => T;
-    type simpleDescriptorBuilder = builder<RuleBuilder.DefinerParams, SimpleDescriptor | string>;
+    type simpleDescriptorBuilder = builder<RuleBuilder.DefinerAPI, SimpleDescriptor | string>;
     type simpleDescriptorBuilderAcceptor = (ruleName: string, descriptorProvider: simpleDescriptorBuilder | string) => any | string;
 }
 /***/

@@ -1,13 +1,26 @@
-import ts from "typescript";
+import {InterfaceDeclaration, JSDocTag, JSDocTagStructure, Node, Project, StructureKind, SyntaxKind} from "ts-morph";
 
-const kinds = new Map(
-    Object.entries(ts.SyntaxKind).map(([k,v]) => [v,k])
-);
+class DSLBuilder {
+    namespaces: string[] = [];
+    classes: string[] = [];
+    render() : string {
+        // language=TypeScript
+        return `
+declare interface __emptyClassWorkaround {}
+declare type EmptyWorkaround<T> = T | __emptyClassWorkaround;
+declare type ValueOrArray<T> = T | ValueOrArray<T>[];
+import {EventEmitter} from "events";
+import {Transaction} from "better-sqlite3";
 
-function kind(value: ts.SyntaxKind) : string {
-    const result = kinds.get(value);
-    if (undefined === result) throw new Error(`Invalid syntax kind ${name}`);
-    return result;
+${this.classes.join("\n\n")}
+
+declare global {
+    ${this.namespaces.join("\n\n").split("\n").map(_ => '    '+_).join("\n").trimLeft()}
+}
+
+export{};
+        `.trim();
+    }
 }
 
 const requestedTypes : Record<string, {detailed?: boolean}>= {
@@ -17,131 +30,125 @@ const requestedTypes : Record<string, {detailed?: boolean}>= {
     ArtifactResolver: {},
     ArtifactFactory: {},
     FileArtifact: {},
+    RecipeArtifact: {},
     Module: {},
     ResolveArtifactResult: {},
     Dependency: {},
     RuleBuilder: {},
     CommandRecipe: {},
     Job: {},
+    JobSet: {},
     Build: {},
     Rule: {},
-    ModuleBuilder: { detailed: false }
+    ModuleBuilder: { detailed: false },
+    Graph: {},
+    Db: {},
+    RecordedVersionInfo: {}
+
 };
+const requestedTypeNames = Object.keys(requestedTypes);
 
-class DSLBuilder {
-    namespaces: string[] = [];
-    classes: string[] = [];
-    render() : string {
-        return `
-declare interface __emptyClassWorkaround {}
-declare type EmptyWorkaround<T> = T | __emptyClassWorkaround;
-declare type ValueOrArray<T> = T | ValueOrArray<T>[];
+const project = new Project({
+    tsConfigFilePath: 'tsconfig.json',
+    skipAddingFilesFromTsConfig: true
+});
 
-${this.classes.join("\n\n")}
+project.addSourceFilesAtPaths([
+    'db',
+    'graph',
+    'graph/artifact',
+    'graph/artifact/file',
+    'graph/artifact/recipe',
+    'graph/dependency',
+    'graph/rule',
+    'module',
+    'front/rule-builder',
+    'front/module-builder',
+    'build',
+    'build/recipe',
+    'build/recipe/command',
+    'build/job',
+    'build/job-set'
+].map(_ => 'types/' + _ + '.d.ts'));
 
-declare module "zrup-dsl" {
-    global {
-        ${this.namespaces.join("\n\n").split("\n").map(_ => '        '+_).join("\n").trimLeft()}
-    }
-}
-        `.trim();
-    }
-}
+const builder = new DSLBuilder();
 
-function makeVisitor(sourceFile: ts.SourceFile, builder: DSLBuilder) : (node: ts.Node) => void {
-    const requestedTypeNames = Object.keys(requestedTypes);
-    const branch : ts.Node[] = [];
-    function traverse(node: ts.Node, visitor: (node: ts.Node) => void) {
-        branch.push(node);
-        try {
-            ts.forEachChild(node, visitor);
-        }
-        catch(e) {
-            throw e;
-        }
-        finally {
-            branch.pop();
-        }
-    }
-    function visit(node: ts.Node) {
-        if (branch.length) {
-            // @ts-ignore
-            node["parent"] = branch[branch.length-1];
-        }
-        const nodeKind = kind(node.kind);
-        if (ts.isModuleBlock(node)) {
-            const decl = node.parent;
-            const name = decl.name.getFullText().trim();
-            if (!requestedTypeNames.includes(name)) {
-                return;
+
+function processInterface(iface: InterfaceDeclaration) {
+    const docs = iface.getJsDocs();
+    let doc = docs[0];
+    if (doc) {
+        const struct = doc.getStructure();
+        const tagsToBeAdded : JSDocTagStructure[] = [];
+        iface.getProperties().forEach(prop => {
+            const propDocs = prop.getJsDocs();
+            const propDoc = propDocs[0];
+            if (propDoc && doc) {
+                const propType = prop.getType();
+                const typeRef = propType.getText().split('.').filter(
+                    _ => /^[A-Za-z_$][0-9A-Za-z_$]*$/.test(_)
+                ).join('.')
+                const v = 7;
+                tagsToBeAdded.push({
+                    kind: StructureKind.JSDocTag,
+                    tagName: "property",
+                    text:
+                        `{${typeRef}} ${prop.getName()}` +
+                        (struct.description ? ' ' + propDoc.getDescription().trim() : '')
+                })
             }
-            builder.namespaces.push(`namespace ${name} ${node.getFullText()}`);
-            return;
-        }
-        if (ts.isClassDeclaration(node)) {
-            const nameNode = node.name;
-            const name = nameNode?.getFullText(sourceFile).trim();
-            if (!name || !requestedTypeNames.includes(name)) {
-                return;
-            }
-            const config = requestedTypes[name];
-            if (!config || false === config.detailed) return;
-            let text = node.getText(sourceFile);
-            text = text.replace(/^.*?\b((?:(abstract|final)\s+)?)class/,"$1class");
-            builder.classes.push(`declare ${text}`);
-        }
-        if (ts.isInterfaceDeclaration(node)) {
-            const nameNode = node.name;
-            const name = nameNode?.getFullText(sourceFile).trim();
-            if (!name || !requestedTypeNames.includes(name)) {
-                return;
-            }
-            const config = requestedTypes[name];
-            if (!config || false === config.detailed) return;
-            let text = node.getText(sourceFile);
-            text = text.replace(/^.*?\binterface/,"interface");
-            builder.classes.push(`declare ${text}`);
-        }
-        switch(nodeKind) {
-            case "ImportDeclaration":
-            case "ImportEqualsDeclaration":
-                return;
-            default:
-                traverse(node, visit);
-        }
+        });
+        doc.addTags(tagsToBeAdded);
     }
-    return visit;
 }
 
+for(let sourceFile of project.getSourceFiles()) {
+    sourceFile.forEachDescendant((node, traversal) => {
+        if (Node.isModuleBlock(node)) {
+            const decl = node.getParent();
+            const name = decl.getName().trim();
+            if (requestedTypeNames.includes(name)) {
+                traversal.skip();
+                node.forEachChild((member) => {
+                    if (Node.isInterfaceDeclaration(member)) {
+                        processInterface(member);
+                    }
+                });
+                builder.namespaces.push(`namespace ${name} ${node.getFullText()}`);
+            }
+        }
+        if (Node.isClassDeclaration(node)) {
+            const name = node.getName();
+            if (name && requestedTypeNames.includes(name)) {
+                const config = requestedTypes[name];
+                if (!config || false === config.detailed) return;
+                let text = node.getText();
+                text = text.replace(/^.*?\b((?:(abstract|final)\s+)?)class/,"$1class");
+                builder.classes.push(`declare ${text}`);
+            }
+            traversal.skip();
+        }
+        if (Node.isInterfaceDeclaration(node)) {
+            const name = node.getName();
+            if (name && requestedTypeNames.includes(name)) {
+                const config = requestedTypes[name];
+                if (!config || false === config.detailed) return;
+                let text = node.getText();
+                text = text.replace(/^.*?\binterface/,"interface");
+                builder.classes.push(
 
-
-function process(fileNames: string[], options: ts.CompilerOptions): void {
-    let program = ts.createProgram(fileNames, options);
-    const builder = new DSLBuilder();
-    for(let sourceFile of program.getSourceFiles()) {
-        if (!fileNames.includes(sourceFile.fileName)) continue;
-        const
-            visit = makeVisitor(sourceFile, builder);
-        visit(sourceFile);
-    }
-    console.log(builder.render())
+                    `declare ${text}`
+                );
+            }
+            traversal.skip();
+        }
+        if ([
+            SyntaxKind.ImportDeclaration,
+            SyntaxKind.ImportEqualsDeclaration
+        ].includes(node.getKind())) {
+            traversal.skip();
+        }
+    })
 }
 
-process(
-    [
-        'graph/artifact',
-        'graph/artifact/file',
-        'graph/dependency',
-        'graph/rule',
-        'module',
-        'front/rule-builder',
-        'front/module-builder',
-        'build/recipe/command',
-        'build/job'
-    ]
-        .map(_ => '/fasthome/rulatir/works/zrup/types/'+_+'.d.ts'),
-    {
-        rootDir: "./utility",
-
-    }
-);
+console.log(builder.render());

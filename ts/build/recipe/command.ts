@@ -262,13 +262,13 @@ export class CommandRecipe extends Recipe {
         module: Module,
         descriptorProvider: CommandRecipe.simpleDescriptorBuilder
     ): RuleBuilder.definer {
-        return (R : RuleBuilder.DefinerParams) => {
+        return (R : RuleBuilder.DefinerAPI) => {
             return CommandRecipe.fromSimpleDescriptor(module, CommandRecipe.redeemDescriptorProvider(R, descriptorProvider));
         };
     }
 
     static redeemDescriptorProvider(
-        R: RuleBuilder.DefinerParams,
+        R: RuleBuilder.DefinerAPI,
         provider: CommandRecipe.simpleDescriptorBuilder | string
     ): CommandRecipe.SimpleDescriptor {
         //TODO: provider comes from outside, validate it more!
@@ -382,7 +382,7 @@ export namespace CommandRecipe {
         combined?:              OutputSinks
     }
     export type builder<P=BuilderParams, T=any> = (params: P) => T;
-    export type simpleDescriptorBuilder = builder<RuleBuilder.DefinerParams, SimpleDescriptor | string>;
+    export type simpleDescriptorBuilder = builder<RuleBuilder.DefinerAPI, SimpleDescriptor | string>;
     export type simpleDescriptorBuilderAcceptor =
         (ruleName: string, descriptorProvider: simpleDescriptorBuilder | string) => any
         | string;

@@ -8,18 +8,18 @@ import { Dependency } from "./graph/dependency.js";
 import { Graph } from "./graph.js";
 import { Rule } from "./graph/rule.js";
 import { Transaction } from "better-sqlite3";
-interface BuildIndex {
-    rule: {
-        job: Map<string, Job>;
-        jobSet: Map<string, JobSet>;
-    };
-}
-declare type RecordedVersionInfo = {
-    target: string;
-    version: string | null;
-    sourceVersions: Record<string, string>;
-};
 export declare namespace Build {
+    interface RecordedVersionInfo {
+        target: string;
+        version: string | null;
+        sourceVersions: Record<string, string>;
+    }
+    interface Index {
+        rule: {
+            job: Map<string, Job>;
+            jobSet: Map<string, JobSet>;
+        };
+    }
     type RuleIndex = Record<string, Rule>;
     type ArtifactRelianceInfo = Record<string, RuleIndex>;
 }
@@ -31,7 +31,7 @@ export declare class Build extends EventEmitter {
     readonly graph: Graph;
     readonly db: Db;
     readonly artifactManager: ArtifactManager;
-    index: BuildIndex;
+    index: Build.Index;
     constructor(graph: Graph, db: Db, artifactManager: ArtifactManager);
     getJobFor(dependency: Dependency, require?: boolean): Promise<Job | null>;
     getJobSetFor(dependency: Dependency, require?: boolean): Promise<(JobSet | null)>;
@@ -42,7 +42,7 @@ export declare class Build extends EventEmitter {
     getAlsoJobSetForRuleKey(ruleKey: string | null): JobSet | null;
     getRuleKeyForArtifact(artifact: Artifact, version?: string): Promise<(string | null)>;
     requireRuleKeyForArtifact(artifact: Artifact, version?: string): Promise<string>;
-    getRecordedVersionInfo: (output: Artifact) => Promise<RecordedVersionInfo>;
+    getRecordedVersionInfo: (output: Artifact) => Promise<Build.RecordedVersionInfo>;
     recordVersionInfo(job: Job, dependencies: Dependency[], outputs: Artifact[]): Promise<void>;
     createRecordVersionInfoTransaction(outputInfos: {
         output: Artifact;
@@ -62,5 +62,4 @@ export declare class Build extends EventEmitter {
     formatRelianceConflictMessage(relianceInfo: Build.ArtifactRelianceInfo, artifact: Artifact, version: string, rule: Rule): string;
     requireJobForRuleKey(ruleKey: string): Job;
 }
-export {};
 //# sourceMappingURL=build.d.ts.map

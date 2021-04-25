@@ -10,23 +10,23 @@ import throwThe from "./util/throw-error.js";
 import {Rule} from "./graph/rule.js";
 import {Transaction} from "better-sqlite3";
 
-interface BuildIndex {
-    rule : {
-        job : Map<string, Job>,
-        jobSet: Map<string, JobSet>
-    }
-}
 
 type WhichRulesReliedOnArtifactVersion = Record<string, Build.ArtifactRelianceInfo>;
 type WhichArtifactVersionDidRuleRelyOn = Record<string, Record<string, string>>;
-type RecordedVersionInfo = {
-    target: string,
-    version: string | null,
-    sourceVersions: Record<string, string>
-}
 
 export namespace Build {
 
+    export interface RecordedVersionInfo {
+        target: string,
+        version: string | null,
+        sourceVersions: Record<string, string>
+    }
+    export interface Index {
+        rule : {
+            job : Map<string, Job>,
+            jobSet: Map<string, JobSet>
+        }
+    }
     export type RuleIndex = Record<string, Rule>;
     export type ArtifactRelianceInfo = Record<string, RuleIndex>;
 }
@@ -39,7 +39,7 @@ export class Build extends EventEmitter  {
 
     #whichRulesReliedOnArtifactVersion : WhichRulesReliedOnArtifactVersion = {};
     #whichArtifactVersionDidRuleRelyOn : WhichArtifactVersionDidRuleRelyOn = {};
-    public index : BuildIndex;
+    public index : Build.Index;
 
     constructor(
         public readonly graph: Graph,
@@ -152,7 +152,7 @@ export class Build extends EventEmitter  {
         return ruleKey;
     }
 
-    getRecordedVersionInfo = async (output: Artifact): Promise<RecordedVersionInfo> => {
+    getRecordedVersionInfo = async (output: Artifact): Promise<Build.RecordedVersionInfo> => {
         const nonresult = {
             target: output.key,
             version: null,
