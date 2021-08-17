@@ -2,12 +2,13 @@ lockfileVersion: 5.3
 
 specifiers:
   '@types/better-sqlite3': ^5.4.1
-  '@types/commander': ^2.12.2
+  '@types/blessed': ^0.1.19
   '@types/md5': ^2.3.0
   '@types/object-hash': ^2.1.0
   '@types/object-inspect': ^1.8.0
   better-path-resolve: ^1.0.0
   better-sqlite3: ^7.1.2
+  blessed: ^0.1.81
   chai: ^4.2.0
   chai-as-promised: ^7.1.1
   commander: ^6.2.1
@@ -40,6 +41,7 @@ specifiers:
 dependencies:
   better-path-resolve: 1.0.0
   better-sqlite3: 7.1.2
+  blessed: 0.1.81
   commander: 6.2.1
   ducktype: 1.2.2
   execa: 5.0.0
@@ -62,7 +64,7 @@ dependencies:
 
 devDependencies:
   '@types/better-sqlite3': 5.4.1
-  '@types/commander': 2.12.2
+  '@types/blessed': 0.1.19
   '@types/md5': 2.3.0
   '@types/object-hash': 2.1.0
   '@types/object-inspect': 1.8.0
@@ -136,11 +138,10 @@ packages:
       '@types/integer': 1.0.1
     dev: true
 
-  /@types/commander/2.12.2:
-    resolution: {integrity: sha512-0QEFiR8ljcHp9bAbWxecjVRuAMr16ivPiGOw6KFQBVrVd0RQIcM3xKdRisH2EDWgVWujiYtHwhSkSUoAAGzH7Q==}
-    deprecated: This is a stub types definition for commander (https://github.com/tj/commander.js). commander provides its own type definitions, so you don't need @types/commander installed!
+  /@types/blessed/0.1.19:
+    resolution: {integrity: sha512-r4qnseYWBsi/kxo5AAlCS22EnTXFbGpnvuXUubJikVeRnYB3e5HwV3NtcwJ0Sk5KOGaLvo9Rtwb8hzxfbqbQPg==}
     dependencies:
-      commander: 6.2.1
+      '@types/node': 16.6.1
     dev: true
 
   /@types/eslint-scope/3.7.0:
@@ -181,6 +182,10 @@ packages:
 
   /@types/node/14.14.37:
     resolution: {integrity: sha512-XYmBiy+ohOR4Lh5jE379fV2IU+6Jn4g5qASinhitfyO71b/sCo6MKsMLF5tc7Zf2CE8hViVQyYSobJNke8OvUw==}
+    dev: true
+
+  /@types/node/16.6.1:
+    resolution: {integrity: sha512-Sr7BhXEAer9xyGuCN3Ek9eg9xPviCF2gfu9kTfuU2HkTVAMYSDeX40fvpmo72n5nansg3nsBjuQBrsS28r+NUw==}
     dev: true
 
   /@types/normalize-package-data/2.4.0:
@@ -499,6 +504,12 @@ packages:
       buffer: 5.7.1
       inherits: 2.0.4
       readable-stream: 3.6.0
+    dev: false
+
+  /blessed/0.1.81:
+    resolution: {integrity: sha1-+WLWh+wsNpVwrnGvhDJW5tDKESk=}
+    engines: {node: '>= 0.8.0'}
+    hasBin: true
     dev: false
 
   /brace-expansion/1.1.11:
@@ -1050,6 +1061,16 @@ packages:
 
   /glob/7.1.6:
     resolution: {integrity: sha512-LwaxwyZ72Lk7vZINtNNrywX0ZuLyStrdDtabefZKAY5ZGJhVtgdznluResxNmPitE0SAO+O26sWTHeKSI2wMBA==}
+    dependencies:
+      fs.realpath: 1.0.0
+      inflight: 1.0.6
+      inherits: 2.0.4
+      minimatch: 3.0.4
+      once: 1.4.0
+      path-is-absolute: 1.0.1
+
+  /glob/7.1.7:
+    resolution: {integrity: sha512-OvD9ENzPLbegENnYP5UUfJIirTg4+XwMWGaQfQTY0JenxNvvIKP3U3/tAQSPIu/lHxXYSZmpXlUHeqAIdKzBLQ==}
     dependencies:
       fs.realpath: 1.0.0
       inflight: 1.0.6
@@ -1977,7 +1998,7 @@ packages:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
     hasBin: true
     dependencies:
-      glob: 7.1.6
+      glob: 7.1.7
 
   /rimraf/3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}

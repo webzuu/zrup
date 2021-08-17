@@ -1,5 +1,0 @@
-#!/bin/bash
-
-HERE="$(dirname "$(readlink -f "$0")")"
-RUNNER="$( realpath "${HERE}"/../js/front/runner.js )"
-node "${RUNNER}" "$@"

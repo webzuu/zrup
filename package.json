@@ -12,6 +12,7 @@
   "dependencies": {
     "better-path-resolve": "^1.0.0",
     "better-sqlite3": "^7.1.2",
+    "blessed": "^0.1.81",
     "commander": "^6.2.1",
     "ducktype": "^1.2.2",
     "execa": "^5.0.0",
@@ -34,7 +35,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^5.4.1",
-    "@types/commander": "^2.12.2",
+    "@types/blessed": "^0.1.19",
     "@types/md5": "^2.3.0",
     "@types/object-hash": "^2.1.0",
     "@types/object-inspect": "^1.8.0",
@@ -51,7 +52,10 @@
   "scripts": {
     "test": "mocha",
     "dsl": "node js/tools/make-dsl-defs/make-dsl-defs.js > dist/dsl.d.ts",
-    "build": "tsc && rm -rf doc/td/* && typedoc --out doc/td ts/ && pnpm run dsl"
+    "build": "tsc && rm -rf doc/td/* && typedoc --gitRevision wip --out doc/td ts/ && pnpm run dsl"
   },
-  "bin": "bin/zrup"
+  "bin": {
+    "zrup": "js/front/runner.js",
+    "zrui": "js/app/app.js"
+  }
 }
