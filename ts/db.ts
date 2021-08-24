@@ -10,8 +10,6 @@ import BetterSqlite3, {Database, Statement} from "better-sqlite3";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-
-
 function openDb(filename: string) : Database
 {
     let db: Database;
