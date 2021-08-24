@@ -4,6 +4,7 @@ import {ResolveArtifactResult} from "../module.js";
 import {EmptyWorkaround, ValueOrArray} from "../util/types.js";
 
 export namespace Artifact {
+    export type Reference = string | AID;
     export type ClassConstructor = {
         new(aid: Reference, ...args : any) : Artifact,
         type?: string
@@ -13,7 +14,6 @@ export namespace Artifact {
         canRemove: boolean;
         canBuild: boolean;
     }
-    export type Reference = string | AID;
     export type References = ValueOrArray<EmptyWorkaround<Reference>>;
     export type Resolvable = Reference | Artifact | Dependency | ResolveArtifactResult;
     export type Resolvables = ValueOrArray<EmptyWorkaround<Resolvable>>;

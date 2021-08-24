@@ -1,31 +1,29 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
 };
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _verbose;
+var _Verbosity_verbose;
 export class Verbosity {
     constructor(verbose) {
-        _verbose.set(this, void 0);
-        __classPrivateFieldSet(this, _verbose, verbose);
+        _Verbosity_verbose.set(this, void 0);
+        __classPrivateFieldSet(this, _Verbosity_verbose, verbose, "f");
     }
     hookModuleBuilder(moduleBuilder) {
-        if (__classPrivateFieldGet(this, _verbose)) {
+        if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
             moduleBuilder.on('defined.module', (module, path, name) => {
                 console.log(`Defining ${name} ${path}`);
             });
         }
     }
     hookRuleBuilder(ruleBuilder, artifactManager) {
-        if (__classPrivateFieldGet(this, _verbose)) {
+        if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
             ruleBuilder.on('defining.rule', (module, rule) => {
                 console.log(`Rule ${module.name}+${rule.name}`);
             });
@@ -41,7 +39,7 @@ export class Verbosity {
         build.on('invoking.recipe', rule => {
             console.log(`Invoking recipe for rule ${rule.module.name}+${rule.name}`);
         });
-        if (__classPrivateFieldGet(this, _verbose)) {
+        if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
             build.on('capturing.output', (job, outputFilePath) => {
                 console.log(`${job.rule.module.name}+${job.rule.name}: > ${outputFilePath}`);
             });
@@ -58,5 +56,5 @@ export class Verbosity {
         }
     }
 }
-_verbose = new WeakMap();
+_Verbosity_verbose = new WeakMap();
 //# sourceMappingURL=verbosity.js.map

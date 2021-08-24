@@ -1,29 +1,27 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
 };
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _module, _name, _label, _recipe;
+var _Rule_module, _Rule_name, _Rule_label, _Rule_recipe;
 import md5 from "md5";
 import { Dependency } from "./dependency.js";
 export class Rule {
     constructor(module, name) {
-        _module.set(this, void 0);
-        _name.set(this, void 0);
-        _label.set(this, void 0);
-        _recipe.set(this, void 0);
-        __classPrivateFieldSet(this, _module, module);
-        __classPrivateFieldSet(this, _name, name.replace(/\W/g, '-'));
-        __classPrivateFieldSet(this, _label, name);
-        __classPrivateFieldSet(this, _recipe, null);
+        _Rule_module.set(this, void 0);
+        _Rule_name.set(this, void 0);
+        _Rule_label.set(this, void 0);
+        _Rule_recipe.set(this, void 0);
+        __classPrivateFieldSet(this, _Rule_module, module, "f");
+        __classPrivateFieldSet(this, _Rule_name, name.replace(/\W/g, '-'), "f");
+        __classPrivateFieldSet(this, _Rule_label, name, "f");
+        __classPrivateFieldSet(this, _Rule_recipe, null, "f");
         this.outputs = {};
         this.dependencies = {};
         this.also = {};
@@ -31,16 +29,16 @@ export class Rule {
         this.always = false;
     }
     get module() {
-        return __classPrivateFieldGet(this, _module);
+        return __classPrivateFieldGet(this, _Rule_module, "f");
     }
     get name() {
-        return __classPrivateFieldGet(this, _name);
+        return __classPrivateFieldGet(this, _Rule_name, "f");
     }
     get identity() {
         return `rule:${this.module.name}+${this.name}`;
     }
     get recipe() {
-        return __classPrivateFieldGet(this, _recipe);
+        return __classPrivateFieldGet(this, _Rule_recipe, "f");
     }
     get validRecipe() {
         const result = this.recipe;
@@ -49,10 +47,10 @@ export class Rule {
         return result;
     }
     set recipe(recipe) {
-        if (__classPrivateFieldGet(this, _recipe)) {
+        if (__classPrivateFieldGet(this, _Rule_recipe, "f")) {
             throw new Error(`Attempt to ${recipe ? "reassign" : "unset"} the recipe of ${this.label}`);
         }
-        __classPrivateFieldSet(this, _recipe, recipe);
+        __classPrivateFieldSet(this, _Rule_recipe, recipe, "f");
     }
     static computeKey(identityString) {
         return md5(JSON.stringify({ identity: identityString }));
@@ -61,10 +59,10 @@ export class Rule {
         return Rule.computeKey(this.identity);
     }
     set label(label) {
-        __classPrivateFieldSet(this, _label, label);
+        __classPrivateFieldSet(this, _Rule_label, label, "f");
     }
     get label() {
-        return __classPrivateFieldGet(this, _label) || this.formatDefaultLabel();
+        return __classPrivateFieldGet(this, _Rule_label, "f") || this.formatDefaultLabel();
     }
     formatDefaultLabel() {
         const outputs = Object.values(this.outputs);
@@ -91,5 +89,5 @@ export class Rule {
             || (this.outputs[artifact.key] = artifact));
     }
 }
-_module = new WeakMap(), _name = new WeakMap(), _label = new WeakMap(), _recipe = new WeakMap();
+_Rule_module = new WeakMap(), _Rule_name = new WeakMap(), _Rule_label = new WeakMap(), _Rule_recipe = new WeakMap();
 //# sourceMappingURL=rule.js.map

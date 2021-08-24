@@ -1,17 +1,15 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
 };
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _request, _projectRoot, _config, _project, _db, _artifactManager, _ruleBuilder, _moduleBuilder, _verbosity;
+var _Zrup_request, _Zrup_projectRoot, _Zrup_config, _Zrup_project, _Zrup_db, _Zrup_artifactManager, _Zrup_ruleBuilder, _Zrup_moduleBuilder, _Zrup_verbosity;
 import { struct, array, string, record, boolean, optional } from 'hyperval';
 import findUp from "find-up";
 import fs from "fs/promises";
@@ -39,39 +37,39 @@ import { Dependency } from "../graph/dependency.js";
 /***/
 export class Zrup {
     constructor(projectRoot, config, request) {
-        _request.set(this, void 0);
-        _projectRoot.set(this, void 0);
-        _config.set(this, void 0);
-        _project.set(this, void 0);
-        _db.set(this, void 0);
-        _artifactManager.set(this, void 0);
-        _ruleBuilder.set(this, void 0);
-        _moduleBuilder.set(this, void 0);
-        _verbosity.set(this, void 0);
-        __classPrivateFieldSet(this, _request, request);
-        __classPrivateFieldSet(this, _projectRoot, projectRoot);
-        const { zrupDir, dataDir, channels } = __classPrivateFieldSet(this, _config, config);
-        __classPrivateFieldSet(this, _project, new Project(projectRoot));
-        __classPrivateFieldSet(this, _db, new Db(path.join(__classPrivateFieldGet(this, _project).path, dataDir.replace(/<zrupDir>/, zrupDir), 'state.sqlite')));
-        __classPrivateFieldSet(this, _artifactManager, new ArtifactManager());
-        new FileArtifactFactory(__classPrivateFieldGet(this, _artifactManager), __classPrivateFieldGet(this, _project));
-        new RecipeArtifactFactory(__classPrivateFieldGet(this, _artifactManager), __classPrivateFieldGet(this, _project));
+        _Zrup_request.set(this, void 0);
+        _Zrup_projectRoot.set(this, void 0);
+        _Zrup_config.set(this, void 0);
+        _Zrup_project.set(this, void 0);
+        _Zrup_db.set(this, void 0);
+        _Zrup_artifactManager.set(this, void 0);
+        _Zrup_ruleBuilder.set(this, void 0);
+        _Zrup_moduleBuilder.set(this, void 0);
+        _Zrup_verbosity.set(this, void 0);
+        __classPrivateFieldSet(this, _Zrup_request, request, "f");
+        __classPrivateFieldSet(this, _Zrup_projectRoot, projectRoot, "f");
+        const { zrupDir, dataDir, channels } = __classPrivateFieldSet(this, _Zrup_config, config, "f");
+        __classPrivateFieldSet(this, _Zrup_project, new Project(projectRoot), "f");
+        __classPrivateFieldSet(this, _Zrup_db, new Db(path.join(__classPrivateFieldGet(this, _Zrup_project, "f").path, dataDir.replace(/<zrupDir>/, zrupDir), 'state.sqlite')), "f");
+        __classPrivateFieldSet(this, _Zrup_artifactManager, new ArtifactManager(), "f");
+        new FileArtifactFactory(__classPrivateFieldGet(this, _Zrup_artifactManager, "f"), __classPrivateFieldGet(this, _Zrup_project, "f") /*, "file", "" */);
+        new RecipeArtifactFactory(__classPrivateFieldGet(this, _Zrup_artifactManager, "f"), __classPrivateFieldGet(this, _Zrup_project, "f"));
         for (let [channel, infix] of Object.entries(channels)) {
-            new FileArtifactFactory(__classPrivateFieldGet(this, _artifactManager), __classPrivateFieldGet(this, _project), channel, (infix || '').replace(/<zrupDir>/, zrupDir));
+            new FileArtifactFactory(__classPrivateFieldGet(this, _Zrup_artifactManager, "f"), __classPrivateFieldGet(this, _Zrup_project, "f"), channel, (infix || '').replace(/<zrupDir>/, zrupDir));
         }
-        __classPrivateFieldSet(this, _verbosity, new Verbosity(request.options.verbose || false));
-        __classPrivateFieldGet(this, _verbosity).hookRuleBuilder(__classPrivateFieldSet(this, _ruleBuilder, new RuleBuilder(__classPrivateFieldGet(this, _project), __classPrivateFieldGet(this, _artifactManager))), __classPrivateFieldGet(this, _artifactManager));
-        __classPrivateFieldGet(this, _verbosity).hookModuleBuilder(__classPrivateFieldSet(this, _moduleBuilder, new ModuleBuilder(__classPrivateFieldGet(this, _project), __classPrivateFieldGet(this, _ruleBuilder))));
+        __classPrivateFieldSet(this, _Zrup_verbosity, new Verbosity(request.options.verbose || false), "f");
+        __classPrivateFieldGet(this, _Zrup_verbosity, "f").hookRuleBuilder(__classPrivateFieldSet(this, _Zrup_ruleBuilder, new RuleBuilder(__classPrivateFieldGet(this, _Zrup_project, "f"), __classPrivateFieldGet(this, _Zrup_artifactManager, "f")), "f"), __classPrivateFieldGet(this, _Zrup_artifactManager, "f"));
+        __classPrivateFieldGet(this, _Zrup_verbosity, "f").hookModuleBuilder(__classPrivateFieldSet(this, _Zrup_moduleBuilder, new ModuleBuilder(__classPrivateFieldGet(this, _Zrup_project, "f"), __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f")), "f"));
     }
     async run() {
         try {
             console.log("Loading graph");
-            await __classPrivateFieldGet(this, _moduleBuilder).loadRootModule();
-            __classPrivateFieldGet(this, _ruleBuilder).finalize();
-            const build = new Build(__classPrivateFieldGet(this, _project).graph, __classPrivateFieldGet(this, _db), __classPrivateFieldGet(this, _artifactManager));
-            __classPrivateFieldGet(this, _verbosity).hookBuild(build);
+            await __classPrivateFieldGet(this, _Zrup_moduleBuilder, "f").loadRootModule();
+            __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f").finalize();
+            const build = new Build(__classPrivateFieldGet(this, _Zrup_project, "f").graph, __classPrivateFieldGet(this, _Zrup_db, "f"), __classPrivateFieldGet(this, _Zrup_artifactManager, "f"));
+            __classPrivateFieldGet(this, _Zrup_verbosity, "f").hookBuild(build);
             console.log("Resolving artifacts");
-            const requestedArtifacts = __classPrivateFieldGet(this, _request).goals.map(ref => __classPrivateFieldGet(this, _artifactManager).get(ref));
+            const requestedArtifacts = __classPrivateFieldGet(this, _Zrup_request, "f").goals.map(ref => __classPrivateFieldGet(this, _Zrup_artifactManager, "f").get(ref));
             console.log("Creating top level build jobs");
             const jobSetsPromise = Promise.all(requestedArtifacts.map(async (artifact) => await build.getJobSetForArtifact(artifact, true)));
             console.log("Running build jobs");
@@ -86,8 +84,8 @@ export class Zrup {
             console.error(util.inspect(e), e.message, e.stack);
         }
         finally {
-            console.log(`Number of data queries:        ${__classPrivateFieldGet(this, _db).queryCount}`);
-            console.log(`Data queries took:             ${__classPrivateFieldGet(this, _db).queryTime} ms`);
+            console.log(`Number of data queries:        ${__classPrivateFieldGet(this, _Zrup_db, "f").queryCount}`);
+            console.log(`Data queries took:             ${__classPrivateFieldGet(this, _Zrup_db, "f").queryTime} ms`);
         }
     }
     static async init(absDirectory) {
@@ -119,7 +117,7 @@ export class Zrup {
         return path.dirname(foundUp);
     }
 }
-_request = new WeakMap(), _projectRoot = new WeakMap(), _config = new WeakMap(), _project = new WeakMap(), _db = new WeakMap(), _artifactManager = new WeakMap(), _ruleBuilder = new WeakMap(), _moduleBuilder = new WeakMap(), _verbosity = new WeakMap();
+_Zrup_request = new WeakMap(), _Zrup_projectRoot = new WeakMap(), _Zrup_config = new WeakMap(), _Zrup_project = new WeakMap(), _Zrup_db = new WeakMap(), _Zrup_artifactManager = new WeakMap(), _Zrup_ruleBuilder = new WeakMap(), _Zrup_moduleBuilder = new WeakMap(), _Zrup_verbosity = new WeakMap();
 const schema_Config = struct({
     zrupDir: string(),
     dataDir: string(),

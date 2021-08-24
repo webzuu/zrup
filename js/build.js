@@ -1,10 +1,9 @@
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _whichRulesReliedOnArtifactVersion, _whichArtifactVersionDidRuleRelyOn;
+var _Build_whichRulesReliedOnArtifactVersion, _Build_whichArtifactVersionDidRuleRelyOn;
 import EventEmitter from "events";
 import { BuildError } from "./build/error.js";
 import { JobSet } from "./build/job-set.js";
@@ -19,8 +18,8 @@ export class Build extends EventEmitter {
         this.graph = graph;
         this.db = db;
         this.artifactManager = artifactManager;
-        _whichRulesReliedOnArtifactVersion.set(this, {});
-        _whichArtifactVersionDidRuleRelyOn.set(this, {});
+        _Build_whichRulesReliedOnArtifactVersion.set(this, {});
+        _Build_whichArtifactVersionDidRuleRelyOn.set(this, {});
         this.getRecordedVersionInfo = async (output) => {
             const nonresult = {
                 target: output.key,
@@ -205,15 +204,15 @@ export class Build extends EventEmitter {
     }
     getArtifactReliances(artifactKey) {
         const result = {};
-        const artifactReliances = __classPrivateFieldGet(this, _whichRulesReliedOnArtifactVersion)[artifactKey] || {};
+        const artifactReliances = __classPrivateFieldGet(this, _Build_whichRulesReliedOnArtifactVersion, "f")[artifactKey] || {};
         for (let version of Object.getOwnPropertyNames(artifactReliances)) {
             result[version] = Object.assign({}, artifactReliances[version]);
         }
         return result;
     }
     async recordReliance(rule, artifact) {
-        const reliancesByVersion = (__classPrivateFieldGet(this, _whichRulesReliedOnArtifactVersion)[artifact.key]
-            || (__classPrivateFieldGet(this, _whichRulesReliedOnArtifactVersion)[artifact.key] = {}));
+        const reliancesByVersion = (__classPrivateFieldGet(this, _Build_whichRulesReliedOnArtifactVersion, "f")[artifact.key]
+            || (__classPrivateFieldGet(this, _Build_whichRulesReliedOnArtifactVersion, "f")[artifact.key] = {}));
         const version = await artifact.version;
         const versionReliances = reliancesByVersion[version];
         if (versionReliances) {
@@ -225,12 +224,12 @@ export class Build extends EventEmitter {
         else {
             reliancesByVersion[version] = { [rule.key]: rule };
         }
-        const reliancesByRule = (__classPrivateFieldGet(this, _whichArtifactVersionDidRuleRelyOn)[rule.key]
-            || (__classPrivateFieldGet(this, _whichArtifactVersionDidRuleRelyOn)[rule.key] = {}));
+        const reliancesByRule = (__classPrivateFieldGet(this, _Build_whichArtifactVersionDidRuleRelyOn, "f")[rule.key]
+            || (__classPrivateFieldGet(this, _Build_whichArtifactVersionDidRuleRelyOn, "f")[rule.key] = {}));
         reliancesByRule[artifact.key] = version;
     }
     getVersionReliedOn(rule, artifact, required) {
-        const result = __classPrivateFieldGet(this, _whichArtifactVersionDidRuleRelyOn)?.[rule.key]?.[artifact.key];
+        const result = __classPrivateFieldGet(this, _Build_whichArtifactVersionDidRuleRelyOn, "f")?.[rule.key]?.[artifact.key];
         if (!result && required) {
             throw new BuildError(`Internal error: unrecorded reliance info for rule ${rule.label} on ${artifact.identity} was requested`);
         }
@@ -251,5 +250,5 @@ export class Build extends EventEmitter {
         return this.getJobForRuleKey(ruleKey) || throwThe(new Error(`Internal error: unable to obtain build job for rule with key ${ruleKey}`));
     }
 }
-_whichRulesReliedOnArtifactVersion = new WeakMap(), _whichArtifactVersionDidRuleRelyOn = new WeakMap();
+_Build_whichRulesReliedOnArtifactVersion = new WeakMap(), _Build_whichArtifactVersionDidRuleRelyOn = new WeakMap();
 //# sourceMappingURL=build.js.map

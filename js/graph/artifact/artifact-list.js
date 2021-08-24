@@ -1,34 +1,32 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
 };
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _items;
+var _ArtifactList_items;
 import { Artifact } from "../artifact.js";
 import hash from "object-hash";
 import { UnsupportedOperation } from "../../error/unsupported-operation.js";
 export class ArtifactList extends Artifact {
     constructor(identity) {
         super(identity);
-        _items.set(this, void 0);
-        __classPrivateFieldSet(this, _items, []);
+        _ArtifactList_items.set(this, void 0);
+        __classPrivateFieldSet(this, _ArtifactList_items, [], "f");
     }
     get type() {
         return "artifact-list";
     }
     get items() {
-        return __classPrivateFieldGet(this, _items).slice();
+        return __classPrivateFieldGet(this, _ArtifactList_items, "f").slice();
     }
     set items(items) {
-        __classPrivateFieldSet(this, _items, items);
+        __classPrivateFieldSet(this, _ArtifactList_items, items, "f");
     }
     get version() {
         return this.computeVersion();
@@ -45,5 +43,5 @@ export class ArtifactList extends Artifact {
         throw new UnsupportedOperation('ArtifactList', 'rm');
     }
 }
-_items = new WeakMap();
+_ArtifactList_items = new WeakMap();
 //# sourceMappingURL=artifact-list.js.map

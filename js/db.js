@@ -1,17 +1,15 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
 };
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _getter, _db, _stmt;
+var _Statements_getter, _Db_db, _Db_stmt;
 import { sleep } from "sleepjs";
 import fsi from "fs";
 import path from "path";
@@ -79,47 +77,47 @@ function __statementGetter(key) {
 class Statements {
     constructor(db) {
         this.__prepared = {};
-        _getter.set(this, void 0);
+        _Statements_getter.set(this, void 0);
         this.__db = db;
-        __classPrivateFieldSet(this, _getter, __statementGetter.bind(this));
+        __classPrivateFieldSet(this, _Statements_getter, __statementGetter.bind(this), "f");
     }
-    get has() { return __classPrivateFieldGet(this, _getter).call(this, "has"); }
-    get hasVersion() { return __classPrivateFieldGet(this, _getter).call(this, "hasVersion"); }
-    get listVersions() { return __classPrivateFieldGet(this, _getter).call(this, "listVersions"); }
-    get listVersionSources() { return __classPrivateFieldGet(this, _getter).call(this, "listVersionSources"); }
-    get record() { return __classPrivateFieldGet(this, _getter).call(this, "record"); }
-    get retract() { return __classPrivateFieldGet(this, _getter).call(this, "retract"); }
-    get retractTarget() { return __classPrivateFieldGet(this, _getter).call(this, "retractTarget"); }
-    get retractRule() { return __classPrivateFieldGet(this, _getter).call(this, "retractRule"); }
-    get listRuleSources() { return __classPrivateFieldGet(this, _getter).call(this, "listRuleSources"); }
-    get listRuleTargets() { return __classPrivateFieldGet(this, _getter).call(this, "listRuleTargets"); }
-    get getProducingRule() { return __classPrivateFieldGet(this, _getter).call(this, "getProducingRule"); }
-    get recordArtifact() { return __classPrivateFieldGet(this, _getter).call(this, "recordArtifact"); }
-    get getArtifact() { return __classPrivateFieldGet(this, _getter).call(this, "getArtifact"); }
-    get pruneArtifacts() { return __classPrivateFieldGet(this, _getter).call(this, "pruneArtifacts"); }
+    get has() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "has"); }
+    get hasVersion() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "hasVersion"); }
+    get listVersions() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "listVersions"); }
+    get listVersionSources() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "listVersionSources"); }
+    get record() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "record"); }
+    get retract() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "retract"); }
+    get retractTarget() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "retractTarget"); }
+    get retractRule() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "retractRule"); }
+    get listRuleSources() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "listRuleSources"); }
+    get listRuleTargets() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "listRuleTargets"); }
+    get getProducingRule() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "getProducingRule"); }
+    get recordArtifact() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "recordArtifact"); }
+    get getArtifact() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "getArtifact"); }
+    get pruneArtifacts() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "pruneArtifacts"); }
 }
-_getter = new WeakMap();
+_Statements_getter = new WeakMap();
 export class Db {
     constructor(dbFilePath) {
-        _db.set(this, void 0);
-        _stmt.set(this, void 0);
+        _Db_db.set(this, void 0);
+        _Db_stmt.set(this, void 0);
         this.dbFilePath = dbFilePath;
-        __classPrivateFieldSet(this, _db, null);
-        __classPrivateFieldSet(this, _stmt, null);
+        __classPrivateFieldSet(this, _Db_db, null, "f");
+        __classPrivateFieldSet(this, _Db_stmt, null, "f");
         this.queryCount = 0;
         this.queryTime = 0;
     }
     get db() {
-        if (!__classPrivateFieldGet(this, _db)) {
-            __classPrivateFieldSet(this, _db, openDb(this.dbFilePath));
+        if (!__classPrivateFieldGet(this, _Db_db, "f")) {
+            __classPrivateFieldSet(this, _Db_db, openDb(this.dbFilePath), "f");
         }
-        return __classPrivateFieldGet(this, _db);
+        return __classPrivateFieldGet(this, _Db_db, "f");
     }
     get stmt() {
-        if (!__classPrivateFieldGet(this, _stmt)) {
-            __classPrivateFieldSet(this, _stmt, new Statements(this.db));
+        if (!__classPrivateFieldGet(this, _Db_stmt, "f")) {
+            __classPrivateFieldSet(this, _Db_stmt, new Statements(this.db), "f");
         }
-        return __classPrivateFieldGet(this, _stmt);
+        return __classPrivateFieldGet(this, _Db_stmt, "f");
     }
     has(targetId) {
         const queryResult = this.get('has', {
@@ -201,9 +199,9 @@ export class Db {
         this.run('pruneArtifacts', {});
     }
     async close() {
-        if (!__classPrivateFieldGet(this, _db))
+        if (!__classPrivateFieldGet(this, _Db_db, "f"))
             return;
-        const dbObj = __classPrivateFieldGet(this, _db);
+        const dbObj = __classPrivateFieldGet(this, _Db_db, "f");
         let success = false;
         for (let i = 5; i; --i) {
             try {
@@ -220,8 +218,8 @@ export class Db {
         if (!success) {
             await dbObj.close();
         }
-        __classPrivateFieldSet(this, _db, null);
-        __classPrivateFieldSet(this, _stmt, null);
+        __classPrivateFieldSet(this, _Db_db, null, "f");
+        __classPrivateFieldSet(this, _Db_stmt, null, "f");
     }
     query(verb, statementKey, data) {
         const statements = this.stmt;
@@ -251,5 +249,5 @@ export class Db {
         return this.query('all', statementKey, data);
     }
 }
-_db = new WeakMap(), _stmt = new WeakMap();
+_Db_db = new WeakMap(), _Db_stmt = new WeakMap();
 //# sourceMappingURL=db.js.map

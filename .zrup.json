@@ -1,0 +1,8 @@
+{
+    "zrupDir": ".zrup",
+    "dataDir": "<zrupDir>/data",
+    "channels": {
+        "internal": "<zrupDir>/channels/internal",
+        "tmp": "<zrupDir>/channels/tmp"
+    }
+}

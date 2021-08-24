@@ -2,6 +2,7 @@ import { Dependency } from "./dependency.js";
 import { ResolveArtifactResult } from "../module.js";
 import { EmptyWorkaround, ValueOrArray } from "../util/types.js";
 export declare namespace Artifact {
+    type Reference = string | AID;
     type ClassConstructor = {
         new (aid: Reference, ...args: any): Artifact;
         type?: string;
@@ -11,7 +12,6 @@ export declare namespace Artifact {
         canRemove: boolean;
         canBuild: boolean;
     };
-    type Reference = string | AID;
     type References = ValueOrArray<EmptyWorkaround<Reference>>;
     type Resolvable = Reference | Artifact | Dependency | ResolveArtifactResult;
     type Resolvables = ValueOrArray<EmptyWorkaround<Resolvable>>;

@@ -130,13 +130,15 @@ export class CommandRecipe extends Recipe {
         }
 
         function isOutputListener(sink: CommandRecipe.OutputSink | CommandRecipe.jobOutputListener): sink is outputListener {
-            return "function" === typeof sink && sink.length === 1;
+            // @ts-ignore
+            return ("function" === typeof sink) && sink.length === 1;
         }
 
         if (isOutputListener(sink)) return sink;
 
         function isJobListener(sink: CommandRecipe.OutputSink | CommandRecipe.jobOutputListener): sink is jobOutputListener {
-            return "function" === typeof sink && sink.length > 1;
+            // @ts-ignore
+            return ("function" === typeof sink) && sink.length > 1;
         }
 
         if (isJobListener(sink)) {

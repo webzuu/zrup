@@ -581,6 +581,7 @@ declare global {
     }
     
     namespace Artifact  {
+        type Reference = string | AID;
         type ClassConstructor = {
             new (aid: Reference, ...args: any): Artifact;
             type?: string;
@@ -590,7 +591,6 @@ declare global {
             canRemove: boolean;
             canBuild: boolean;
         };
-        type Reference = string | AID;
         type References = ValueOrArray<EmptyWorkaround<Reference>>;
         type Resolvable = Reference | Artifact | Dependency | ResolveArtifactResult;
         type Resolvables = ValueOrArray<EmptyWorkaround<Resolvable>>;

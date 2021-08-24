@@ -10,7 +10,6 @@ import throwThe from "./util/throw-error.js";
 import {Rule} from "./graph/rule.js";
 import {Transaction} from "better-sqlite3";
 
-
 type WhichRulesReliedOnArtifactVersion = Record<string, Build.ArtifactRelianceInfo>;
 type WhichArtifactVersionDidRuleRelyOn = Record<string, Record<string, string>>;
 
