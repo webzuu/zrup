@@ -15,7 +15,7 @@ import { CommandRecipe } from "../build/recipe/command.js";
 import { Module, resolveArtifacts } from "../module.js";
 import * as path from "path";
 import EventEmitter from "events";
-import { ZrupAPI } from "./api";
+import { ZrupAPI } from "./api.js";
 export class ModuleBuilder extends EventEmitter {
     constructor(project, ruleBuilder) {
         super();

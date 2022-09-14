@@ -7,7 +7,7 @@ import * as path from "path";
 import EventEmitter from "events";
 import {Project} from "../project.js";
 import simpleDescriptorBuilderAcceptor = CommandRecipe.simpleDescriptorBuilderAcceptor;
-import {ZrupAPI} from "./api";
+import {ZrupAPI} from "./api.js";
 
 /**
  *

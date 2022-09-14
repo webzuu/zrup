@@ -5,7 +5,7 @@ import { CommandRecipe } from "../build/recipe/command.js";
 import { Module, ResolveArtifactResult } from "../module.js";
 import EventEmitter from "events";
 import { Project } from "../project.js";
-import { ZrupAPI } from "./api";
+import { ZrupAPI } from "./api.js";
 /**
  *
  */
