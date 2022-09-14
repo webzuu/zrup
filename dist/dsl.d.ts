@@ -157,6 +157,36 @@ declare class Job {
     readVersionFileList(ref: Artifact.Reference, artifactType?: string): Promise<VersionFileListEntry[]>;
 }
 
+declare class ZrupAPI {
+    Artifact: typeof Artifact;
+    AID: typeof AID;
+    FileArtifact: typeof FileArtifact;
+    RecipeArtifact: typeof RecipeArtifact;
+    MockArtifact: typeof MockArtifact;
+    Dependency: typeof Dependency;
+    ArtifactManager: typeof ArtifactManager;
+    ArtifactFactory: typeof ArtifactFactory;
+    FileArtifactFactory: typeof FileArtifactFactory;
+    FileArtifactResolver: typeof FileArtifactResolver;
+    RecipeArtifactFactory: typeof RecipeArtifactFactory;
+    RecipeArtifactResolver: typeof RecipeArtifactResolver;
+    MockFileFactory: typeof MockFileFactory;
+    Db: typeof Db;
+    Build: typeof Build;
+    Job: typeof Job;
+    JobSet: typeof JobSet;
+    Rule: typeof Rule;
+    Recipe: typeof Recipe;
+    NopRecipe: typeof NopRecipe;
+    CommandRecipe: typeof CommandRecipe;
+    WrapperRecipe: typeof WrapperRecipe;
+    DelayedRecipe: typeof DelayedRecipe;
+    ModuleBuilder: typeof ModuleBuilder;
+    RuleBuilder: typeof RuleBuilder;
+    Zrup: typeof Zrup;
+    resolveArtifacts: typeof resolveArtifacts;
+}
+
 declare class RuleBuilder extends EventEmitter {
     #private;
     protected readonly project: Project;

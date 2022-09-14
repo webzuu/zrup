@@ -1,22 +1,5 @@
 import { HyperVal } from 'hyperval';
-import { JobSet } from "../build/job-set.js";
-import { Job } from "../build/job.js";
-import { NopRecipe, Recipe } from "../build/recipe.js";
-import { CommandRecipe } from "../build/recipe/command.js";
-import { DelayedRecipe } from "../build/recipe/delayed.js";
-import { WrapperRecipe } from "../build/recipe/wrapper.js";
-import { MockArtifact, MockFileFactory } from "../graph/artifact/mock.js";
-import { RecipeArtifact, RecipeArtifactFactory, RecipeArtifactResolver } from "../graph/artifact/recipe.js";
-import { Db } from "../db.js";
-import { AID, Artifact, ArtifactFactory, ArtifactManager } from "../graph/artifact.js";
-import { FileArtifact, FileArtifactFactory, FileArtifactResolver } from "../graph/artifact/file.js";
-import { RuleBuilder } from "./rule-builder.js";
-import { ModuleBuilder } from "./module-builder.js";
-import { Build } from "../build.js";
-import { resolveArtifacts } from "../module.js";
-import { Rule } from "../graph/rule.js";
 import Config = Zrup.Config;
-import { Dependency } from "../graph/dependency.js";
 /***/
 export declare class Zrup {
     #private;
@@ -55,35 +38,6 @@ export declare namespace Zrup {
         Request: typeof schema_Request;
         Options: typeof schema_Options;
     };
-}
-export declare class ZrupAPI {
-    Artifact: typeof Artifact;
-    AID: typeof AID;
-    FileArtifact: typeof FileArtifact;
-    RecipeArtifact: typeof RecipeArtifact;
-    MockArtifact: typeof MockArtifact;
-    Dependency: typeof Dependency;
-    ArtifactManager: typeof ArtifactManager;
-    ArtifactFactory: typeof ArtifactFactory;
-    FileArtifactFactory: typeof FileArtifactFactory;
-    FileArtifactResolver: typeof FileArtifactResolver;
-    RecipeArtifactFactory: typeof RecipeArtifactFactory;
-    RecipeArtifactResolver: typeof RecipeArtifactResolver;
-    MockFileFactory: typeof MockFileFactory;
-    Db: typeof Db;
-    Build: typeof Build;
-    Job: typeof Job;
-    JobSet: typeof JobSet;
-    Rule: typeof Rule;
-    Recipe: typeof Recipe;
-    NopRecipe: typeof NopRecipe;
-    CommandRecipe: typeof CommandRecipe;
-    WrapperRecipe: typeof WrapperRecipe;
-    DelayedRecipe: typeof DelayedRecipe;
-    ModuleBuilder: typeof ModuleBuilder;
-    RuleBuilder: typeof RuleBuilder;
-    Zrup: typeof Zrup;
-    resolveArtifacts: typeof resolveArtifacts;
 }
 export {};
 //# sourceMappingURL=zrup.d.ts.map

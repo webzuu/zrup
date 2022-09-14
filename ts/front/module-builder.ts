@@ -4,10 +4,10 @@ import fs from "fs";
 import {CommandRecipe} from "../build/recipe/command.js";
 import {Module, ResolveArtifactResult, resolveArtifacts} from "../module.js";
 import * as path from "path";
-import {ZrupAPI} from "./zrup.js";
 import EventEmitter from "events";
 import {Project} from "../project.js";
 import simpleDescriptorBuilderAcceptor = CommandRecipe.simpleDescriptorBuilderAcceptor;
+import {ZrupAPI} from "./api";
 
 /**
  *

@@ -1,0 +1,48 @@
+import { Build } from "../build";
+import { Job } from "../build/job";
+import { JobSet } from "../build/job-set";
+import { NopRecipe, Recipe } from "../build/recipe";
+import { CommandRecipe } from "../build/recipe/command";
+import { DelayedRecipe } from "../build/recipe/delayed";
+import { WrapperRecipe } from "../build/recipe/wrapper";
+import { Db } from "../db";
+import { AID, Artifact, ArtifactFactory, ArtifactManager } from "../graph/artifact";
+import { FileArtifact, FileArtifactFactory, FileArtifactResolver } from "../graph/artifact/file";
+import { MockArtifact, MockFileFactory } from "../graph/artifact/mock";
+import { RecipeArtifact, RecipeArtifactFactory, RecipeArtifactResolver } from "../graph/artifact/recipe";
+import { Dependency } from "../graph/dependency";
+import { Rule } from "../graph/rule";
+import { resolveArtifacts } from "../module";
+import { ModuleBuilder } from "./module-builder";
+import { RuleBuilder } from "./rule-builder";
+import { Zrup } from "./zrup";
+export declare class ZrupAPI {
+    Artifact: typeof Artifact;
+    AID: typeof AID;
+    FileArtifact: typeof FileArtifact;
+    RecipeArtifact: typeof RecipeArtifact;
+    MockArtifact: typeof MockArtifact;
+    Dependency: typeof Dependency;
+    ArtifactManager: typeof ArtifactManager;
+    ArtifactFactory: typeof ArtifactFactory;
+    FileArtifactFactory: typeof FileArtifactFactory;
+    FileArtifactResolver: typeof FileArtifactResolver;
+    RecipeArtifactFactory: typeof RecipeArtifactFactory;
+    RecipeArtifactResolver: typeof RecipeArtifactResolver;
+    MockFileFactory: typeof MockFileFactory;
+    Db: typeof Db;
+    Build: typeof Build;
+    Job: typeof Job;
+    JobSet: typeof JobSet;
+    Rule: typeof Rule;
+    Recipe: typeof Recipe;
+    NopRecipe: typeof NopRecipe;
+    CommandRecipe: typeof CommandRecipe;
+    WrapperRecipe: typeof WrapperRecipe;
+    DelayedRecipe: typeof DelayedRecipe;
+    ModuleBuilder: typeof ModuleBuilder;
+    RuleBuilder: typeof RuleBuilder;
+    Zrup: typeof Zrup;
+    resolveArtifacts: typeof resolveArtifacts;
+}
+//# sourceMappingURL=api.d.ts.map

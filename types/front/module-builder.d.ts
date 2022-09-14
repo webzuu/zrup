@@ -3,9 +3,9 @@ import { RuleBuilder } from "./rule-builder.js";
 import { Artifact } from "../graph/artifact.js";
 import { CommandRecipe } from "../build/recipe/command.js";
 import { Module, ResolveArtifactResult } from "../module.js";
-import { ZrupAPI } from "./zrup.js";
 import EventEmitter from "events";
 import { Project } from "../project.js";
+import { ZrupAPI } from "./api";
 /**
  *
  */

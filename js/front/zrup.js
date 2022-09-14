@@ -10,30 +10,20 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _Zrup_request, _Zrup_projectRoot, _Zrup_config, _Zrup_project, _Zrup_db, _Zrup_artifactManager, _Zrup_ruleBuilder, _Zrup_moduleBuilder, _Zrup_verbosity;
-import { struct, array, string, record, boolean, optional } from 'hyperval';
+import { array, boolean, optional, record, string, struct } from 'hyperval';
 import findUp from "find-up";
 import fs from "fs/promises";
-import { JobSet } from "../build/job-set.js";
-import { Job } from "../build/job.js";
-import { NopRecipe, Recipe } from "../build/recipe.js";
-import { CommandRecipe } from "../build/recipe/command.js";
-import { DelayedRecipe } from "../build/recipe/delayed.js";
-import { WrapperRecipe } from "../build/recipe/wrapper.js";
-import { MockArtifact, MockFileFactory } from "../graph/artifact/mock.js";
-import { RecipeArtifact, RecipeArtifactFactory, RecipeArtifactResolver } from "../graph/artifact/recipe.js";
+import { RecipeArtifactFactory } from "../graph/artifact/recipe.js";
 import { Project } from "../project.js";
 import { Db } from "../db.js";
-import { AID, Artifact, ArtifactFactory, ArtifactManager } from "../graph/artifact.js";
-import { FileArtifact, FileArtifactFactory, FileArtifactResolver } from "../graph/artifact/file.js";
+import { ArtifactManager } from "../graph/artifact.js";
+import { FileArtifactFactory } from "../graph/artifact/file.js";
 import { RuleBuilder } from "./rule-builder.js";
 import { ModuleBuilder } from "./module-builder.js";
 import path from "path";
 import { Build } from "../build.js";
 import * as util from "util";
 import { Verbosity } from "./verbosity.js";
-import { resolveArtifacts } from "../module.js";
-import { Rule } from "../graph/rule.js";
-import { Dependency } from "../graph/dependency.js";
 /***/
 export class Zrup {
     constructor(projectRoot, config, request) {
@@ -140,35 +130,4 @@ const schema_Config = struct({
         Options: schema_Options
     };
 })(Zrup || (Zrup = {}));
-export class ZrupAPI {
-    constructor() {
-        this.Artifact = Artifact;
-        this.AID = AID;
-        this.FileArtifact = FileArtifact;
-        this.RecipeArtifact = RecipeArtifact;
-        this.MockArtifact = MockArtifact;
-        this.Dependency = Dependency;
-        this.ArtifactManager = ArtifactManager;
-        this.ArtifactFactory = ArtifactFactory;
-        this.FileArtifactFactory = FileArtifactFactory;
-        this.FileArtifactResolver = FileArtifactResolver;
-        this.RecipeArtifactFactory = RecipeArtifactFactory;
-        this.RecipeArtifactResolver = RecipeArtifactResolver;
-        this.MockFileFactory = MockFileFactory;
-        this.Db = Db;
-        this.Build = Build;
-        this.Job = Job;
-        this.JobSet = JobSet;
-        this.Rule = Rule;
-        this.Recipe = Recipe;
-        this.NopRecipe = NopRecipe;
-        this.CommandRecipe = CommandRecipe;
-        this.WrapperRecipe = WrapperRecipe;
-        this.DelayedRecipe = DelayedRecipe;
-        this.ModuleBuilder = ModuleBuilder;
-        this.RuleBuilder = RuleBuilder;
-        this.Zrup = Zrup;
-        this.resolveArtifacts = resolveArtifacts;
-    }
-}
 //# sourceMappingURL=zrup.js.map

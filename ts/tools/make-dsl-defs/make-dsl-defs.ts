@@ -43,8 +43,8 @@ const requestedTypes : Record<string, {detailed?: boolean}>= {
     ModuleBuilder: { detailed: false },
     Graph: {},
     Db: {},
-    RecordedVersionInfo: {}
-
+    RecordedVersionInfo: {},
+    ZrupAPI: {}
 };
 const requestedTypeNames = Object.keys(requestedTypes);
 
@@ -64,11 +64,13 @@ project.addSourceFilesAtPaths([
     'module',
     'front/rule-builder',
     'front/module-builder',
+    'front/zrup',
     'build',
     'build/recipe',
     'build/recipe/command',
     'build/job',
-    'build/job-set'
+    'build/job-set',
+    'front/api',
 ].map(_ => 'types/' + _ + '.d.ts'));
 
 const builder = new DSLBuilder();
