@@ -1,6 +1,6 @@
 {
   "name": "zrup",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "description": "Build system experiment",
   "main": "js/front/runner.js",
   "typings": "./dist/zrup.d.ts",
@@ -11,7 +11,7 @@
   "type": "module",
   "dependencies": {
     "better-path-resolve": "^1.0.0",
-    "better-sqlite3": "^7.1.2",
+    "better-sqlite3": "^8.0.1",
     "blessed": "^0.1.81",
     "commander": "^6.2.1",
     "ducktype": "^1.2.2",
