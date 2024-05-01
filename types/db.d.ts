@@ -15,33 +15,33 @@ declare const queries: {
     getArtifact: string;
     pruneArtifacts: string;
 };
-export declare type StatementKey = keyof typeof queries;
-export declare type VersionRecord = {
+export type StatementKey = keyof typeof queries;
+export type VersionRecord = {
     version: string;
 };
-export declare type VersionSourcesRecord = {
+export type VersionSourcesRecord = {
     source: string;
     version: string;
 };
-export declare type RuleSourcesRecord = {
+export type RuleSourcesRecord = {
     key: string;
     type: string;
     identity: string;
 };
-export declare type RuleTargetsRecord = {
+export type RuleTargetsRecord = {
     key: string;
     type: string;
     identity: string;
 };
-export declare type ProducingRuleRecord = {
+export type ProducingRuleRecord = {
     rule: string;
 };
-export declare type ArtifactRecord = {
+export type ArtifactRecord = {
     key: string;
     type: string;
     identity: string;
 };
-export declare type StatementVerb = "get" | "run" | "all";
+export type StatementVerb = "get" | "run" | "all";
 declare class Statements implements Record<StatementKey, Statement> {
     #private;
     __db: Database;

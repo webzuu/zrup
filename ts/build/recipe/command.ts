@@ -24,6 +24,8 @@ import {RuleBuilder} from "../../front/rule-builder.js";
 import OutputListenerDescriptor = CommandRecipe.OutputListenerDescriptor;
 import {EmptyWorkaround, ValueOrArray} from "../../util/types.js";
 
+const flattenDepth: number=16;
+
 /***/
 export class CommandRecipe extends Recipe {
     readonly #commandBuilder: builder;
@@ -47,7 +49,7 @@ export class CommandRecipe extends Recipe {
             job.build.artifactManager,
             job.rule.module,
             false,
-            ...[cwd ?? (job.rule.module.name + '+')].flat(Infinity)
+            ...[cwd ?? (job.rule.module.name + '+')].flat(flattenDepth)
         )[0];
         if (undefined === resolved) {
             throw new Error(`Could not resolve ${cwd} as working directory specification`);
@@ -202,14 +204,14 @@ export class CommandRecipe extends Recipe {
 
             exec: (cmdString, ...argItems) => {
                 spec.exec = cmdString;
-                spec.args.push(...resolveExceptStrings(...argItems.flat(Infinity)).map(_ => '' + _));
+                spec.args.push(...resolveExceptStrings(...argItems.flat(flattenDepth)).map(_ => '' + _));
             },
             shell: (...argItems) => {
-                spec.exec = resolveExceptStrings(...argItems.flat(Infinity)).map(_ => '' + _).join(" ");
+                spec.exec = resolveExceptStrings(...argItems.flat(flattenDepth)).map(_ => '' + _).join(" ");
                 spec.shell = true;
             },
             args: (...argItems) => {
-                spec.args.push(...resolveExceptStrings(...argItems.flat(Infinity)).map(_ => '' + _));
+                spec.args.push(...resolveExceptStrings(...argItems.flat(flattenDepth)).map(_ => '' + _));
             },
             cwd: cwdValue => {
                 spec.cwd = cwdValue;
@@ -286,26 +288,26 @@ export class CommandRecipe extends Recipe {
         return new CommandRecipe((C: CommandRecipe.BuilderParams) => {
 
             CommandRecipe.validateCommandDescriptorSchema(descriptor);
-            const commandSegments: CommandSpecifier[] = [descriptor.cmd].flat(Infinity) as CommandSpecifier[];
+            const commandSegments: CommandSpecifier[] = [descriptor.cmd].flat(8) as CommandSpecifier[];
             const firstCommandSegment = commandSegments[0] as CommandSpecifier;
             if (undefined === firstCommandSegment) {
                 throw new Error(`Invalid command recipe: command cannot be empty`);
             }
             C.shell(firstCommandSegment, ...(commandSegments.slice(1) as CommandSpecifier[]));
             if ('args' in descriptor) {
-                C.args(...([descriptor.args].flat(Infinity) as ArgumentSpecifier[]))
+                C.args(...([descriptor.args].flat(8) as ArgumentSpecifier[]))
             }
             if ('cwd' in descriptor) {
-                const cwd = [descriptor.cwd].flat(Infinity);
+                const cwd = [descriptor.cwd].flat(flattenDepth);
                 if (cwd.length !== 1) {
                     //TODO: throw InvalidSpecification
                     throw new Error("Invalid specification: cwd must be a single item")
                 }
                 C.cwd(cwd[0] as string);
             }
-            if ('out' in descriptor) ([descriptor.out].flat(Infinity) as OutputSink[]).forEach(C.out.bind(C));
-            if ('err' in descriptor) ([descriptor.err].flat(Infinity) as OutputSink[]).forEach(C.err.bind(C));
-            if ('combined' in descriptor) ([descriptor.combined].flat(Infinity) as OutputSink[]).forEach(C.combined.bind(C));
+            if ('out' in descriptor) ([descriptor.out].flat(8) as OutputSink[]).forEach(C.out.bind(C));
+            if ('err' in descriptor) ([descriptor.err].flat(8) as OutputSink[]).forEach(C.err.bind(C));
+            if ('combined' in descriptor) ([descriptor.combined].flat(8) as OutputSink[]).forEach(C.combined.bind(C));
         });
     }
 

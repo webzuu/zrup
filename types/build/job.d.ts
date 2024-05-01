@@ -4,7 +4,7 @@ import { Build } from "../build.js";
 import { Artifact } from "../graph/artifact.js";
 import { Rule } from "../graph/rule.js";
 import { ArtifactRecord } from "../db.js";
-declare type VersionFileListEntry = [string, string];
+type VersionFileListEntry = [string, string];
 /**
  *
  */

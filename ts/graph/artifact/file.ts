@@ -6,6 +6,7 @@ import {Module} from "../../module.js";
 import * as pathUtils from "path";
 import isSubdir from "is-subdir";
 import {Project} from "../../project.js";
+import {isNodeError} from "../../util/casts.js";
 
 export class FileArtifact extends Artifact  {
 
@@ -28,7 +29,7 @@ export class FileArtifact extends Artifact  {
                 return await md5File(this.#resolvedPath);
             }
             catch(e) {
-                if (e.code !== "ENOENT") throw e;
+                if (!isNodeError(e) || e.code !== "ENOENT") throw e;
             }
             return Artifact.NONEXISTENT_VERSION;
         })();
@@ -47,7 +48,7 @@ export class FileArtifact extends Artifact  {
             await fsp.unlink(this.#resolvedPath);
         }
         catch(e) {
-            if (e.code !== 'ENOENT') { throw e; }
+            if (!isNodeError(e) || e.code !== 'ENOENT') { throw e; }
         }
     }
 

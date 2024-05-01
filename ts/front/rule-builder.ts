@@ -8,7 +8,7 @@ import {Recipe} from "../build/recipe.js";
 import EventEmitter from "events";
 import {Project} from "../project.js";
 import {ModuleBuilder} from "./module-builder.js";
-import {obtainArtifactReferenceFrom} from "../util/casts.js";
+import {flattenResolvables, obtainArtifactReferenceFrom} from "../util/casts.js";
 
 /**
  *
@@ -160,7 +160,7 @@ export class RuleBuilder extends EventEmitter
     depends : RuleBuilder.artifactNominator = (...resolvables: Artifact.Resolvables[]) : Dependency[] =>
     {
         const rule = this.requireCurrentRule('depends'), module = rule.module;
-        return resolvables.flat(Infinity).map(obtainArtifactReferenceFrom).map((ref : string) : Dependency => {
+        return flattenResolvables(resolvables).map(obtainArtifactReferenceFrom).map((ref : string) : Dependency => {
             const artifact = this.artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }));
             const dependency = rule.addDependency(artifact, Dependency.ABSENT_VIOLATION);
             this.emit("depends", module, rule, dependency);
@@ -171,7 +171,7 @@ export class RuleBuilder extends EventEmitter
     produces : RuleBuilder.artifactNominator = (...resolvables: Artifact.Resolvables[]) : Artifact[] =>
     {
         const rule = this.requireCurrentRule('produces'), module = rule.module;
-        return resolvables.flat(Infinity).map(obtainArtifactReferenceFrom).map((ref : string) : Artifact => {
+        return flattenResolvables(resolvables).map(obtainArtifactReferenceFrom).map((ref : string) : Artifact => {
             const artifact = this.artifactManager.get(new AID(ref+'').withDefaults({ module: module.name }))
             rule.addOutput(artifact);
             this.emit("produces", module, rule, artifact);

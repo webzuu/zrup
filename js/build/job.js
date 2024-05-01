@@ -67,7 +67,8 @@ export class Job {
             this.promise = null;
         }
         catch (e) {
-            throw new BuildError(BuildError.formatRuleFailure(this.rule, e), e);
+            if (e instanceof Error)
+                throw new BuildError(BuildError.formatRuleFailure(this.rule, e), e);
         }
         finally {
         }

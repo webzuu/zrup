@@ -17,13 +17,13 @@ export class BuildError extends Error {
     }
     // noinspection JSUnusedLocalSymbols
     static formatRuleFailure(rule, e) {
-        return (`Rule ${rule.label} failed to build`);
+        return (`Rule ${rule.label} defined in module ${rule.module.name} in file ${rule.module.pathFromRoot} failed to build`);
     }
 }
 export class TargetCollision extends Error {
     constructor(artifact, previousRule, previousVersion, offendingRule, offendingVersion) {
-        super(`Rule collision: ${offendingRule.label} produced ${artifact.label}` +
-            ` after it was already produced by ${previousRule.label}`);
+        super(`Rule collision: ${offendingRule.label} in module ${offendingRule.module.name} in file ${offendingRule.module.pathFromRoot} produced ${artifact.label}` +
+            ` after it was already produced by ${previousRule.label} in module ${previousRule.module.name} in file ${previousRule.module.pathFromRoot}`);
         this.artifact = artifact;
         this.previousRule = previousRule;
         this.previousVersion = previousVersion;

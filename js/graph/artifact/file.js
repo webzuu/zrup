@@ -16,6 +16,7 @@ import fs from "fs";
 const fsp = fs.promises;
 import * as pathUtils from "path";
 import isSubdir from "is-subdir";
+import { isNodeError } from "../../util/casts.js";
 export class FileArtifact extends Artifact {
     constructor(ref, resolvedPath) {
         super(`${ref}`);
@@ -31,7 +32,7 @@ export class FileArtifact extends Artifact {
                 return await md5File(__classPrivateFieldGet(this, _FileArtifact_resolvedPath, "f"));
             }
             catch (e) {
-                if (e.code !== "ENOENT")
+                if (!isNodeError(e) || e.code !== "ENOENT")
                     throw e;
             }
             return Artifact.NONEXISTENT_VERSION;
@@ -46,7 +47,7 @@ export class FileArtifact extends Artifact {
             await fsp.unlink(__classPrivateFieldGet(this, _FileArtifact_resolvedPath, "f"));
         }
         catch (e) {
-            if (e.code !== 'ENOENT') {
+            if (!isNodeError(e) || e.code !== 'ENOENT') {
                 throw e;
             }
         }

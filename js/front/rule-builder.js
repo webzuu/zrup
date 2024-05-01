@@ -16,7 +16,7 @@ import { AID } from "../graph/artifact.js";
 import { Dependency } from "../graph/dependency.js";
 import { reassemble } from "../util/tagged-template.js";
 import EventEmitter from "events";
-import { obtainArtifactReferenceFrom } from "../util/casts.js";
+import { flattenResolvables, obtainArtifactReferenceFrom } from "../util/casts.js";
 /***/
 export class RuleBuilder extends EventEmitter {
     constructor(project, artifactManager) {
@@ -27,7 +27,7 @@ export class RuleBuilder extends EventEmitter {
         _RuleBuilder_currentRule.set(this, null);
         this.depends = (...resolvables) => {
             const rule = this.requireCurrentRule('depends'), module = rule.module;
-            return resolvables.flat(Infinity).map(obtainArtifactReferenceFrom).map((ref) => {
+            return flattenResolvables(resolvables).map(obtainArtifactReferenceFrom).map((ref) => {
                 const artifact = this.artifactManager.get(new AID(ref + '').withDefaults({ module: module.name }));
                 const dependency = rule.addDependency(artifact, Dependency.ABSENT_VIOLATION);
                 this.emit("depends", module, rule, dependency);
@@ -36,7 +36,7 @@ export class RuleBuilder extends EventEmitter {
         };
         this.produces = (...resolvables) => {
             const rule = this.requireCurrentRule('produces'), module = rule.module;
-            return resolvables.flat(Infinity).map(obtainArtifactReferenceFrom).map((ref) => {
+            return flattenResolvables(resolvables).map(obtainArtifactReferenceFrom).map((ref) => {
                 const artifact = this.artifactManager.get(new AID(ref + '').withDefaults({ module: module.name }));
                 rule.addOutput(artifact);
                 this.emit("produces", module, rule, artifact);

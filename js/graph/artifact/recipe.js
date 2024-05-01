@@ -15,14 +15,14 @@ import { Rule } from "../rule.js";
 import { UnsupportedOperation } from "../../error/unsupported-operation.js";
 import throwThe from "../../util/throw-error.js";
 export class RecipeArtifact extends Artifact {
+    async rm() {
+        throw new UnsupportedOperation(RecipeArtifact.name, 'rm');
+    }
     constructor(aid, job) {
         super(aid);
         _RecipeArtifact_specPromise.set(this, null);
         _RecipeArtifact_versionPromise.set(this, null);
         this.job = job;
-    }
-    async rm() {
-        throw new UnsupportedOperation(RecipeArtifact.name, 'rm');
     }
     get exists() {
         return Promise.resolve(true);

@@ -71,7 +71,9 @@ export class Zrup {
             console.log("All done");
         }
         catch (e) {
-            console.error(util.inspect(e), e.message, e.stack);
+            if (e instanceof Error) {
+                console.error(util.inspect(e), e.message, e.stack);
+            }
         }
         finally {
             console.log(`Number of data queries:        ${__classPrivateFieldGet(this, _Zrup_db, "f").queryCount}`);

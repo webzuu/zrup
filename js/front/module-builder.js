@@ -16,6 +16,7 @@ import { Module, resolveArtifacts } from "../module.js";
 import * as path from "path";
 import EventEmitter from "events";
 import { ZrupAPI } from "./api.js";
+import { isNodeError } from "../util/casts.js";
 export class ModuleBuilder extends EventEmitter {
     constructor(project, ruleBuilder) {
         super();
@@ -85,7 +86,7 @@ export class ModuleBuilder extends EventEmitter {
                 return importedModule;
             }
             catch (e) {
-                if ("ERR_MODULE_NOT_FOUND" !== e.code)
+                if (!isNodeError(e) || "ERR_MODULE_NOT_FOUND" !== e.code)
                     throw e;
                 let butItExistsBooHoo = false;
                 try {

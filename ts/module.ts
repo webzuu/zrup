@@ -3,6 +3,7 @@ import {AID, Artifact, ArtifactManager} from "./graph/artifact.js";
 import {Project} from "./project.js";
 import {obtainArtifactReferenceFrom} from "./util/casts.js";
 
+const flattenDepth: number = 4;
 export class Module
 
 {
@@ -89,7 +90,7 @@ export function resolveArtifacts(
     ...refs                                 : Artifact.Resolvables[]
 ) : (string|ResolveArtifactResult)[] {
 
-    return (refs.flat(Infinity) as Artifact.Resolvable[]).map(ref => {
+    return (refs.flat(8) as Artifact.Resolvable[]).map(ref => {
         if ('string'===typeof ref && skipStrings) return ref;
         const artifact = artifactManager.get(
             new AID(obtainArtifactReferenceFrom(ref)).withDefaults({module: module.name})

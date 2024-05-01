@@ -8,6 +8,7 @@ import EventEmitter from "events";
 import {Project} from "../project.js";
 import simpleDescriptorBuilderAcceptor = CommandRecipe.simpleDescriptorBuilderAcceptor;
 import {ZrupAPI} from "./api.js";
+import {isNodeError} from "../util/casts.js";
 
 /**
  *
@@ -213,7 +214,7 @@ export class ModuleBuilder extends EventEmitter
                 return importedModule;
             }
             catch(e) {
-                if ("ERR_MODULE_NOT_FOUND" !== e.code) throw e;
+                if (!isNodeError(e) || "ERR_MODULE_NOT_FOUND" !== e.code) throw e;
                 let butItExistsBooHoo = false;
                 try { butItExistsBooHoo = (await fs.promises.stat(fullPath)).isFile(); } catch(v) {}
                 if (butItExistsBooHoo) throw e;

@@ -13,6 +13,7 @@ var _Module_project, _Module_parent, _Module_name, _Module_path, _Module_absolut
 import fsPath from "path";
 import { AID } from "./graph/artifact.js";
 import { obtainArtifactReferenceFrom } from "./util/casts.js";
+const flattenDepth = 4;
 export class Module {
     constructor(parent, path, name) {
         // noinspection TypeScriptFieldCanBeMadeReadonly
@@ -66,7 +67,7 @@ export class Module {
 }
 _Module_project = new WeakMap(), _Module_parent = new WeakMap(), _Module_name = new WeakMap(), _Module_path = new WeakMap(), _Module_absolutePath = new WeakMap(), _Module_exports = new WeakMap();
 export function resolveArtifacts(artifactManager, module, skipStrings, ...refs) {
-    return refs.flat(Infinity).map(ref => {
+    return refs.flat(8).map(ref => {
         if ('string' === typeof ref && skipStrings)
             return ref;
         const artifact = artifactManager.get(new AID(obtainArtifactReferenceFrom(ref)).withDefaults({ module: module.name }));

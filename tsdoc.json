@@ -5,11 +5,11 @@
 	},
 	"plugins":[
 		 "plugins/markdown",
-		"/home/rulatir/.npm/lib/node_modules/tsdoc/template/plugins/TSDoc.js"
+		"./node_modules/tsdoc/template/plugins/TSDoc.js"
 	],
 	"opts":
 	{
-		"template"	:"/home/rulatir/.npm/lib/node_modules/tsdoc/template",
+		"template"	:"./node_modules/tsdoc/template",
 		"recurse"	:"true"
 	},
 	"templates" : {
@@ -25,8 +25,8 @@
 		"hardwrap" : true
 	},
 	"tsdoc":{
-		"source"		:"/fasthome/rulatir/works/zrup/ts/",
-		"destination"	:"/fasthome/rulatir/works/zrup/docs",
+		"source"		:"./ts/",
+		"destination"	:"./docs/",
 		"tutorials"		:"",
 		"systemName"	: "zrup",
 		"footer"		: "",

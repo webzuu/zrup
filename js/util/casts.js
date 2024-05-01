@@ -13,4 +13,19 @@ export function obtainArtifactReferenceFrom(resolvable) {
         return resolvable.artifact.identity;
     throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
 }
+export function flattenResolvables(resolvables) {
+    let result = [];
+    for (let i = 0; i < resolvables.length; i++) {
+        if (Array.isArray(resolvables[i])) {
+            result = result.concat(flattenResolvables(resolvables[i]));
+        }
+        else {
+            result.push(resolvables[i]);
+        }
+    }
+    return result;
+}
+export function isNodeError(e) {
+    return e instanceof Error && 'string' === typeof e.code;
+}
 //# sourceMappingURL=casts.js.map
