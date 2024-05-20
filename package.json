@@ -11,7 +11,7 @@
   "type": "module",
   "dependencies": {
     "better-path-resolve": "^1.0.0",
-    "better-sqlite3": "^8.7.0",
+    "better-sqlite3": "^10.0.0",
     "blessed": "^0.1.81",
     "commander": "^6.2.1",
     "ducktype": "^1.2.2",
