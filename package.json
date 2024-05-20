@@ -1,6 +1,6 @@
 {
   "name": "zrup",
-  "version": "0.14.2",
+  "version": "0.14.3",
   "description": "Build system experiment",
   "main": "js/front/runner.js",
   "typings": "./dist/zrup.d.ts",
@@ -39,6 +39,7 @@
     "@types/object-hash": "^2.2.1",
     "@types/object-inspect": "^1.13.0",
     "@types/rmfr": "^2.0.5",
+    "bumper": "^1.1.0",
     "chai": "^4.4.1",
     "chai-as-promised": "^7.1.2",
     "mocha": "^8.4.0",
