@@ -22,7 +22,7 @@ const js = async function js(M) {
     M.to('compiled-js', ({T})=>{
         depends(a.fingerprint, a.tsconfig);
         produces(a.buildinfo);
-        return { cwd: SRC, cmd: T`tsc` };
+        return { cwd: SRC, cmd: T`pnpm exec tsc` };
     });
 
     M.to('compiled-js-proof', ({T}) => ({

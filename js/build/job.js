@@ -102,7 +102,11 @@ export class Job {
                 await this.rule.validRecipe.executeFor(this, spec);
             }
             finally {
-                process.stdout.write(this.rule.validRecipe.consoleOutput);
+                const prefix = this.rule.formatLogTag();
+                process.stdout.write(this.rule.validRecipe.consoleOutput
+                    .split("\n")
+                    .map(_ => `${prefix} ${_}`)
+                    .join("\n"));
             }
             this.build.emit('invoked.recipe', this.rule);
             await this.detectRewritesAfterUse();

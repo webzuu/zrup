@@ -74,6 +74,16 @@ export class Rule {
             default: return `rule for building "${outputs[0].label}" (and more)`;
         }
     }
+    formatLogTag() {
+        const outputs = Object.values(this.outputs);
+        switch (outputs.length) {
+            case 0:
+                return `[${this.module.pathFromRoot}][${__classPrivateFieldGet(this, _Rule_label, "f") || this.identity}]`;
+            case 1:
+                return `[${this.module.pathFromRoot}]->[${outputs[0].label}]`;
+            default: return `[${this.module.pathFromRoot}]->[${outputs[0].label} ...]`;
+        }
+    }
     addDependency(artifact, whenAbsent) {
         let dependency = this.dependencies[artifact.key];
         if (!dependency || whenAbsent !== Dependency.Absent.State) {

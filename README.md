@@ -11,3 +11,8 @@ Features:
  - uses a uniform way of referring to artifacts
  - supports primitives that make it feasible to implement both autodependencies and auto-outputs, as long as the targeted build tool is capable of enumerating those somehow
  - combined with tree-utils (which have been developed in parallel with it), it is possible to specify dependency sets using glob expressions, and to use git for speeding up detection of changes in large sets of files thus specified
+
+How to self-zrup this project:
+```bash
+node js/front/runner.js internal:all
+```

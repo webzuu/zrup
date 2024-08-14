@@ -21,6 +21,7 @@ export declare class Rule {
     set label(label: string | null);
     get label(): string | null;
     formatDefaultLabel(): string;
+    formatLogTag(): string;
     addDependency(artifact: Artifact, whenAbsent: Dependency.Absent): Dependency;
     addAlso(rule: Rule): void;
     addOutput(artifact: Artifact): Artifact;

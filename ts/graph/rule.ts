@@ -4,6 +4,7 @@ import {Dependency} from "./dependency.js";
 import {Artifact} from "./artifact.js";
 import {Recipe} from "../build/recipe.js";
 
+
 export class Rule  {
 
     readonly #module                : Module;
@@ -96,6 +97,20 @@ export class Rule  {
             case 1:
                 return `rule for building "${(outputs[0] as Artifact).label}"`;
             default: return `rule for building "${(outputs[0] as Artifact).label}" (and more)`;
+        }
+    }
+
+
+
+    formatLogTag() : string
+    {
+        const outputs = Object.values(this.outputs);
+        switch (outputs.length) {
+            case 0:
+                return `[${this.module.pathFromRoot}][${this.#label || this.identity}]`;
+            case 1:
+                return `[${this.module.pathFromRoot}]->[${(outputs[0] as Artifact).label}]`;
+            default: return `[${this.module.pathFromRoot}]->[${(outputs[0] as Artifact).label} ...]`;
         }
     }
 
