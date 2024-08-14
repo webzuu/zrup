@@ -99,8 +99,8 @@ export class Job  {
                 process.stdout.write(
                     this.rule.validRecipe.consoleOutput
                         .split("\n")
-                        .map(_ => `${prefix} ${_}`)
-                        .join("\n")
+                        .map(_ => `${prefix} ${_}\n`)
+                        .join("")
                 );
             }
             this.build.emit('invoked.recipe',this.rule);
