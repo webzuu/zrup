@@ -24,6 +24,7 @@ import path from "path";
 import { Build } from "../build.js";
 import * as util from "util";
 import { Verbosity } from "./verbosity.js";
+import { DependencyCycle } from "../error/dependency-cycle.js";
 /***/
 export class Zrup {
     constructor(projectRoot, config, request) {
@@ -54,6 +55,26 @@ export class Zrup {
     async run() {
         try {
             console.log("Loading graph");
+            __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f").on('defined.rule', (module, rule) => {
+                const targets = new Set(Object.values(rule.outputs).map(artifact => artifact.identity));
+                const checked = new Set();
+                const cycle = [];
+                const check = (rule) => {
+                    if (!rule || checked.has(rule.identity))
+                        return true;
+                    checked.add(rule.identity);
+                    for (let [artifactKey, dependency] of Object.entries(rule.dependencies)) {
+                        const artifact = dependency.artifact;
+                        if (targets.has(artifact.identity) || !check(__classPrivateFieldGet(this, _Zrup_project, "f").graph.index.rule.key.get(__classPrivateFieldGet(this, _Zrup_project, "f").graph.index.output.rule.get(artifactKey) ?? ''))) {
+                            cycle.unshift({ rule, artifact });
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+                if (!check(rule))
+                    throw new DependencyCycle(cycle);
+            });
             await __classPrivateFieldGet(this, _Zrup_moduleBuilder, "f").loadRootModule();
             __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f").finalize();
             const build = new Build(__classPrivateFieldGet(this, _Zrup_project, "f").graph, __classPrivateFieldGet(this, _Zrup_db, "f"), __classPrivateFieldGet(this, _Zrup_artifactManager, "f"));

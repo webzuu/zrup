@@ -20,10 +20,10 @@ export class Graph
         this.rule_seq=1;
         this.index = {
             rule: {
-                key: new Map()
+                key: new Map<string, Rule>()
             },
             output: {
-                rule: new Map()
+                rule: new Map<string, string>()
             }
         }
     }
