@@ -75,6 +75,7 @@ export class Zrup
 
     async run() {
 
+        let hadError: boolean = false;
         try {
             console.log("Loading graph");
             this.#ruleBuilder.on('defined.rule',(module: Module, rule: Rule) => {
@@ -121,12 +122,13 @@ export class Zrup
             if (e instanceof Error) {
                 console.error(util.inspect(e), e.message, e.stack);
             }
-            process.exitCode = 1;
+            hadError=true;
         }
         finally {
             console.log(`Number of data queries:        ${this.#db.queryCount}`);
             console.log(`Data queries took:             ${this.#db.queryTime} ms`);
         }
+        if (hadError) process.exit(1);
     }
 
     static async init(absDirectory: string): Promise<void>

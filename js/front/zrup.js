@@ -53,6 +53,7 @@ export class Zrup {
         __classPrivateFieldGet(this, _Zrup_verbosity, "f").hookModuleBuilder(__classPrivateFieldSet(this, _Zrup_moduleBuilder, new ModuleBuilder(__classPrivateFieldGet(this, _Zrup_project, "f"), __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f")), "f"));
     }
     async run() {
+        let hadError = false;
         try {
             console.log("Loading graph");
             __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f").on('defined.rule', (module, rule) => {
@@ -95,12 +96,14 @@ export class Zrup {
             if (e instanceof Error) {
                 console.error(util.inspect(e), e.message, e.stack);
             }
-            process.exitCode = 1;
+            hadError = true;
         }
         finally {
             console.log(`Number of data queries:        ${__classPrivateFieldGet(this, _Zrup_db, "f").queryCount}`);
             console.log(`Data queries took:             ${__classPrivateFieldGet(this, _Zrup_db, "f").queryTime} ms`);
         }
+        if (hadError)
+            process.exit(1);
     }
     static async init(absDirectory) {
         absDirectory = absDirectory || process.cwd();
