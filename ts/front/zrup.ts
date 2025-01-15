@@ -121,6 +121,7 @@ export class Zrup
             if (e instanceof Error) {
                 console.error(util.inspect(e), e.message, e.stack);
             }
+            process.exitCode = 1;
         }
         finally {
             console.log(`Number of data queries:        ${this.#db.queryCount}`);
