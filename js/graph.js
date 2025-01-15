@@ -1,4 +1,5 @@
 import { uniqueAdd } from "./util/indexing.js";
+import RuleError from "./error/rule-error.js";
 export class Graph {
     constructor() {
         this.rule_seq = 1;
@@ -14,8 +15,13 @@ export class Graph {
     addRule(rule) {
         if (rule.key in this.index.rule.key)
             return;
-        uniqueAdd(this.index.rule.key, rule.key, rule);
-        this.indexRule(rule);
+        try {
+            uniqueAdd(this.index.rule.key, rule.key, rule);
+            this.indexRule(rule);
+        }
+        catch (e) {
+            throw new RuleError(rule, e instanceof Error ? e : undefined);
+        }
     }
     indexRule(rule) {
         for (let output of Object.values(rule.outputs))

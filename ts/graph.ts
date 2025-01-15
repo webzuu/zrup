@@ -1,5 +1,6 @@
 import {uniqueAdd} from "./util/indexing.js";
 import {Rule} from "./graph/rule.js";
+import RuleError from "./error/rule-error.js";
 
 interface GraphIndex
 {
@@ -31,8 +32,12 @@ export class Graph
     addRule(rule : Rule)
     {
         if (rule.key in this.index.rule.key) return;
-        uniqueAdd(this.index.rule.key, rule.key, rule);
-        this.indexRule(rule);
+        try {
+            uniqueAdd(this.index.rule.key, rule.key, rule);
+            this.indexRule(rule);
+        } catch (e) {
+            throw new RuleError(rule, e instanceof Error ? e : undefined);
+        }
     }
 
     indexRule(rule : Rule)

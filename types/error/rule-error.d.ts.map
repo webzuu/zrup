@@ -1,0 +1,1 @@
+{"version":3,"file":"rule-error.d.ts","sourceRoot":"","sources":["../../ts/error/rule-error.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAErC,MAAM,CAAC,OAAO,OAAO,SAAU,SAAQ,KAAK;IAErB,IAAI,EAAE,IAAI;IAAS,QAAQ,CAAC;gBAA5B,IAAI,EAAE,IAAI,EAAS,QAAQ,CAAC,mBAAO;CAUzD"}
