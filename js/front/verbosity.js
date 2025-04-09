@@ -56,7 +56,12 @@ export class Verbosity {
         });
         if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
             const R = (job) => `${job.rule.module.name}+${job.rule.name}`;
-            const L = (key) => artifactManager.findByKey(key)?.label || key;
+            const A = (key) => artifactManager.findByKey(key);
+            const L = (key) => A(key)?.identity || key;
+            const THE = (key) => {
+                const artifact = A(key);
+                return artifact ? `${artifact.identity} ${X(artifact.identity)}` : key;
+            };
             build.on('capturing.output', (job, outputFilePath) => {
                 console.log(C('CAPTURING OUTPUT', {
                     Job: R(job),
@@ -90,14 +95,14 @@ export class Verbosity {
             build.on('nonexistent.output', (job, { details, artifact }) => {
                 console.log(C('NONEXISTENT OUTPUT', {
                     Job: R(job),
-                    Artifact: L(artifact.identity),
+                    Artifact: `${artifact.identity} ${X(artifact.key)}}`,
                     Details: details
                 }));
             });
             build.on('unrecorded.output', (job, { details, artifact }) => {
                 console.log(C('UNRECORDED OUTPUT', {
                     Job: R(job),
-                    Artifact: L(artifact.identity),
+                    Artifact: `${artifact.identity} ${X(artifact.key)}`,
                     Details: details
                 }));
             });
@@ -110,18 +115,18 @@ export class Verbosity {
             build.on('dirty.output', (job, { details, rec, act }) => {
                 console.log(C('DIRTY OUTPUT', {
                     Job: R(job),
-                    Artifact: L(rec.target),
+                    Artifact: THE(rec.target),
                     "Recorded Version": rec.version || "null",
                     "Current Version": act || "null",
                     Details: details
                 }));
             });
-            build.on('changed.source', (job, { details, sourceKey, rec, act }) => {
+            build.on('changed.source', (job, { details, source, rec, act }) => {
                 console.log(C('CHANGED DEPENDENCY', {
                     Job: R(job),
-                    Target: L(rec.target),
-                    Dependency: X(sourceKey),
-                    "Recorded Version": rec.sourceVersions[sourceKey] || "null",
+                    Target: THE(rec.target),
+                    Dependency: THE(source.key),
+                    "Recorded Version": rec.sourceVersions[source.key] || "null",
                     "Current Version": act || "null",
                     Details: details
                 }));

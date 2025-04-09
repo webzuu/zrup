@@ -15,7 +15,7 @@ export function formatKeyValueTable(data, options = {}) {
     // Format each row
     const rows = Object.entries(data).map(([label, value]) => {
         // Right-align and bold the label
-        const formattedLabel = `\x1b[1m${label.padStart(labelWidth)}${suffix}\x1b[0m`;
+        const formattedLabel = `\x1b[1m${(label + suffix).padStart(labelWidth)}\x1b[0m`;
         // Convert value to string and word-wrap it
         const valueStr = String(value);
         const wrappedValue = wordWrap(valueStr, valueWidth);

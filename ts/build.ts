@@ -279,9 +279,12 @@ export class Build extends EventEmitter  {
             });
             return false;
         }
+        const dependencyArtifacts = [...new Set([...job.dependencies, ...job.recordedDependencies].map(d => d.artifact)).values()];
+        const dependencyArtifactsByKey : Record<string, Artifact> = {};
+        for(let d of dependencyArtifacts) dependencyArtifactsByKey[d.key] = d;
         const [recordedSourceVersionsByOutput, actualSourceVersions, actualOutputVersions] = await Promise.all([
             Promise.all(allOutputs.map(this.getRecordedVersionInfo)),
-            this.getActualVersionInfo([...job.dependencies, ...job.recordedDependencies].map(d => d.artifact)),
+            this.getActualVersionInfo(dependencyArtifacts),
             this.getActualVersionInfo(allOutputs)
         ]);
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {
@@ -304,7 +307,7 @@ export class Build extends EventEmitter  {
                 ) {
                     this.emit("changed.source", job, {
                         details: "source was modified",
-                        sourceKey: recordedSourceKey,
+                        source: dependencyArtifactsByKey[recordedSourceKey],
                         rec: recordedVersionsInfo,
                         act: actualSourceVersions[recordedSourceKey],
                     });

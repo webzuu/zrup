@@ -70,8 +70,13 @@ export class Verbosity {
             ))
         });
         if (this.#verbose) {
-            const R = (job: Job) => `${job.rule.module.name}+${job.rule.name}`
-            const L = (key: string) => artifactManager.findByKey(key)?.label || key;
+            const R = (job: Job) => `${job.rule.module.name}+${job.rule.name}`;
+            const A = (key: string) => artifactManager.findByKey(key);
+            const L = (key: string) => A(key)?.identity || key;
+            const THE = (key: string) => {
+                const artifact = A(key);
+                return artifact ? `${artifact.identity} ${X(artifact.identity)}` : key;
+            };
             build.on('capturing.output',(job, outputFilePath) => {
                 console.log(C(
                     'CAPTURING OUTPUT',
@@ -127,7 +132,7 @@ export class Verbosity {
                         'NONEXISTENT OUTPUT',
                         {
                             Job: R(job),
-                            Artifact: L(artifact.identity),
+                            Artifact: `${artifact.identity} ${X(artifact.key)}}`,
                             Details: details
                         }
                     ));
@@ -140,7 +145,7 @@ export class Verbosity {
                         'UNRECORDED OUTPUT',
                         {
                             Job: R(job),
-                            Artifact: L(artifact.identity),
+                            Artifact: `${artifact.identity} ${X(artifact.key)}`,
                             Details: details
                         }
                     ));
@@ -162,21 +167,14 @@ export class Verbosity {
                 'dirty.output',
                 (
                     job,
-                    {
-                        details,
-                        rec,
-                        act
-                    }:{
-                        details: string,
-                        rec: RecordedVersionInfo
-                        act: string | null
-                    }
+                    { details, rec, act }
+                    : { details: string, rec: RecordedVersionInfo, act: string | null }
                 ) => {
                     console.log(C(
                         'DIRTY OUTPUT',
                         {
                             Job: R(job),
-                            Artifact: L(rec.target),
+                            Artifact: THE(rec.target),
                             "Recorded Version": rec.version || "null",
                             "Current Version": act || "null",
                             Details: details
@@ -188,25 +186,16 @@ export class Verbosity {
                 'changed.source',
                 (
                     job,
-                    {
-                        details,
-                        sourceKey,
-                        rec,
-                        act
-                    } : {
-                        details: string,
-                        sourceKey: string,
-                        rec: RecordedVersionInfo,
-                        act: string | null
-                    }
+                    {details, source, rec, act}
+                    : { details: string, source: Artifact, rec: RecordedVersionInfo, act: string | null }
                 ) => {
                     console.log(C(
                         'CHANGED DEPENDENCY',
                         {
                             Job: R(job),
-                            Target: L(rec.target),
-                            Dependency: X(sourceKey),
-                            "Recorded Version": rec.sourceVersions[sourceKey] || "null",
+                            Target: THE(rec.target),
+                            Dependency: THE(source.key),
+                            "Recorded Version": rec.sourceVersions[source.key] || "null",
                             "Current Version": act || "null",
                             Details: details
                         }
@@ -217,13 +206,8 @@ export class Verbosity {
                 'missing.records',
                 (
                     job,
-                    {
-                        details,
-                        rec
-                    } : {
-                        details: string,
-                        rec: RecordedVersionInfo
-                    }
+                    { details, rec }
+                    : { details: string, rec: RecordedVersionInfo }
                 ) => {
                     console.log(C(
                         'MISSING BUILD RECORDS',

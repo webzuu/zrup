@@ -1,6 +1,6 @@
 {
   "name": "zrup",
-  "version": "0.16.5",
+  "version": "0.16.6",
   "description": "Build system experiment",
   "main": "js/front/runner.js",
   "typings": "./dist/zrup.d.ts",
