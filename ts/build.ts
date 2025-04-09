@@ -35,7 +35,6 @@ export namespace Build {
  */
 export class Build extends EventEmitter  {
 
-
     #whichRulesReliedOnArtifactVersion : WhichRulesReliedOnArtifactVersion = {};
     #whichArtifactVersionDidRuleRelyOn : WhichArtifactVersionDidRuleRelyOn = {};
     public index : Build.Index;
@@ -257,9 +256,28 @@ export class Build extends EventEmitter  {
         const allOutputs = [...new Set([...outputs, ...recordedOutputs]).values()];
         const allOutputsExistAndHaveBuildRecords =
             (await Promise.all(allOutputs.map(
-                async artifact => (await artifact.exists) && (artifact.key in recordedOutputsByKey)
+                async artifact => {
+                    if (!await artifact.exists) {
+                        this.emit("nonexistent.output", job, {
+                            details: "output does not exist",
+                            artifact
+                        });
+                        return false;
+                    }
+                    if (!(artifact.key in recordedOutputsByKey)) {
+                        this.emit("unrecorded.output", job, {
+                            details: "output exists but there is no build record",
+                            artifact
+                        });
+                        return false;
+                    }
+                    return true;
+                }
             ))).reduce((previous, current) => previous && current, true);
         if (!allOutputsExistAndHaveBuildRecords) {
+            this.emit("incomplete.job", job, {
+                details: "missing or unrecorded outputs (see prior messages)"
+            });
             return false;
         }
         const [recordedSourceVersionsByOutput, actualSourceVersions, actualOutputVersions] = await Promise.all([
@@ -270,6 +288,11 @@ export class Build extends EventEmitter  {
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {
 
             if (actualOutputVersions[recordedVersionsInfo.target] !== recordedVersionsInfo.version) {
+                this.emit("dirty.output", job, {
+                    details: "output was modified externally",
+                    recordedVersion: recordedVersionsInfo.version,
+                    actualVersion: actualOutputVersions[recordedVersionsInfo.target]
+                });
                 return false;
             }
             const recordedSourceKeys = Object.keys(recordedVersionsInfo.sourceVersions);
@@ -280,10 +303,22 @@ export class Build extends EventEmitter  {
                     recordedVersionsInfo.sourceVersions[recordedSourceKey]
                     !== actualSourceVersions[recordedSourceKey]
                 ) {
+                    this.emit("changed.source", job, {
+                        details: "source was modified",
+                        sourceKey: recordedSourceKey,
+                        recordedVersion: recordedVersionsInfo.sourceVersions[recordedSourceKey],
+                        actualVersion: actualSourceVersions[recordedSourceKey],
+                    });
                     return false;
                 }
             }
-            if (!hadRecordedSources) return false;
+            if (!hadRecordedSources) {
+                this.emit("missing.records", job, {
+                    details: "no source versions were recorded for target",
+                    target: recordedVersionsInfo.target
+                });
+                return false;
+            }
         }
         return true;
     }

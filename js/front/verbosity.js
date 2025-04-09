@@ -40,18 +40,37 @@ export class Verbosity {
             console.log(`Invoking recipe for rule ${rule.module.name}+${rule.name}`);
         });
         if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
+            const R = (job) => `${job.rule.module.name}+${job.rule.name}`;
             build.on('capturing.output', (job, outputFilePath) => {
-                console.log(`${job.rule.module.name}+${job.rule.name}: > ${outputFilePath}`);
+                console.log(`${R(job)}: > ${outputFilePath}`);
             });
             // noinspection JSUnusedLocalSymbols
             build.on('spawning.command', (job, rawExec, args, child) => {
-                console.log(`${job.rule.module.name}+${job.rule.name}: spawning ${rawExec} ${[args].flat(Infinity).join(' ')}`);
+                console.log(`${R(job)}: spawning ${rawExec} ${[args].flat(Infinity).join(' ')}`);
             });
             build.on('spawned.command', (job, child) => {
-                console.log(`${job.rule.module.name}+${job.rule.name}: spawned ${child.spawnfile} ${child.spawnargs}`);
+                console.log(`${R(job)}: spawned ${child.spawnfile} ${child.spawnargs}`);
             });
             build.on('completed.command', (job, child) => {
-                console.log(`${job.rule.module.name}+${job.rule.name}: completed ${child.spawnfile} ${child.spawnargs}`);
+                console.log(`${R(job)}: completed ${child.spawnfile} ${child.spawnargs}`);
+            });
+            build.on('nonexistent.output', (job, { details, artifact }) => {
+                console.log(`${R(job)}: ${details} ${artifact.key}`);
+            });
+            build.on('unrecorded.output', (job, { details, artifact }) => {
+                console.log(`${R(job)}: ${details} ${artifact.key}`);
+            });
+            build.on('incomplete.job', (job, { details }) => {
+                console.log(`${R(job)}: ${details}`);
+            });
+            build.on('dirty.output', (job, { details, recordedVersion, actualVersion }) => {
+                console.log(`${R(job)}: ${details} from ${recordedVersion} to ${actualVersion}`);
+            });
+            build.on('changed.source', (job, { details, sourceKey, recordedVersion, actualVersion }) => {
+                console.log(`${R(job)}: ${details}: built from ${sourceKey} in version ${recordedVersion}, but current version is ${actualVersion}`);
+            });
+            build.on('missing.records', (job, { details, output }) => {
+                console.log(`${R(job)}: ${details} ${output}`);
             });
         }
     }
