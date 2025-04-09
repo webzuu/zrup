@@ -70,6 +70,7 @@ export class Verbosity {
             ))
         });
         if (this.#verbose) {
+            let concurrency = 0;
             const R = (job: Job) => `${job.rule.module.name}+${job.rule.name}`;
             const A = (key: string) => artifactManager.findByKey(key);
             const L = (key: string) => A(key)?.identity || key;
@@ -86,17 +87,6 @@ export class Verbosity {
                     }
                 ))
             });
-            // noinspection JSUnusedLocalSymbols
-            build.on('spawning.command', (job, rawExec, args, child) =>{
-                console.log(C(
-                    'SPAWNING COMMAND',
-                    {
-                        Job: R(job),
-                        Command: rawExec,
-                        Args: [args].flat(Infinity).join(' ')
-                    }
-                ))
-            });
             build.on(
                 'spawned.command',
                 (job, rawExec, args, child) => {
@@ -106,7 +96,8 @@ export class Verbosity {
                             Job: R(job),
                             Command: child.spawnfile,
                             Args: child.spawnargs,
-                            PID: child.pid
+                            PID: child.pid,
+                            "Recipes running": String(++concurrency),
                         }
                     ));
                 }
@@ -120,7 +111,8 @@ export class Verbosity {
                             Job: R(job),
                             Command: child.spawnfile,
                             Args: child.spawnargs,
-                            PID: child.pid
+                            PID: child.pid,
+                            "Recipes running": String(--concurrency),
                         }
                     ));
                 }

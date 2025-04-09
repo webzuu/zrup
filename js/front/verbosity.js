@@ -55,6 +55,7 @@ export class Verbosity {
             }));
         });
         if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
+            let concurrency = 0;
             const R = (job) => `${job.rule.module.name}+${job.rule.name}`;
             const A = (key) => artifactManager.findByKey(key);
             const L = (key) => A(key)?.identity || key;
@@ -68,20 +69,13 @@ export class Verbosity {
                     "Output Path": outputFilePath
                 }));
             });
-            // noinspection JSUnusedLocalSymbols
-            build.on('spawning.command', (job, rawExec, args, child) => {
-                console.log(C('SPAWNING COMMAND', {
-                    Job: R(job),
-                    Command: rawExec,
-                    Args: [args].flat(Infinity).join(' ')
-                }));
-            });
             build.on('spawned.command', (job, rawExec, args, child) => {
                 console.log(C('COMMAND SPAWNED', {
                     Job: R(job),
                     Command: child.spawnfile,
                     Args: child.spawnargs,
-                    PID: child.pid
+                    PID: child.pid,
+                    "Recipes running": String(++concurrency),
                 }));
             });
             build.on('completed.command', (job, child) => {
@@ -89,7 +83,8 @@ export class Verbosity {
                     Job: R(job),
                     Command: child.spawnfile,
                     Args: child.spawnargs,
-                    PID: child.pid
+                    PID: child.pid,
+                    "Recipes running": String(--concurrency),
                 }));
             });
             build.on('nonexistent.output', (job, { details, artifact }) => {

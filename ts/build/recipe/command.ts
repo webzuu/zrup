@@ -60,13 +60,16 @@ export class CommandRecipe extends Recipe {
         exec = exec.replace(/^\s+/, '').replace(/\s+$/, '');
         const rawExec = exec + '';
         if (shell) exec = `set -euo pipefail; ${exec}`;
-        job.build.emit('spawning.command', job, rawExec, args, options);
-        const child = spawn(exec, args, options);
-        job.build.emit('spawned.command', job, rawExec, args, child);
-
-        this.hookStreams(child, out, err, combined);
-
-        return child;
+        try {
+            const child = spawn(exec, args, options);
+            job.build.emit('spawned.command', job, rawExec, args, child, options);
+            this.hookStreams(child, out, err, combined);
+            return child;
+        }
+        catch (e) {
+            job.build.emit('spawn.error', job, rawExec, args, options);
+            throw e;
+        }
     }
 
     hookStreams(
