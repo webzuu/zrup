@@ -256,6 +256,7 @@ declare class ArtifactManager {
     requireFactoryForType(type: string | undefined): ArtifactFactory;
     normalizeAID(aid: AID): AID;
     find(ref: Artifact.Reference): Artifact | null;
+    findByKey(key: string): Artifact | null;
     get(ref: Artifact.Reference): Artifact;
     put(artifact: Artifact): void;
     private putNew;

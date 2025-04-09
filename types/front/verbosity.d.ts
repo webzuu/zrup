@@ -7,6 +7,6 @@ export declare class Verbosity {
     constructor(verbose: boolean);
     hookModuleBuilder(moduleBuilder: ModuleBuilder): void;
     hookRuleBuilder(ruleBuilder: RuleBuilder, artifactManager: ArtifactManager): void;
-    hookBuild(build: Build): void;
+    hookBuild(build: Build, artifactManager: ArtifactManager): void;
 }
 //# sourceMappingURL=verbosity.d.ts.map

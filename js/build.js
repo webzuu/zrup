@@ -198,8 +198,8 @@ export class Build extends EventEmitter {
             if (actualOutputVersions[recordedVersionsInfo.target] !== recordedVersionsInfo.version) {
                 this.emit("dirty.output", job, {
                     details: "output was modified externally",
-                    recordedVersion: recordedVersionsInfo.version,
-                    actualVersion: actualOutputVersions[recordedVersionsInfo.target]
+                    rec: recordedVersionsInfo,
+                    act: actualOutputVersions[recordedVersionsInfo.target],
                 });
                 return false;
             }
@@ -212,8 +212,8 @@ export class Build extends EventEmitter {
                     this.emit("changed.source", job, {
                         details: "source was modified",
                         sourceKey: recordedSourceKey,
-                        recordedVersion: recordedVersionsInfo.sourceVersions[recordedSourceKey],
-                        actualVersion: actualSourceVersions[recordedSourceKey],
+                        rec: recordedVersionsInfo,
+                        act: actualSourceVersions[recordedSourceKey],
                     });
                     return false;
                 }
@@ -221,7 +221,7 @@ export class Build extends EventEmitter {
             if (!hadRecordedSources) {
                 this.emit("missing.records", job, {
                     details: "no source versions were recorded for target",
-                    target: recordedVersionsInfo.target
+                    rec: recordedVersionsInfo
                 });
                 return false;
             }

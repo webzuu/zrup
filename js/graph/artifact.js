@@ -163,6 +163,9 @@ export class ArtifactManager {
     find(ref) {
         return __classPrivateFieldGet(this, _ArtifactManager_index, "f").artifact.identity["" + ref] ?? null;
     }
+    findByKey(key) {
+        return __classPrivateFieldGet(this, _ArtifactManager_index, "f").artifact.key[key] ?? null;
+    }
     get(ref) {
         const aid = new AID("" + ref);
         const factory = this.requireFactoryForType(aid.type);

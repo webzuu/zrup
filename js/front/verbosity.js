@@ -35,12 +35,13 @@ export class Verbosity {
             });
         }
     }
-    hookBuild(build) {
+    hookBuild(build, artifactManager) {
         build.on('invoking.recipe', rule => {
             console.log(`Invoking recipe for rule ${rule.module.name}+${rule.name}`);
         });
         if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
             const R = (job) => `${job.rule.module.name}+${job.rule.name}`;
+            const L = (key) => artifactManager.findByKey(key)?.label || key;
             build.on('capturing.output', (job, outputFilePath) => {
                 console.log(`${R(job)}: > ${outputFilePath}`);
             });
@@ -48,7 +49,7 @@ export class Verbosity {
             build.on('spawning.command', (job, rawExec, args, child) => {
                 console.log(`${R(job)}: spawning ${rawExec} ${[args].flat(Infinity).join(' ')}`);
             });
-            build.on('spawned.command', (job, child) => {
+            build.on('spawned.command', (job, rawExec, args, child) => {
                 console.log(`${R(job)}: spawned ${child.spawnfile} ${child.spawnargs}`);
             });
             build.on('completed.command', (job, child) => {
@@ -63,14 +64,14 @@ export class Verbosity {
             build.on('incomplete.job', (job, { details }) => {
                 console.log(`${R(job)}: ${details}`);
             });
-            build.on('dirty.output', (job, { details, recordedVersion, actualVersion }) => {
-                console.log(`${R(job)}: ${details} from ${recordedVersion} to ${actualVersion}`);
+            build.on('dirty.output', (job, { details, rec, act }) => {
+                console.log(`${R(job)}: ${L(rec.target)} ${details} from ${rec.version} to ${act}`);
             });
-            build.on('changed.source', (job, { details, sourceKey, recordedVersion, actualVersion }) => {
-                console.log(`${R(job)}: ${details}: built from ${sourceKey} in version ${recordedVersion}, but current version is ${actualVersion}`);
+            build.on('changed.source', (job, { details, sourceKey, rec, actualVersion }) => {
+                console.log(`${R(job)}: ${details}: ${L(rec.target)} built from ${L(sourceKey)} in version ${rec.sourceVersions[sourceKey]}, but current version is ${actualVersion}`);
             });
-            build.on('missing.records', (job, { details, output }) => {
-                console.log(`${R(job)}: ${details} ${output}`);
+            build.on('missing.records', (job, { details, rec }) => {
+                console.log(`${R(job)}: ${details} ${L(rec.target)}`);
             });
         }
     }

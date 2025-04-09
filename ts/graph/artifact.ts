@@ -249,6 +249,11 @@ export class ArtifactManager
         return this.#index.artifact.identity[""+ref] ?? null;
     }
 
+    findByKey(key : string) : Artifact|null
+    {
+        return this.#index.artifact.key[key] ?? null;
+    }
+
     get(ref : Artifact.Reference) : Artifact
     {
         const aid = new AID(""+ref);

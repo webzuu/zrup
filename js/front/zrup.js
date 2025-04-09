@@ -79,7 +79,7 @@ export class Zrup {
             await __classPrivateFieldGet(this, _Zrup_moduleBuilder, "f").loadRootModule();
             __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f").finalize();
             const build = new Build(__classPrivateFieldGet(this, _Zrup_project, "f").graph, __classPrivateFieldGet(this, _Zrup_db, "f"), __classPrivateFieldGet(this, _Zrup_artifactManager, "f"));
-            __classPrivateFieldGet(this, _Zrup_verbosity, "f").hookBuild(build);
+            __classPrivateFieldGet(this, _Zrup_verbosity, "f").hookBuild(build, __classPrivateFieldGet(this, _Zrup_artifactManager, "f"));
             console.log("Resolving artifacts");
             const requestedArtifacts = __classPrivateFieldGet(this, _Zrup_request, "f").goals.map(ref => __classPrivateFieldGet(this, _Zrup_artifactManager, "f").get(ref));
             console.log("Creating top level build jobs");

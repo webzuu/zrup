@@ -3,6 +3,7 @@ import {RuleBuilder} from "./rule-builder.js";
 import {ArtifactManager,Artifact} from "../graph/artifact.js";
 import {ModuleBuilder} from "./module-builder.js";
 import { Job } from "../build/job.js";
+import RecordedVersionInfo = Build.RecordedVersionInfo;
 
 export class Verbosity {
 
@@ -37,13 +38,14 @@ export class Verbosity {
         }
     }
 
-    hookBuild(build: Build)
+    hookBuild(build: Build, artifactManager: ArtifactManager)
     {
         build.on('invoking.recipe',rule => {
             console.log(`Invoking recipe for rule ${rule.module.name}+${rule.name}`);
         });
         if (this.#verbose) {
             const R = (job: Job) => `${job.rule.module.name}+${job.rule.name}`
+            const L = (key: string) => artifactManager.findByKey(key)?.label || key;
             build.on('capturing.output',(job, outputFilePath) => {
                 console.log(`${R(job)}: > ${outputFilePath}`);
             });
@@ -53,7 +55,7 @@ export class Verbosity {
             });
             build.on(
                 'spawned.command',
-                (job,child) => {
+                (job, rawExec, args, child) => {
                     console.log(`${R(job)}: spawned ${child.spawnfile} ${child.spawnargs}`);
                 }
             );
@@ -87,15 +89,15 @@ export class Verbosity {
                     job,
                     {
                         details,
-                        recordedVersion,
-                        actualVersion
+                        rec,
+                        act
                     }:{
                         details: string,
-                        recordedVersion: string | null,
-                        actualVersion: string | null
+                        rec: RecordedVersionInfo
+                        act: string | null
                     }
                 ) => {
-                    console.log(`${R(job)}: ${details} from ${recordedVersion} to ${actualVersion}`);
+                    console.log(`${R(job)}: ${L(rec.target)} ${details} from ${rec.version} to ${act}`);
                 }
             );
             build.on(
@@ -105,16 +107,16 @@ export class Verbosity {
                     {
                         details,
                         sourceKey,
-                        recordedVersion,
+                        rec,
                         actualVersion
                     } : {
                         details: string,
                         sourceKey: string,
-                        recordedVersion: string,
+                        rec: RecordedVersionInfo,
                         actualVersion: string | null
                     }
                 ) => {
-                    console.log(`${R(job)}: ${details}: built from ${sourceKey} in version ${recordedVersion}, but current version is ${actualVersion}`);
+                    console.log(`${R(job)}: ${details}: ${L(rec.target)} built from ${L(sourceKey)} in version ${rec.sourceVersions[sourceKey]}, but current version is ${actualVersion}`);
                 }
             );
             build.on(
@@ -123,13 +125,13 @@ export class Verbosity {
                     job,
                     {
                         details,
-                        output
+                        rec
                     } : {
                         details: string,
-                        output: string
+                        rec: RecordedVersionInfo
                     }
                 ) => {
-                    console.log(`${R(job)}: ${details} ${output}`);
+                    console.log(`${R(job)}: ${details} ${L(rec.target)}`);
                 }
             );
         }

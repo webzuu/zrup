@@ -103,7 +103,7 @@ export class Zrup
             await this.#moduleBuilder.loadRootModule();
             this.#ruleBuilder.finalize();
             const build = new Build(this.#project.graph, this.#db, this.#artifactManager);
-            this.#verbosity.hookBuild(build);
+            this.#verbosity.hookBuild(build, this.#artifactManager);
             console.log("Resolving artifacts");
             const requestedArtifacts = this.#request.goals.map(ref => this.#artifactManager.get(ref));
             console.log("Creating top level build jobs");
