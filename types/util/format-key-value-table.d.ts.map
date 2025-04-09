@@ -1,0 +1,1 @@
+{"version":3,"file":"format-key-value-table.d.ts","sourceRoot":"","sources":["../../ts/util/format-key-value-table.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AACH,wBAAgB,mBAAmB,CAC/B,IAAI,EAAE,MAAM,CAAC,MAAM,EAAE,MAAM,GAAG,MAAM,GAAG,OAAO,CAAC,EAC/C,OAAO,GAAE;IACL,UAAU,CAAC,EAAE,MAAM,CAAC;IACpB,OAAO,CAAC,EAAE,MAAM,CAAC;IACjB,WAAW,CAAC,EAAE,MAAM,CAAC;CACnB,GACP,MAAM,CAgCR"}

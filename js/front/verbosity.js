@@ -10,6 +10,8 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _Verbosity_verbose;
+import { formatKeyValueTable } from "../util/format-key-value-table.js";
+const C = (label, data) => `\n\x1b[1m${label}\x1b[0m\n${formatKeyValueTable(data, { labelSuffix: ":" })}`;
 export class Verbosity {
     constructor(verbose) {
         _Verbosity_verbose.set(this, void 0);
@@ -18,60 +20,118 @@ export class Verbosity {
     hookModuleBuilder(moduleBuilder) {
         if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
             moduleBuilder.on('defined.module', (module, path, name) => {
-                console.log(`Defining ${name} ${path}`);
+                console.log(C('MODULE DEFINED', { Name: name, Path: path }));
             });
         }
     }
     hookRuleBuilder(ruleBuilder, artifactManager) {
+        const X = (id) => artifactManager.resolveToExternalIdentifier(id);
         if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
             ruleBuilder.on('defining.rule', (module, rule) => {
-                console.log(`Rule ${module.name}+${rule.name}`);
+                console.log(C('DEFINING RULE', { Name: rule.name, Module: module.name }));
             });
             ruleBuilder.on('depends', (module, rule, dependency) => {
-                console.log(`Depends on ${artifactManager.resolveToExternalIdentifier(dependency.artifact.identity)}`);
+                console.log(C('DEPENDENCY REGISTERED', {
+                    Module: module.name,
+                    Rule: rule.name,
+                    "Depends on": X(dependency.artifact.identity)
+                }));
             });
             ruleBuilder.on('produces', (module, rule, artifact) => {
-                console.log(`Produces ${artifactManager.resolveToExternalIdentifier(artifact.identity)}`);
+                console.log(C('TARGET REGISTERED', {
+                    Module: module.name,
+                    Rule: rule.name,
+                    Target: X(artifact.identity)
+                }));
             });
         }
     }
     hookBuild(build, artifactManager) {
+        const X = (id) => artifactManager.resolveToExternalIdentifier(id);
         build.on('invoking.recipe', rule => {
-            console.log(`Invoking recipe for rule ${rule.module.name}+${rule.name}`);
+            console.log(C('RECIPE INVOKED', {
+                Module: rule.module.name,
+                "Rule Name": rule.name
+            }));
         });
         if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
             const R = (job) => `${job.rule.module.name}+${job.rule.name}`;
             const L = (key) => artifactManager.findByKey(key)?.label || key;
             build.on('capturing.output', (job, outputFilePath) => {
-                console.log(`${R(job)}: > ${outputFilePath}`);
+                console.log(C('CAPTURING OUTPUT', {
+                    Job: R(job),
+                    "Output Path": outputFilePath
+                }));
             });
             // noinspection JSUnusedLocalSymbols
             build.on('spawning.command', (job, rawExec, args, child) => {
-                console.log(`${R(job)}: spawning ${rawExec} ${[args].flat(Infinity).join(' ')}`);
+                console.log(C('SPAWNING COMMAND', {
+                    Job: R(job),
+                    Command: rawExec,
+                    Args: [args].flat(Infinity).join(' ')
+                }));
             });
             build.on('spawned.command', (job, rawExec, args, child) => {
-                console.log(`${R(job)}: spawned ${child.spawnfile} ${child.spawnargs}`);
+                console.log(C('COMMAND SPAWNED', {
+                    Job: R(job),
+                    Command: child.spawnfile,
+                    Args: child.spawnargs,
+                    PID: child.pid
+                }));
             });
             build.on('completed.command', (job, child) => {
-                console.log(`${R(job)}: completed ${child.spawnfile} ${child.spawnargs}`);
+                console.log(C('COMMAND COMPLETED', {
+                    Job: R(job),
+                    Command: child.spawnfile,
+                    Args: child.spawnargs,
+                    PID: child.pid
+                }));
             });
             build.on('nonexistent.output', (job, { details, artifact }) => {
-                console.log(`${R(job)}: ${details} ${artifact.key}`);
+                console.log(C('NONEXISTENT OUTPUT', {
+                    Job: R(job),
+                    Artifact: L(artifact.identity),
+                    Details: details
+                }));
             });
             build.on('unrecorded.output', (job, { details, artifact }) => {
-                console.log(`${R(job)}: ${details} ${artifact.key}`);
+                console.log(C('UNRECORDED OUTPUT', {
+                    Job: R(job),
+                    Artifact: L(artifact.identity),
+                    Details: details
+                }));
             });
             build.on('incomplete.job', (job, { details }) => {
-                console.log(`${R(job)}: ${details}`);
+                console.log(C('INCOMPLETE JOB', {
+                    Job: R(job),
+                    Details: details
+                }));
             });
             build.on('dirty.output', (job, { details, rec, act }) => {
-                console.log(`${R(job)}: ${L(rec.target)} ${details} from ${rec.version} to ${act}`);
+                console.log(C('DIRTY OUTPUT', {
+                    Job: R(job),
+                    Artifact: L(rec.target),
+                    "Recorded Version": rec.version || "null",
+                    "Current Version": act || "null",
+                    Details: details
+                }));
             });
-            build.on('changed.source', (job, { details, sourceKey, rec, actualVersion }) => {
-                console.log(`${R(job)}: ${details}: ${L(rec.target)} built from ${L(sourceKey)} in version ${rec.sourceVersions[sourceKey]}, but current version is ${actualVersion}`);
+            build.on('changed.source', (job, { details, sourceKey, rec, act }) => {
+                console.log(C('CHANGED DEPENDENCY', {
+                    Job: R(job),
+                    Target: L(rec.target),
+                    Dependency: X(sourceKey),
+                    "Recorded Version": rec.sourceVersions[sourceKey] || "null",
+                    "Current Version": act || "null",
+                    Details: details
+                }));
             });
             build.on('missing.records', (job, { details, rec }) => {
-                console.log(`${R(job)}: ${details} ${L(rec.target)}`);
+                console.log(C('MISSING BUILD RECORDS', {
+                    Job: R(job),
+                    Target: L(rec.target),
+                    Details: details
+                }));
             });
         }
     }

@@ -145,13 +145,12 @@ export class Build extends EventEmitter {
             this.db.recordArtifact(artifact.key, artifact.type, artifact.identity);
     }
     async getActualVersionInfo(artifacts) {
-        const actualSourceVersions = {};
-        const artifactsUnique = [...new Set(artifacts).values()];
-        await Promise.all(artifactsUnique.map(async (artifact) => {
-            actualSourceVersions[artifact.key] =
+        const actualVersions = {};
+        await Promise.all([...new Set(artifacts).values()].map(async (artifact) => {
+            actualVersions[artifact.key] =
                 (await artifact.exists) ? (await artifact.version) : null;
         }));
-        return actualSourceVersions;
+        return actualVersions;
     }
     async isUpToDate(job) {
         job.prepare();
