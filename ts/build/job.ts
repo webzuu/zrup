@@ -107,6 +107,9 @@ export class Job  {
             await this.detectRewritesAfterUse();
             await this.build.recordStandardVersionInfo(this);
         }
+        else {
+            this.build.emit('eliding.recipe',this);
+        }
     }
 
 
