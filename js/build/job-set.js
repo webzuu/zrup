@@ -37,8 +37,5 @@ export class JobSet {
     get jobs() {
         return Object.values(this.$jobs);
     }
-    get job() {
-        return this.jobs[0];
-    }
 }
 //# sourceMappingURL=job-set.js.map

@@ -120,7 +120,6 @@ declare class JobSet {
     union(jobSet?: JobSet | null): JobSet;
     difference(jobSet?: JobSet | null): JobSet | null | undefined;
     get jobs(): Job[];
-    get job(): Job | undefined;
 }
 
 declare class Job {
