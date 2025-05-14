@@ -23,53 +23,53 @@ import {Dependency} from "../graph/dependency.js";
 /***/
 export class Zrup
 {
-    #request: Zrup.Request;
+    private $request: Zrup.Request;
 
-    #projectRoot: string;
+    private $projectRoot: string;
 
-    #config: Zrup.Config;
+    private $config: Zrup.Config;
 
-    readonly #project: Project;
+    private readonly $project: Project;
 
-    readonly #db: Db;
+    private readonly $db: Db;
 
-    readonly #artifactManager: ArtifactManager;
+    private readonly $artifactManager: ArtifactManager;
 
-    readonly #ruleBuilder: RuleBuilder;
+    private readonly $ruleBuilder: RuleBuilder;
 
-    #moduleBuilder: ModuleBuilder;
+    private $moduleBuilder: ModuleBuilder;
 
-    #verbosity: Verbosity;
+    private $verbosity: Verbosity;
 
 
     constructor(projectRoot: string, config: Zrup.Config, request: Zrup.Request) {
-        this.#request = request;
-        this.#projectRoot = projectRoot;
-        const {zrupDir, dataDir, channels} = this.#config = config;
-        this.#project = new Project(projectRoot);
-        this.#db = new Db(path.join(
-            this.#project.path,
+        this.$request = request;
+        this.$projectRoot = projectRoot;
+        const {zrupDir, dataDir, channels} = this.$config = config;
+        this.$project = new Project(projectRoot);
+        this.$db = new Db(path.join(
+            this.$project.path,
             dataDir.replace(/<zrupDir>/, zrupDir),
             'state.sqlite'
         ));
-        this.#artifactManager = new ArtifactManager();
-        new FileArtifactFactory(this.#artifactManager, this.#project /*, "file", "" */);
-        new RecipeArtifactFactory(this.#artifactManager, this.#project);
+        this.$artifactManager = new ArtifactManager();
+        new FileArtifactFactory(this.$artifactManager, this.$project /*, "file", "" */);
+        new RecipeArtifactFactory(this.$artifactManager, this.$project);
         for (let [channel, infix] of Object.entries(channels)) {
             new FileArtifactFactory(
-                this.#artifactManager,
-                this.#project,
+                this.$artifactManager,
+                this.$project,
                 channel,
                 (infix || '').replace(/<zrupDir>/, zrupDir)
             )
         }
-        this.#verbosity = new Verbosity(request.options.verbose || false);
-        this.#verbosity.hookRuleBuilder(
-            this.#ruleBuilder = new RuleBuilder(this.#project, this.#artifactManager),
-            this.#artifactManager
+        this.$verbosity = new Verbosity(request.options.verbose || false);
+        this.$verbosity.hookRuleBuilder(
+            this.$ruleBuilder = new RuleBuilder(this.$project, this.$artifactManager),
+            this.$artifactManager
         );
-        this.#verbosity.hookModuleBuilder(
-            this.#moduleBuilder = new ModuleBuilder(this.#project, this.#ruleBuilder)
+        this.$verbosity.hookModuleBuilder(
+            this.$moduleBuilder = new ModuleBuilder(this.$project, this.$ruleBuilder)
         );
     }
 
@@ -78,7 +78,7 @@ export class Zrup
         let hadError: boolean = false;
         try {
             console.log("Loading graph");
-            this.#ruleBuilder.on('defined.rule',(module: Module, rule: Rule) => {
+            this.$ruleBuilder.on('defined.rule',(module: Module, rule: Rule) => {
                 const targets = new Set(Object.values(rule.outputs).map(artifact => artifact.identity))
                 const checked = new Set<string>();
                 const cycle : {rule: Rule, artifact: Artifact}[] = [];
@@ -88,8 +88,8 @@ export class Zrup
                     for (let [artifactKey,dependency] of Object.entries(rule.dependencies)) {
                         const artifact = dependency.artifact;
                         if (targets.has(artifact.identity) || !check(
-                            this.#project.graph.index.rule.key.get(
-                                this.#project.graph.index.output.rule.get(artifactKey) ?? ''
+                            this.$project.graph.index.rule.key.get(
+                                this.$project.graph.index.output.rule.get(artifactKey) ?? ''
                             )
                         )) {
                             cycle.unshift({rule, artifact});
@@ -100,12 +100,12 @@ export class Zrup
                 }
                 if (!check(rule)) throw new DependencyCycle(cycle);
             });
-            await this.#moduleBuilder.loadRootModule();
-            this.#ruleBuilder.finalize();
-            const build = new Build(this.#project.graph, this.#db, this.#artifactManager);
-            this.#verbosity.hookBuild(build, this.#artifactManager);
+            await this.$moduleBuilder.loadRootModule();
+            this.$ruleBuilder.finalize();
+            const build = new Build(this.$project.graph, this.$db, this.$artifactManager);
+            this.$verbosity.hookBuild(build, this.$artifactManager);
             console.log("Resolving artifacts");
-            const requestedArtifacts = this.#request.goals.map(ref => this.#artifactManager.get(ref));
+            const requestedArtifacts = this.$request.goals.map(ref => this.$artifactManager.get(ref));
             console.log("Creating top level build jobs");
             const jobSetsPromise = Promise.all(
                 requestedArtifacts.map(async artifact => await build.getJobSetForArtifact(artifact,true))
@@ -125,8 +125,8 @@ export class Zrup
             hadError=true;
         }
         finally {
-            console.log(`Number of data queries:        ${this.#db.queryCount}`);
-            console.log(`Data queries took:             ${this.#db.queryTime} ms`);
+            console.log(`Number of data queries:        ${this.$db.queryCount}`);
+            console.log(`Data queries took:             ${this.$db.queryTime} ms`);
         }
         if (hadError) process.exit(1);
     }
@@ -173,9 +173,9 @@ const
         channels: record(string(), string())
     }),
     schema_RequestOptions = struct({
-        version: string(),
+        version: optional(boolean()),
         init: optional(boolean()),
-        verbose: optional(boolean())
+        verbose: optional(boolean()),
     }),
     schema_Request = struct({
         goals: array(string()),

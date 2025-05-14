@@ -36,21 +36,21 @@ export namespace RuleBuilder {
     export interface DefinerAPI {
         /** The {@link Rule} instance being defined. */
         rule: Rule,
-        /** {@see ModuleBuilder.DefinerAPI.depends}*/
+        /** {@link ModuleBuilder.DefinerAPI.depends}*/
         depends: RuleBuilder.artifactNominator,
-        /** {@see ModuleBuilder.DefinerAPI.produces}*/
+        /** {@link ModuleBuilder.DefinerAPI.produces}*/
         produces: RuleBuilder.artifactNominator,
-        /** {@see ModuleBuilder.DefinerAPI.after}*/
+        /** {@link ModuleBuilder.DefinerAPI.after}*/
         after: RuleBuilder.ruleNominator,
-        /** {@see ModuleBuilder.DefinerAPI.always}*/
+        /** {@link ModuleBuilder.DefinerAPI.always}*/
         always: RuleBuilder.flagSetter,
-        /** {@see ModuleBuilder.DefinerAPI.resolve}*/
+        /** {@link ModuleBuilder.DefinerAPI.resolve}*/
         resolve: ModuleBuilder.resolve,
         T: templateStringTag
     }
 
     /**
-     * A function type that receives {@see Artifact.Resolvable artifact-resolvables} and presumably designates the
+     * A function type that receives {@link Artifact.Resolvable artifact-resolvables} and presumably designates the
      * corresponding artifacts as relevant to the rule being built, i.e. as dependencies or outputs.
      */
     export type artifactNominator = (...resolvables: Artifact.Resolvables[]) => any;
@@ -97,13 +97,13 @@ export class RuleBuilder extends EventEmitter
 
     readonly artifactManager: ArtifactManager;
 
-    #declarations: RuleBuilder.Declaration[] = [];
+    private $declarations: RuleBuilder.Declaration[] = [];
 
-    #afterEdges : Record<string, string[]> = {};
+    private $afterEdges : Record<string, string[]> = {};
 
-    #alsoEdges : Record<string, string[]> = {};
+    private $alsoEdges : Record<string, string[]> = {};
 
-    #currentRule: Rule|null = null;
+    private $currentRule: Rule|null = null;
 
     constructor(project: Project, artifactManager: ArtifactManager)
     {
@@ -128,7 +128,7 @@ export class RuleBuilder extends EventEmitter
             rule                = new Rule(module, name);
 
         this.project.graph.addRule(rule);
-        this.#declarations.push(this.createDeclaration(module, rule, definer));
+        this.$declarations.push(this.createDeclaration(module, rule, definer));
         this.emit('declared.rule', module, rule);
     }
 
@@ -181,12 +181,12 @@ export class RuleBuilder extends EventEmitter
 
     after : RuleBuilder.ruleNominator = (...prerequisiteRuleRefs: string[]) : void =>
     {
-        this.declareRuleEdges(this.#afterEdges, 'after', ...prerequisiteRuleRefs);
+        this.declareRuleEdges(this.$afterEdges, 'after', ...prerequisiteRuleRefs);
     }
 
     also : RuleBuilder.ruleNominator = (...peerRuleRefs: string[]) : void =>
     {
-        this.declareRuleEdges(this.#alsoEdges, 'also', ...peerRuleRefs);
+        this.declareRuleEdges(this.$alsoEdges, 'also', ...peerRuleRefs);
     }
 
     private declareRuleEdges(dictionary: Record<string, string[]>, edgeKind: string, ...ruleRefs: string[])
@@ -205,39 +205,39 @@ export class RuleBuilder extends EventEmitter
 
     requireCurrentRule(bindingName: string) : Rule
     {
-        if (!this.#currentRule) {
+        if (!this.$currentRule) {
             throw new Error(
                 `DSL error: ${bindingName}() cannot be used outside of rule definition callback, even though `
                 +'it is passed to the module definition callback in order to minimize boilerplate'
             );
         }
-        return this.#currentRule;
+        return this.$currentRule;
     }
 
     finalize()
     {
         this.defineRules();
         this.indexRules();
-        this.addRuleEdges(this.#afterEdges, 'addPrerequisiteRule');
-        this.addRuleEdges(this.#alsoEdges, 'addAlsoRule');
+        this.addRuleEdges(this.$afterEdges, 'addPrerequisiteRule');
+        this.addRuleEdges(this.$alsoEdges, 'addAlsoRule');
     }
 
     private defineRules() {
-        for(let {rule, boundDefiner, module} of this.#declarations) {
+        for(let {rule, boundDefiner, module} of this.$declarations) {
             this.emit('defining.rule',module,rule);
-            this.#currentRule = rule;
+            this.$currentRule = rule;
             try {
                 rule.recipe = boundDefiner();
                 this.emit('defined.rule',module,rule);
             }
             finally {
-                this.#currentRule = null;
+                this.$currentRule = null;
             }
         }
     }
 
     private indexRules() {
-        for(let {rule} of this.#declarations) {
+        for(let {rule} of this.$declarations) {
             this.project.graph.indexRule(rule);
         }
     }

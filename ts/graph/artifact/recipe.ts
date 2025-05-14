@@ -8,8 +8,8 @@ import throwThe from "../../util/throw-error.js";
 export class RecipeArtifact extends Artifact
 
 {
-    #specPromise : Promise<Object>|null = null;
-    #versionPromise : Promise<string>|null = null;
+    private $specPromise : Promise<Object>|null = null;
+    private $versionPromise : Promise<string>|null = null;
     public readonly job: Job;
 
     async rm(): Promise<void> {
@@ -29,10 +29,10 @@ export class RecipeArtifact extends Artifact
 
     get spec() {
         return (
-            this.#specPromise
+            this.$specPromise
             ||
             (
-                this.#specPromise
+                this.$specPromise
                 =
                 this.job.rule.validRecipe.concretizeSpecFor(this.job)
             )
@@ -42,10 +42,10 @@ export class RecipeArtifact extends Artifact
     get version()
     {
         return (
-            this.#versionPromise
+            this.$versionPromise
             ||
             (
-                this.#versionPromise
+                this.$versionPromise
                 =
                 (async () => {
                     return await this.job.rule.validRecipe.hashSpec(await this.spec)
@@ -81,12 +81,12 @@ export class RecipeArtifactResolver extends ArtifactResolver
 export class RecipeArtifactFactory extends ArtifactFactory
 
 {
-    readonly #project: Project;
+    private readonly $project: Project;
 
     constructor(manager: ArtifactManager, project: Project)
     {
         super(manager, RecipeArtifact, new RecipeArtifactResolver(), "recipe");
-        this.#project = project;
+        this.$project = project;
     }
 
     //TODO: roadblock these - this factory is just a dummy
@@ -99,7 +99,7 @@ export class RecipeArtifactFactory extends ArtifactFactory
     }
 
     private resolveRule(ref : Artifact.Reference): (Rule | undefined) {
-        const inspectableProject = this.#project;
+        const inspectableProject = this.$project;
         return inspectableProject.graph.index.rule.key.get(
             Rule.computeKey(new AID(''+ref).withType("rule").toString())
         );

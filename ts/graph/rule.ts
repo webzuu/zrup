@@ -7,13 +7,13 @@ import {Recipe} from "../build/recipe.js";
 
 export class Rule  {
 
-    readonly #module                : Module;
+    private readonly $module                : Module;
 
-    readonly #name                  : string;
+    private readonly $name                  : string;
 
-    #label                          : string | null;
+    private $label                          : string | null;
 
-    #recipe                         : Recipe | null;
+    private $recipe                         : Recipe | null;
     public outputs                  : Record<string, Artifact>;
     public dependencies             : Record<string, Dependency>;
     public also                     : Record<string, Rule>;
@@ -22,10 +22,10 @@ export class Rule  {
 
     constructor(module : Module, name : string)
     {
-        this.#module = module;
-        this.#name = name.replace(/\W/g, '-');
-        this.#label = name;
-        this.#recipe = null;
+        this.$module = module;
+        this.$name = name.replace(/\W/g, '-');
+        this.$label = name;
+        this.$recipe = null;
         this.outputs = {};
         this.dependencies = {};
         this.also = {};
@@ -35,12 +35,12 @@ export class Rule  {
 
     get module() : Module
     {
-        return this.#module;
+        return this.$module;
     }
 
     get name() : string
     {
-        return this.#name;
+        return this.$name;
     }
 
     get identity() : string
@@ -50,7 +50,7 @@ export class Rule  {
 
     get recipe() : Recipe | null
     {
-        return this.#recipe;
+        return this.$recipe;
     }
 
     get validRecipe() : Recipe
@@ -62,10 +62,10 @@ export class Rule  {
 
     set recipe(recipe : Recipe|null)
     {
-        if (this.#recipe) {
+        if (this.$recipe) {
             throw new Error(`Attempt to ${recipe ? "reassign" : "unset"} the recipe of ${this.label}`);
         }
-        this.#recipe = recipe;
+        this.$recipe = recipe;
     }
 
     static computeKey(identityString : string) : string
@@ -80,12 +80,12 @@ export class Rule  {
 
     set label(label : string|null)
     {
-        this.#label = label;
+        this.$label = label;
     }
 
     get label() : string|null
     {
-        return this.#label || this.formatDefaultLabel();
+        return this.$label || this.formatDefaultLabel();
     }
 
     formatDefaultLabel() : string
@@ -107,7 +107,7 @@ export class Rule  {
         const outputs = Object.values(this.outputs);
         switch (outputs.length) {
             case 0:
-                return `[${this.module.pathFromRoot}][${this.#label || this.identity}]`;
+                return `[${this.module.pathFromRoot}][${this.$label || this.identity}]`;
             case 1:
                 return `[${this.module.pathFromRoot}]->[${(outputs[0] as Artifact).label}]`;
             default: return `[${this.module.pathFromRoot}]->[${(outputs[0] as Artifact).label} ...]`;

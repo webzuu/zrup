@@ -1,6 +1,6 @@
 import { Artifact } from "../artifact.js";
 export declare class ArtifactList extends Artifact {
-    #private;
+    private $items;
     constructor(identity: string);
     get type(): string;
     get items(): Artifact[];

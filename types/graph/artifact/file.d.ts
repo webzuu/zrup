@@ -2,7 +2,7 @@ import { AID, Artifact, ArtifactFactory, ArtifactManager, ArtifactResolver } fro
 import { Module } from "../../module.js";
 import { Project } from "../../project.js";
 export declare class FileArtifact extends Artifact {
-    #private;
+    private readonly $resolvedPath;
     constructor(ref: Artifact.Reference, resolvedPath: string);
     get exists(): Promise<boolean>;
     get version(): Promise<string>;
@@ -15,7 +15,9 @@ export declare class FileArtifact extends Artifact {
     get caps(): Artifact.Caps;
 }
 export declare class FileArtifactResolver extends ArtifactResolver {
-    #private;
+    private $project;
+    private readonly $infix;
+    private readonly $type;
     constructor(project: Project, infix?: string, type?: string);
     normalize(aid: AID): AID;
     resolveToExternalIdentifier(aid: AID): string;
@@ -32,7 +34,7 @@ export declare class FileArtifactResolver extends ArtifactResolver {
     get treePrefix(): string;
 }
 export declare class FileArtifactFactory extends ArtifactFactory {
-    #private;
+    private $project;
     constructor(manager: ArtifactManager, project: Project, type?: string, infix?: string);
     get fileResolver(): FileArtifactResolver;
     prependRequiredConstructorArgs(ref: Artifact.Reference, extraArgs: string[]): string[];

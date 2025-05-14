@@ -10,16 +10,16 @@ const C = (label: string, data: Record<string, string>) => `\n\x1b[1m${label}\x1
 
 export class Verbosity {
 
-    readonly #verbose: boolean;
+    private readonly $verbose: boolean;
 
     constructor(verbose: boolean)
     {
-        this.#verbose = verbose;
+        this.$verbose = verbose;
     }
 
     hookModuleBuilder(moduleBuilder: ModuleBuilder)
     {
-        if (this.#verbose) {
+        if (this.$verbose) {
 
             moduleBuilder.on('defined.module', (module, path, name) => {
                 console.log(C('MODULE DEFINED', {Name: name, Path: path}));
@@ -30,7 +30,7 @@ export class Verbosity {
     hookRuleBuilder(ruleBuilder: RuleBuilder, artifactManager: ArtifactManager)
     {
         const X = (id: string) => artifactManager.resolveToExternalIdentifier(id);
-        if (this.#verbose) {
+        if (this.$verbose) {
             ruleBuilder.on('defining.rule', (module, rule) => {
                 console.log(C('DEFINING RULE', {Name: rule.name, Module: module.name}));
             });
@@ -69,7 +69,7 @@ export class Verbosity {
                 }
             ))
         });
-        if (this.#verbose) {
+        if (this.$verbose) {
             let concurrency = 0;
             const R = (job: Job) => `${job.rule.module.name}+${job.rule.name}`;
             const A = (key: string) => artifactManager.findByKey(key);
@@ -124,7 +124,7 @@ export class Verbosity {
                         'NONEXISTENT OUTPUT',
                         {
                             Job: R(job),
-                            Artifact: `${artifact.identity} ${X(artifact.key)}}`,
+                            Artifact: `${artifact.identity} ${X(artifact.key)}`,
                             Details: details
                         }
                     ));

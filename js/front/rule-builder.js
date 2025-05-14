@@ -1,15 +1,3 @@
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-};
-var _RuleBuilder_declarations, _RuleBuilder_afterEdges, _RuleBuilder_alsoEdges, _RuleBuilder_currentRule;
 import { Rule } from "../graph/rule.js";
 import { resolveArtifacts } from "../module.js";
 import { AID } from "../graph/artifact.js";
@@ -21,10 +9,10 @@ import { flattenResolvables, obtainArtifactReferenceFrom } from "../util/casts.j
 export class RuleBuilder extends EventEmitter {
     constructor(project, artifactManager) {
         super();
-        _RuleBuilder_declarations.set(this, []);
-        _RuleBuilder_afterEdges.set(this, {});
-        _RuleBuilder_alsoEdges.set(this, {});
-        _RuleBuilder_currentRule.set(this, null);
+        this.$declarations = [];
+        this.$afterEdges = {};
+        this.$alsoEdges = {};
+        this.$currentRule = null;
         this.depends = (...resolvables) => {
             const rule = this.requireCurrentRule('depends'), module = rule.module;
             return flattenResolvables(resolvables).map(obtainArtifactReferenceFrom).map((ref) => {
@@ -44,10 +32,10 @@ export class RuleBuilder extends EventEmitter {
             });
         };
         this.after = (...prerequisiteRuleRefs) => {
-            this.declareRuleEdges(__classPrivateFieldGet(this, _RuleBuilder_afterEdges, "f"), 'after', ...prerequisiteRuleRefs);
+            this.declareRuleEdges(this.$afterEdges, 'after', ...prerequisiteRuleRefs);
         };
         this.also = (...peerRuleRefs) => {
-            this.declareRuleEdges(__classPrivateFieldGet(this, _RuleBuilder_alsoEdges, "f"), 'also', ...peerRuleRefs);
+            this.declareRuleEdges(this.$alsoEdges, 'also', ...peerRuleRefs);
         };
         this.always = (value) => {
             this.requireCurrentRule('always').always = false !== value;
@@ -61,7 +49,7 @@ export class RuleBuilder extends EventEmitter {
     acceptDefiner(module, nameOrDefiner, definerWhenNameGiven) {
         const haveName = "string" === typeof nameOrDefiner, name = haveName ? nameOrDefiner : nameOrDefiner.name, definer = haveName ? definerWhenNameGiven : nameOrDefiner, rule = new Rule(module, name);
         this.project.graph.addRule(rule);
-        __classPrivateFieldGet(this, _RuleBuilder_declarations, "f").push(this.createDeclaration(module, rule, definer));
+        this.$declarations.push(this.createDeclaration(module, rule, definer));
         this.emit('declared.rule', module, rule);
     }
     createDeclaration(module, rule, definer) {
@@ -96,33 +84,33 @@ export class RuleBuilder extends EventEmitter {
             this.emit(edgeKind, module, ruleFrom, ref);
     }
     requireCurrentRule(bindingName) {
-        if (!__classPrivateFieldGet(this, _RuleBuilder_currentRule, "f")) {
+        if (!this.$currentRule) {
             throw new Error(`DSL error: ${bindingName}() cannot be used outside of rule definition callback, even though `
                 + 'it is passed to the module definition callback in order to minimize boilerplate');
         }
-        return __classPrivateFieldGet(this, _RuleBuilder_currentRule, "f");
+        return this.$currentRule;
     }
     finalize() {
         this.defineRules();
         this.indexRules();
-        this.addRuleEdges(__classPrivateFieldGet(this, _RuleBuilder_afterEdges, "f"), 'addPrerequisiteRule');
-        this.addRuleEdges(__classPrivateFieldGet(this, _RuleBuilder_alsoEdges, "f"), 'addAlsoRule');
+        this.addRuleEdges(this.$afterEdges, 'addPrerequisiteRule');
+        this.addRuleEdges(this.$alsoEdges, 'addAlsoRule');
     }
     defineRules() {
-        for (let { rule, boundDefiner, module } of __classPrivateFieldGet(this, _RuleBuilder_declarations, "f")) {
+        for (let { rule, boundDefiner, module } of this.$declarations) {
             this.emit('defining.rule', module, rule);
-            __classPrivateFieldSet(this, _RuleBuilder_currentRule, rule, "f");
+            this.$currentRule = rule;
             try {
                 rule.recipe = boundDefiner();
                 this.emit('defined.rule', module, rule);
             }
             finally {
-                __classPrivateFieldSet(this, _RuleBuilder_currentRule, null, "f");
+                this.$currentRule = null;
             }
         }
     }
     indexRules() {
-        for (let { rule } of __classPrivateFieldGet(this, _RuleBuilder_declarations, "f")) {
+        for (let { rule } of this.$declarations) {
             this.project.graph.indexRule(rule);
         }
     }
@@ -169,5 +157,4 @@ export class RuleBuilder extends EventEmitter {
         return rule;
     }
 }
-_RuleBuilder_declarations = new WeakMap(), _RuleBuilder_afterEdges = new WeakMap(), _RuleBuilder_alsoEdges = new WeakMap(), _RuleBuilder_currentRule = new WeakMap();
 //# sourceMappingURL=rule-builder.js.map

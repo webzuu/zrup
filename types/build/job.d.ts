@@ -9,9 +9,9 @@ type VersionFileListEntry = [string, string];
  *
  */
 export declare class Job {
-    #private;
     readonly build: Build;
     readonly rule: Rule;
+    private $prepared;
     recipeInvoked: boolean;
     recipeArtifact: RecipeArtifact;
     promise: Promise<this> | null;

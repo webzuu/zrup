@@ -26,11 +26,11 @@ import {Job} from "../job.js";
 /***/
 export class WrapperRecipe extends Recipe
 {
-    readonly #params : Required<WrapperRecipe.Parameters>;
+    private readonly $params : Required<WrapperRecipe.Parameters>;
 
     constructor(params: WrapperRecipe.Parameters) {
         super();
-        this.#params = {
+        this.$params = {
             recipe: params.recipe || new NopRecipe(),
             before: params.before || (
                 async() => {}
@@ -45,13 +45,13 @@ export class WrapperRecipe extends Recipe
     }
 
     async concretizeSpecFor(job: Job): Promise<WrapperRecipe.Spec> {
-        const recipe = this.#params.recipe;
+        const recipe = this.$params.recipe;
         if (!recipe) throw new Error("Wrapper recipe must have a wrappee set before its spec can be concretized");
         const
             recipeSpec = await recipe.concretizeSpecFor(job),
             recipeHash = await recipe.hashSpec(recipeSpec)
         return {
-            ...this.#params,
+            ...this.$params,
             ...{ recipeSpec, recipeHash }
         }
     }

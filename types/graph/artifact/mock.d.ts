@@ -2,7 +2,8 @@ import { Artifact, ArtifactManager, ArtifactFactory } from "../artifact.js";
 import { PromiseKeeper } from "../../util/promise-keeper.js";
 import { Project } from "../../project.js";
 export declare class MockArtifact extends Artifact {
-    #private;
+    private $pk;
+    private readonly $type;
     constructor(ref: Artifact.Reference, type: string | undefined, pk: PromiseKeeper);
     get type(): string;
     get exists(): Promise<boolean>;
@@ -19,7 +20,8 @@ export declare class MockArtifact extends Artifact {
     static get constructorOfThisClass(): typeof MockArtifact;
 }
 export declare class MockFileFactory extends ArtifactFactory {
-    #private;
+    private $project;
+    private readonly $pk;
     constructor(manager: ArtifactManager, project: Project, pk: PromiseKeeper);
     prependRequiredConstructorArgs(aid: Artifact.Reference, extraArgs: any[]): any[];
     static get type(): string;

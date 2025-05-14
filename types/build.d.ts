@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import EventEmitter from "events";
 import { JobSet } from "./build/job-set.js";
 import { Job } from "./build/job.js";
@@ -27,10 +26,11 @@ export declare namespace Build {
  * Class that manages transient information necessary to fulfill a particular build request.
  */
 export declare class Build extends EventEmitter {
-    #private;
     readonly graph: Graph;
     readonly db: Db;
     readonly artifactManager: ArtifactManager;
+    private $whichRulesReliedOnArtifactVersion;
+    private $whichArtifactVersionDidRuleRelyOn;
     index: Build.Index;
     constructor(graph: Graph, db: Db, artifactManager: ArtifactManager);
     getJobFor(dependency: Dependency, require?: boolean): Promise<Job | null>;

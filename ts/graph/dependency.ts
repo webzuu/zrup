@@ -2,17 +2,17 @@ import {Artifact} from "./artifact.js";
 
 export class Dependency
 {
-    readonly #artifact : Artifact;
-    readonly #whenAbsent;
+    private readonly $artifact : Artifact;
+    private readonly $whenAbsent;
 
     constructor(artifact : Artifact, whenAbsent: Dependency.Absent)
     {
-        this.#artifact = artifact;
-        this.#whenAbsent = ("undefined" === typeof whenAbsent) ? Dependency.Absent.Violation : whenAbsent;
+        this.$artifact = artifact;
+        this.$whenAbsent = ("undefined" === typeof whenAbsent) ? Dependency.Absent.Violation : whenAbsent;
     }
 
-    get artifact() { return this.#artifact; }
-    get whenAbsent() { return this.#whenAbsent; }
+    get artifact() { return this.$artifact; }
+    get whenAbsent() { return this.$whenAbsent; }
 
     static readonly ABSENT_VIOLATION = 0;
     static readonly ABSENT_STATE = 1;

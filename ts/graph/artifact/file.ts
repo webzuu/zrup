@@ -10,23 +10,23 @@ import {isNodeError} from "../../util/casts.js";
 
 export class FileArtifact extends Artifact  {
 
-    readonly #resolvedPath : string;
+    private readonly $resolvedPath : string;
 
     constructor(ref: Artifact.Reference, resolvedPath : string) {
         super(`${ref}`);
-        this.#resolvedPath = resolvedPath;
+        this.$resolvedPath = resolvedPath;
     }
 
     get exists() : Promise<boolean>
     {
-        return Promise.resolve(fs.existsSync(this.#resolvedPath));
+        return Promise.resolve(fs.existsSync(this.$resolvedPath));
     }
 
     get version() : Promise<string>
     {
         return (async () => {
             try {
-                return await md5File(this.#resolvedPath);
+                return await md5File(this.$resolvedPath);
             }
             catch(e) {
                 if (!isNodeError(e) || e.code !== "ENOENT") throw e;
@@ -39,13 +39,13 @@ export class FileArtifact extends Artifact  {
 
     async getContents() : Promise<string>
     {
-        return await fsp.readFile(this.#resolvedPath,'utf-8');
+        return await fsp.readFile(this.$resolvedPath,'utf-8');
     }
 
     async rm() : Promise<void>
     {
         try {
-            await fsp.unlink(this.#resolvedPath);
+            await fsp.unlink(this.$resolvedPath);
         }
         catch(e) {
             if (!isNodeError(e) || e.code !== 'ENOENT') { throw e; }
@@ -54,19 +54,19 @@ export class FileArtifact extends Artifact  {
 
     async truncate() : Promise<void>
     {
-        await fsp.truncate(this.#resolvedPath);
+        await fsp.truncate(this.$resolvedPath);
     }
 
     async append(str : string) : Promise<void>
     {
-        await fsp.mkdir(pathUtils.dirname(this.#resolvedPath), {mode: 0o755, recursive: true});
-        await fsp.appendFile(this.#resolvedPath, str);
+        await fsp.mkdir(pathUtils.dirname(this.$resolvedPath), {mode: 0o755, recursive: true});
+        await fsp.appendFile(this.$resolvedPath, str);
     }
 
     async putContents(contents : string) : Promise<void>
     {
-        await fsp.mkdir(pathUtils.dirname(this.#resolvedPath), {mode: 0o755, recursive: true});
-        await fsp.writeFile(this.#resolvedPath, contents);
+        await fsp.mkdir(pathUtils.dirname(this.$resolvedPath), {mode: 0o755, recursive: true});
+        await fsp.writeFile(this.$resolvedPath, contents);
     }
 
     get caps() : Artifact.Caps
@@ -81,18 +81,18 @@ export class FileArtifact extends Artifact  {
 
 export class FileArtifactResolver extends ArtifactResolver
 {
-    #project : Project
+    private $project : Project
 
-    readonly #infix : string
+    private readonly $infix : string
 
-    readonly #type : string
+    private readonly $type : string
 
     constructor(project: Project, infix?: string, type?: string)
     {
         super();
-        this.#project=project
-        this.#infix = infix || '';
-        this.#type = type || 'file';
+        this.$project=project
+        this.$infix = infix || '';
+        this.$type = type || 'file';
     }
 
     normalize(aid: AID): AID {
@@ -111,7 +111,7 @@ export class FileArtifactResolver extends ArtifactResolver
     }
 
     resolveToExternalIdentifier(aid: AID): string {
-        const statedModule = aid.module ? this.#project.getModuleByName(aid.module) : this.#project.rootModule;
+        const statedModule = aid.module ? this.$project.getModuleByName(aid.module) : this.$project.rootModule;
         if (!statedModule) {
             throw new Error(`Internal error: fallback module resolution failed for AID "${aid.toString()}"`);
         }
@@ -121,8 +121,8 @@ export class FileArtifactResolver extends ArtifactResolver
     resolveModule(aid: AID): { statedModule: Module; closestModule: (Module | null); }
     {
         const statedModule = aid.module
-            ? this.#project.getModuleByName(aid.module)
-            : this.#project.rootModule
+            ? this.$project.getModuleByName(aid.module)
+            : this.$project.rootModule
 
         if (!statedModule) {
             if (aid.module) {
@@ -140,7 +140,7 @@ export class FileArtifactResolver extends ArtifactResolver
 
     isInfixed(path: string): boolean
     {
-        return isSubdir(this.treePrefix, pathUtils.resolve(this.#project.path, path))
+        return isSubdir(this.treePrefix, pathUtils.resolve(this.$project.path, path))
     }
 
     applyInfix(path: string): string
@@ -149,9 +149,9 @@ export class FileArtifactResolver extends ArtifactResolver
         const infixed = pathUtils.resolve(
             this.treePrefix,
             pathUtils.relative(
-                this.#project.path,
+                this.$project.path,
                 pathUtils.resolve(
-                    this.#project.path,
+                    this.$project.path,
                     path
                 )
             )
@@ -159,7 +159,7 @@ export class FileArtifactResolver extends ArtifactResolver
         return (
             pathUtils.isAbsolute(path)
                 ? infixed
-                : pathUtils.relative(this.#project.path, infixed)
+                : pathUtils.relative(this.$project.path, infixed)
         );
     }
 
@@ -167,11 +167,11 @@ export class FileArtifactResolver extends ArtifactResolver
     {
         if (!this.isInfixed(path)) return path;
         const uninfixed = pathUtils.resolve(
-            this.#project.path,
+            this.$project.path,
             pathUtils.relative(
                 this.treePrefix,
                 pathUtils.resolve(
-                    this.#project.path,
+                    this.$project.path,
                     path
                 )
             )
@@ -179,7 +179,7 @@ export class FileArtifactResolver extends ArtifactResolver
         return (
             pathUtils.isAbsolute(path)
                 ? uninfixed
-                : pathUtils.relative(this.#project.path, uninfixed)
+                : pathUtils.relative(this.$project.path, uninfixed)
         );
     }
 
@@ -189,7 +189,7 @@ export class FileArtifactResolver extends ArtifactResolver
 
         let prefix = "";
         let result = null;
-        for(let module of this.#project.allModules) {
+        for(let module of this.$project.allModules) {
             const modulePath = module.absolutePath;
             if (
                 (
@@ -206,27 +206,27 @@ export class FileArtifactResolver extends ArtifactResolver
     }
 
     get type(): string {
-        return this.#type;
+        return this.$type;
     }
 
     get treeInfix(): string
     {
-        return this.#infix;
+        return this.$infix;
     }
 
     get treePrefix(): string
     {
-        return pathUtils.join(this.#project.path, this.treeInfix)
+        return pathUtils.join(this.$project.path, this.treeInfix)
     }
 }
 
 export class FileArtifactFactory extends ArtifactFactory
 {
-    #project: Project;
+    private $project: Project;
 
     constructor(manager: ArtifactManager, project: Project, type?: string, infix?: string) {
         super(manager, FileArtifact, new FileArtifactResolver(project, infix, type), type);
-        this.#project = project;
+        this.$project = project;
     }
 
     get fileResolver() : FileArtifactResolver {

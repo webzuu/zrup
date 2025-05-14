@@ -11,44 +11,43 @@ interface ProjectIndex {
 
 export class Project
 {
-    #index : ProjectIndex = {
+    private $index : ProjectIndex = {
         module: {
             name: {},
             path: {}
         }
     }
 
-    readonly #rootDirectory : string;
+    private readonly $rootDirectory : string;
 
-    readonly #graph : Graph;
+    private readonly $graph : Graph;
 
-    #rootModule : Module|null;
+    private $rootModule : Module|null;
 
     constructor(rootDirectory : string)
     {
-        this.#rootDirectory=rootDirectory;
-        this.#graph = new Graph();
-        this.#rootModule = null;
+        this.$rootDirectory=rootDirectory;
+        this.$graph = new Graph();
+        this.$rootModule = null;
     }
 
-    /** @return {Graph} */
-    get graph()
+    get graph() : Graph
     {
-        return this.#graph;
+        return this.$graph;
     }
 
     addModule(module : Module) : Module
     {
-        this.#index.module.name[module.name]
-            = this.#index.module.path[fsPath.relative(this.path, module.absolutePath)]
+        this.$index.module.name[module.name]
+            = this.$index.module.path[fsPath.relative(this.path, module.absolutePath)]
             = module;
-        if (!this.#rootModule && !module.parent) this.#rootModule = module;
+        if (!this.$rootModule && !module.parent) this.$rootModule = module;
         return module;
     }
 
     getModuleByName(name : string, require?: boolean) : Module|null
     {
-        const result = this.#index.module.name[name];
+        const result = this.$index.module.name[name];
         if (!result && require) {
             throw new Error(`Unknown module ${name}`);
         }
@@ -62,21 +61,21 @@ export class Project
 
     get allModules() : Module[]
     {
-        return Object.values(this.#index.module.name);
+        return Object.values(this.$index.module.name);
     }
 
     getModuleByPath(path : string) : Module|null
     {
-        return this.#index.module.path[path] || null;
+        return this.$index.module.path[path] || null;
     }
 
     get rootModule() : Module|null
     {
-        return this.#rootModule;
+        return this.$rootModule;
     }
 
     get path() : string
     {
-        return this.#rootDirectory;
+        return this.$rootDirectory;
     }
 }

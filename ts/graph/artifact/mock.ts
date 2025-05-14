@@ -6,48 +6,48 @@ import {Project} from "../../project.js";
 export class MockArtifact extends Artifact
 
 {
-    #pk: PromiseKeeper;
-    readonly #type : string;
+    private $pk: PromiseKeeper;
+    private readonly $type : string;
 
     constructor(ref: Artifact.Reference, type: string | undefined, pk: PromiseKeeper)
     {
         super(new AID(ref+'').withType(type).toString());
-        this.#pk=pk;
-        this.#type=type || 'file';
+        this.$pk=pk;
+        this.$type=type || 'file';
     }
 
     get type() : string
     {
-        return this.#type;
+        return this.$type;
     }
 
     get exists() : Promise<boolean>
     {
-        return this.#pk.about(this.key, "exists").promise;
+        return this.$pk.about(this.key, "exists").promise;
     }
 
     get version() : Promise<string>
     {
-        return this.#pk.about(this.key, "version").promise;
+        return this.$pk.about(this.key, "version").promise;
     }
 
     async getContents() : Promise<string>
     {
-        return await this.#pk.about(this.key, "contents").promise;
+        return await this.$pk.about(this.key, "contents").promise;
     }
 
     async putContents(contents: string)
     {
-        this.#pk.set(this.key, "contents", contents);
+        this.$pk.set(this.key, "contents", contents);
     }
 
     async rm()
     {
-        this.#pk.forget(this.key, "exists");
-        this.#pk.forget(this.key, "version");
-        this.#pk.forget(this.key, "contents");
-        this.#pk.set(this.key, "exists", false);
-        this.#pk.set(this.key, "version", Artifact.NONEXISTENT_VERSION);
+        this.$pk.forget(this.key, "exists");
+        this.$pk.forget(this.key, "version");
+        this.$pk.forget(this.key, "contents");
+        this.$pk.set(this.key, "exists", false);
+        this.$pk.set(this.key, "version", Artifact.NONEXISTENT_VERSION);
     }
 
 
@@ -72,20 +72,20 @@ export class MockArtifact extends Artifact
 
 export class MockFileFactory extends ArtifactFactory
 {
-    #project: Project
+    private $project: Project
 
-    readonly #pk: PromiseKeeper;
+    private readonly $pk: PromiseKeeper;
 
     constructor(manager: ArtifactManager, project: Project, pk: PromiseKeeper)
     {
         super(manager, MockArtifact, new FileArtifactResolver(project), "file");
-        this.#project = project;
-        this.#pk = pk;
+        this.$project = project;
+        this.$pk = pk;
     }
 
     prependRequiredConstructorArgs(aid: Artifact.Reference, extraArgs: any[])
     {
-        return [MockFileFactory.type, this.#pk, ...super.prependRequiredConstructorArgs(aid, extraArgs)];
+        return [MockFileFactory.type, this.$pk, ...super.prependRequiredConstructorArgs(aid, extraArgs)];
     }
 
     static get type() : string { return "file"; };

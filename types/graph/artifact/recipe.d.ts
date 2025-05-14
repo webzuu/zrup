@@ -3,7 +3,8 @@ import { Rule } from "../rule.js";
 import { Job } from "../../build/job.js";
 import { Project } from "../../project.js";
 export declare class RecipeArtifact extends Artifact {
-    #private;
+    private $specPromise;
+    private $versionPromise;
     readonly job: Job;
     rm(): Promise<void>;
     constructor(aid: Artifact.Reference, job: Job);
@@ -17,7 +18,7 @@ export declare class RecipeArtifactResolver extends ArtifactResolver {
     get type(): string;
 }
 export declare class RecipeArtifactFactory extends ArtifactFactory {
-    #private;
+    private readonly $project;
     constructor(manager: ArtifactManager, project: Project);
     prependRequiredConstructorArgs(ref: Artifact.Reference, extraArgs: any[]): [Rule, ...any];
     private resolveRule;

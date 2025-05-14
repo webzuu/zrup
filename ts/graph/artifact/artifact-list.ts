@@ -5,12 +5,12 @@ import {UnsupportedOperation} from "../../error/unsupported-operation.js";
 
 export class ArtifactList extends Artifact {
 
-    #items : Artifact[];
+    private $items : Artifact[];
 
     constructor(identity: string)
     {
         super(identity);
-        this.#items = [];
+        this.$items = [];
     }
 
     get type()
@@ -20,12 +20,12 @@ export class ArtifactList extends Artifact {
 
     get items(): Artifact[]
     {
-        return this.#items.slice();
+        return this.$items.slice();
     }
 
     set items(items: Artifact[])
     {
-        this.#items = items;
+        this.$items = items;
     }
 
     get version()

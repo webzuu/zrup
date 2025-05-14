@@ -1,15 +1,3 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _Zrup_request, _Zrup_projectRoot, _Zrup_config, _Zrup_project, _Zrup_db, _Zrup_artifactManager, _Zrup_ruleBuilder, _Zrup_moduleBuilder, _Zrup_verbosity;
 import { array, boolean, optional, record, string, struct } from 'hyperval';
 import findUp from "find-up";
 import fs from "fs/promises";
@@ -28,35 +16,26 @@ import { DependencyCycle } from "../error/dependency-cycle.js";
 /***/
 export class Zrup {
     constructor(projectRoot, config, request) {
-        _Zrup_request.set(this, void 0);
-        _Zrup_projectRoot.set(this, void 0);
-        _Zrup_config.set(this, void 0);
-        _Zrup_project.set(this, void 0);
-        _Zrup_db.set(this, void 0);
-        _Zrup_artifactManager.set(this, void 0);
-        _Zrup_ruleBuilder.set(this, void 0);
-        _Zrup_moduleBuilder.set(this, void 0);
-        _Zrup_verbosity.set(this, void 0);
-        __classPrivateFieldSet(this, _Zrup_request, request, "f");
-        __classPrivateFieldSet(this, _Zrup_projectRoot, projectRoot, "f");
-        const { zrupDir, dataDir, channels } = __classPrivateFieldSet(this, _Zrup_config, config, "f");
-        __classPrivateFieldSet(this, _Zrup_project, new Project(projectRoot), "f");
-        __classPrivateFieldSet(this, _Zrup_db, new Db(path.join(__classPrivateFieldGet(this, _Zrup_project, "f").path, dataDir.replace(/<zrupDir>/, zrupDir), 'state.sqlite')), "f");
-        __classPrivateFieldSet(this, _Zrup_artifactManager, new ArtifactManager(), "f");
-        new FileArtifactFactory(__classPrivateFieldGet(this, _Zrup_artifactManager, "f"), __classPrivateFieldGet(this, _Zrup_project, "f") /*, "file", "" */);
-        new RecipeArtifactFactory(__classPrivateFieldGet(this, _Zrup_artifactManager, "f"), __classPrivateFieldGet(this, _Zrup_project, "f"));
+        this.$request = request;
+        this.$projectRoot = projectRoot;
+        const { zrupDir, dataDir, channels } = this.$config = config;
+        this.$project = new Project(projectRoot);
+        this.$db = new Db(path.join(this.$project.path, dataDir.replace(/<zrupDir>/, zrupDir), 'state.sqlite'));
+        this.$artifactManager = new ArtifactManager();
+        new FileArtifactFactory(this.$artifactManager, this.$project /*, "file", "" */);
+        new RecipeArtifactFactory(this.$artifactManager, this.$project);
         for (let [channel, infix] of Object.entries(channels)) {
-            new FileArtifactFactory(__classPrivateFieldGet(this, _Zrup_artifactManager, "f"), __classPrivateFieldGet(this, _Zrup_project, "f"), channel, (infix || '').replace(/<zrupDir>/, zrupDir));
+            new FileArtifactFactory(this.$artifactManager, this.$project, channel, (infix || '').replace(/<zrupDir>/, zrupDir));
         }
-        __classPrivateFieldSet(this, _Zrup_verbosity, new Verbosity(request.options.verbose || false), "f");
-        __classPrivateFieldGet(this, _Zrup_verbosity, "f").hookRuleBuilder(__classPrivateFieldSet(this, _Zrup_ruleBuilder, new RuleBuilder(__classPrivateFieldGet(this, _Zrup_project, "f"), __classPrivateFieldGet(this, _Zrup_artifactManager, "f")), "f"), __classPrivateFieldGet(this, _Zrup_artifactManager, "f"));
-        __classPrivateFieldGet(this, _Zrup_verbosity, "f").hookModuleBuilder(__classPrivateFieldSet(this, _Zrup_moduleBuilder, new ModuleBuilder(__classPrivateFieldGet(this, _Zrup_project, "f"), __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f")), "f"));
+        this.$verbosity = new Verbosity(request.options.verbose || false);
+        this.$verbosity.hookRuleBuilder(this.$ruleBuilder = new RuleBuilder(this.$project, this.$artifactManager), this.$artifactManager);
+        this.$verbosity.hookModuleBuilder(this.$moduleBuilder = new ModuleBuilder(this.$project, this.$ruleBuilder));
     }
     async run() {
         let hadError = false;
         try {
             console.log("Loading graph");
-            __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f").on('defined.rule', (module, rule) => {
+            this.$ruleBuilder.on('defined.rule', (module, rule) => {
                 const targets = new Set(Object.values(rule.outputs).map(artifact => artifact.identity));
                 const checked = new Set();
                 const cycle = [];
@@ -66,7 +45,7 @@ export class Zrup {
                     checked.add(rule.identity);
                     for (let [artifactKey, dependency] of Object.entries(rule.dependencies)) {
                         const artifact = dependency.artifact;
-                        if (targets.has(artifact.identity) || !check(__classPrivateFieldGet(this, _Zrup_project, "f").graph.index.rule.key.get(__classPrivateFieldGet(this, _Zrup_project, "f").graph.index.output.rule.get(artifactKey) ?? ''))) {
+                        if (targets.has(artifact.identity) || !check(this.$project.graph.index.rule.key.get(this.$project.graph.index.output.rule.get(artifactKey) ?? ''))) {
                             cycle.unshift({ rule, artifact });
                             return false;
                         }
@@ -76,12 +55,12 @@ export class Zrup {
                 if (!check(rule))
                     throw new DependencyCycle(cycle);
             });
-            await __classPrivateFieldGet(this, _Zrup_moduleBuilder, "f").loadRootModule();
-            __classPrivateFieldGet(this, _Zrup_ruleBuilder, "f").finalize();
-            const build = new Build(__classPrivateFieldGet(this, _Zrup_project, "f").graph, __classPrivateFieldGet(this, _Zrup_db, "f"), __classPrivateFieldGet(this, _Zrup_artifactManager, "f"));
-            __classPrivateFieldGet(this, _Zrup_verbosity, "f").hookBuild(build, __classPrivateFieldGet(this, _Zrup_artifactManager, "f"));
+            await this.$moduleBuilder.loadRootModule();
+            this.$ruleBuilder.finalize();
+            const build = new Build(this.$project.graph, this.$db, this.$artifactManager);
+            this.$verbosity.hookBuild(build, this.$artifactManager);
             console.log("Resolving artifacts");
-            const requestedArtifacts = __classPrivateFieldGet(this, _Zrup_request, "f").goals.map(ref => __classPrivateFieldGet(this, _Zrup_artifactManager, "f").get(ref));
+            const requestedArtifacts = this.$request.goals.map(ref => this.$artifactManager.get(ref));
             console.log("Creating top level build jobs");
             const jobSetsPromise = Promise.all(requestedArtifacts.map(async (artifact) => await build.getJobSetForArtifact(artifact, true)));
             console.log("Running build jobs");
@@ -99,8 +78,8 @@ export class Zrup {
             hadError = true;
         }
         finally {
-            console.log(`Number of data queries:        ${__classPrivateFieldGet(this, _Zrup_db, "f").queryCount}`);
-            console.log(`Data queries took:             ${__classPrivateFieldGet(this, _Zrup_db, "f").queryTime} ms`);
+            console.log(`Number of data queries:        ${this.$db.queryCount}`);
+            console.log(`Data queries took:             ${this.$db.queryTime} ms`);
         }
         if (hadError)
             process.exit(1);
@@ -134,15 +113,14 @@ export class Zrup {
         return path.dirname(foundUp);
     }
 }
-_Zrup_request = new WeakMap(), _Zrup_projectRoot = new WeakMap(), _Zrup_config = new WeakMap(), _Zrup_project = new WeakMap(), _Zrup_db = new WeakMap(), _Zrup_artifactManager = new WeakMap(), _Zrup_ruleBuilder = new WeakMap(), _Zrup_moduleBuilder = new WeakMap(), _Zrup_verbosity = new WeakMap();
 const schema_Config = struct({
     zrupDir: string(),
     dataDir: string(),
     channels: record(string(), string())
 }), schema_RequestOptions = struct({
-    version: string(),
+    version: optional(boolean()),
     init: optional(boolean()),
-    verbose: optional(boolean())
+    verbose: optional(boolean()),
 }), schema_Request = struct({
     goals: array(string()),
     options: schema_RequestOptions

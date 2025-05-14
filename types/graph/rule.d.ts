@@ -3,7 +3,10 @@ import { Dependency } from "./dependency.js";
 import { Artifact } from "./artifact.js";
 import { Recipe } from "../build/recipe.js";
 export declare class Rule {
-    #private;
+    private readonly $module;
+    private readonly $name;
+    private $label;
+    private $recipe;
     outputs: Record<string, Artifact>;
     dependencies: Record<string, Dependency>;
     also: Record<string, Rule>;

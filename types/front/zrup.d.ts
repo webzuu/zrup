@@ -2,7 +2,15 @@ import { HyperVal } from 'hyperval';
 import Config = Zrup.Config;
 /***/
 export declare class Zrup {
-    #private;
+    private $request;
+    private $projectRoot;
+    private $config;
+    private readonly $project;
+    private readonly $db;
+    private readonly $artifactManager;
+    private readonly $ruleBuilder;
+    private $moduleBuilder;
+    private $verbosity;
     constructor(projectRoot: string, config: Zrup.Config, request: Zrup.Request);
     run(): Promise<void>;
     static init(absDirectory: string): Promise<void>;
@@ -14,13 +22,13 @@ declare const schema_Config: import("hyperval").HyperObject<{
     dataDir: import("hyperval").Hyper<string, string>;
     channels: import("hyperval").HyperRecord<import("hyperval").Hyper<string, string>, import("hyperval").Hyper<string, string>>;
 }>, schema_RequestOptions: import("hyperval").HyperObject<{
-    version: import("hyperval").Hyper<string, string>;
+    version: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
     init: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
     verbose: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
 }>, schema_Request: import("hyperval").HyperObject<{
     goals: import("hyperval").HyperArray<import("hyperval").Hyper<string, string>>;
     options: import("hyperval").HyperObject<{
-        version: import("hyperval").Hyper<string, string>;
+        version: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
         init: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
         verbose: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
     }>;

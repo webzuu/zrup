@@ -1,24 +1,11 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _Verbosity_verbose;
 import { formatKeyValueTable } from "../util/format-key-value-table.js";
 const C = (label, data) => `\n\x1b[1m${label}\x1b[0m\n${formatKeyValueTable(data, { labelSuffix: ":" })}`;
 export class Verbosity {
     constructor(verbose) {
-        _Verbosity_verbose.set(this, void 0);
-        __classPrivateFieldSet(this, _Verbosity_verbose, verbose, "f");
+        this.$verbose = verbose;
     }
     hookModuleBuilder(moduleBuilder) {
-        if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
+        if (this.$verbose) {
             moduleBuilder.on('defined.module', (module, path, name) => {
                 console.log(C('MODULE DEFINED', { Name: name, Path: path }));
             });
@@ -26,7 +13,7 @@ export class Verbosity {
     }
     hookRuleBuilder(ruleBuilder, artifactManager) {
         const X = (id) => artifactManager.resolveToExternalIdentifier(id);
-        if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
+        if (this.$verbose) {
             ruleBuilder.on('defining.rule', (module, rule) => {
                 console.log(C('DEFINING RULE', { Name: rule.name, Module: module.name }));
             });
@@ -54,7 +41,7 @@ export class Verbosity {
                 "Rule Name": rule.name
             }));
         });
-        if (__classPrivateFieldGet(this, _Verbosity_verbose, "f")) {
+        if (this.$verbose) {
             let concurrency = 0;
             const R = (job) => `${job.rule.module.name}+${job.rule.name}`;
             const A = (key) => artifactManager.findByKey(key);
@@ -90,7 +77,7 @@ export class Verbosity {
             build.on('nonexistent.output', (job, { details, artifact }) => {
                 console.log(C('NONEXISTENT OUTPUT', {
                     Job: R(job),
-                    Artifact: `${artifact.identity} ${X(artifact.key)}}`,
+                    Artifact: `${artifact.identity} ${X(artifact.key)}`,
                     Details: details
                 }));
             });
@@ -136,5 +123,4 @@ export class Verbosity {
         }
     }
 }
-_Verbosity_verbose = new WeakMap();
 //# sourceMappingURL=verbosity.js.map

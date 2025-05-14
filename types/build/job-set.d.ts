@@ -1,6 +1,7 @@
 import { Job } from "./job.js";
 export declare class JobSet {
-    #private;
+    private $jobs;
+    private $promise;
     constructor(...jobs: Job[]);
     run(): Promise<void[]>;
     private createRunPromise;

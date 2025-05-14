@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { RuleBuilder } from "./rule-builder.js";
 import { Artifact } from "../graph/artifact.js";
 import { CommandRecipe } from "../build/recipe/command.js";
@@ -116,7 +115,8 @@ export declare namespace ModuleBuilder {
     }
 }
 export declare class ModuleBuilder extends EventEmitter {
-    #private;
+    private readonly $project;
+    private readonly $ruleBuilder;
     constructor(project: Project, ruleBuilder: RuleBuilder);
     get project(): Project;
     define(parentModule: Module | null, path: string, name: string, definer: ModuleBuilder.definer): Promise<void>;

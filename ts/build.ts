@@ -35,8 +35,8 @@ export namespace Build {
  */
 export class Build extends EventEmitter  {
 
-    #whichRulesReliedOnArtifactVersion : WhichRulesReliedOnArtifactVersion = {};
-    #whichArtifactVersionDidRuleRelyOn : WhichArtifactVersionDidRuleRelyOn = {};
+    private $whichRulesReliedOnArtifactVersion : WhichRulesReliedOnArtifactVersion = {};
+    private $whichArtifactVersionDidRuleRelyOn : WhichArtifactVersionDidRuleRelyOn = {};
     public index : Build.Index;
 
     constructor(
@@ -339,7 +339,7 @@ export class Build extends EventEmitter  {
     getArtifactReliances(artifactKey: string) : Record<string, Record<string, Rule>>
     {
         const result : Record<string, Record<string, Rule>> = {};
-        const artifactReliances = this.#whichRulesReliedOnArtifactVersion[artifactKey] || {};
+        const artifactReliances = this.$whichRulesReliedOnArtifactVersion[artifactKey] || {};
         for(let version of Object.getOwnPropertyNames(artifactReliances))
         {
             result[version] = Object.assign({},artifactReliances[version]);
@@ -350,8 +350,8 @@ export class Build extends EventEmitter  {
     async recordReliance(rule: Rule, artifact: Artifact): Promise<void>
     {
         const reliancesByVersion : Record<string, Record<string, Rule>> = (
-            this.#whichRulesReliedOnArtifactVersion[artifact.key]
-            || (this.#whichRulesReliedOnArtifactVersion[artifact.key] = {})
+            this.$whichRulesReliedOnArtifactVersion[artifact.key]
+            || (this.$whichRulesReliedOnArtifactVersion[artifact.key] = {})
         );
 
         const version = await artifact.version;
@@ -373,15 +373,15 @@ export class Build extends EventEmitter  {
         }
 
         const reliancesByRule = (
-            this.#whichArtifactVersionDidRuleRelyOn[rule.key]
-            || (this.#whichArtifactVersionDidRuleRelyOn[rule.key] = {})
+            this.$whichArtifactVersionDidRuleRelyOn[rule.key]
+            || (this.$whichArtifactVersionDidRuleRelyOn[rule.key] = {})
         );
         reliancesByRule[artifact.key] = version;
     }
 
     getVersionReliedOn(rule: Rule, artifact: Artifact, required: boolean): string | undefined
     {
-        const result = this.#whichArtifactVersionDidRuleRelyOn?.[rule.key]?.[artifact.key];
+        const result = this.$whichArtifactVersionDidRuleRelyOn?.[rule.key]?.[artifact.key];
         if (!result && required) {
             throw new BuildError(
                 `Internal error: unrecorded reliance info for rule ${rule.label} on ${artifact.identity} was requested`

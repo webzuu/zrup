@@ -26,17 +26,17 @@ export namespace Artifact {
 
 export abstract class Artifact  {
 
-    readonly #identity : string;
+    private readonly $identity : string;
 
     protected constructor(aid : Artifact.Reference)
     {
-        this.#identity = ''+aid;
+        this.$identity = ''+aid;
         this.validate();
     }
 
     get type() : string
     {
-        return (AID.parse(this.#identity) as AID).type || '';
+        return (AID.parse(this.$identity) as AID).type || '';
     }
 
     static computeKey(type: string, identity: string) : string
@@ -57,7 +57,7 @@ export abstract class Artifact  {
 
     get identity() : string
     {
-        return this.#identity;
+        return this.$identity;
     }
 
     get label() : string
@@ -79,9 +79,9 @@ export abstract class Artifact  {
     }
 
     private validate() {
-        const aid = AID.parse(this.#identity);
+        const aid = AID.parse(this.$identity);
         if (false === aid) {
-            throw new Error(`Invalid AID string ${this.#identity} used to construct an Artifact instance`);
+            throw new Error(`Invalid AID string ${this.$identity} used to construct an Artifact instance`);
         }
     }
 }

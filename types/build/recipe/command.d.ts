@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { Job } from "../job.js";
 import { ChildProcessWithoutNullStreams } from "child_process";
 import { AID, Artifact } from "../../graph/artifact.js";
@@ -15,7 +14,7 @@ import { RuleBuilder } from "../../front/rule-builder.js";
 import { EmptyWorkaround, ValueOrArray } from "../../util/types.js";
 /***/
 export declare class CommandRecipe extends Recipe {
-    #private;
+    private readonly $commandBuilder;
     private readonly stdoutChunks;
     private readonly stderrChunks;
     private readonly combinedChunks;

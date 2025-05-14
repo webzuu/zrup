@@ -1,7 +1,12 @@
 import { Artifact, ArtifactManager } from "./graph/artifact.js";
 import { Project } from "./project.js";
 export declare class Module {
-    #private;
+    private $project;
+    private readonly $parent;
+    private readonly $name?;
+    private $path;
+    private readonly $absolutePath;
+    private $exports;
     constructor(parent: Module | null, path: string, name?: string);
     get project(): Project | null;
     get validProject(): Project;

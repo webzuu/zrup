@@ -127,26 +127,26 @@ export namespace ModuleBuilder {
 
 export class ModuleBuilder extends EventEmitter
 {
-    readonly #project: Project;
-    readonly #ruleBuilder: RuleBuilder;
+    private readonly $project: Project;
+    private readonly $ruleBuilder: RuleBuilder;
 
     constructor(project: Project, ruleBuilder: RuleBuilder)
     {
         super();
-        this.#project = project;
-        this.#ruleBuilder = ruleBuilder;
+        this.$project = project;
+        this.$ruleBuilder = ruleBuilder;
     }
 
     get project() {
-        return this.#project;
+        return this.$project;
     }
 
     async define(parentModule: Module | null, path: string, name: string, definer: ModuleBuilder.definer)
     {
         const moduleToBeDefined = (
             parentModule
-                ? this.#project.addModule(new Module(parentModule, path, name))
-                : Module.createRoot(this.#project, name)
+                ? this.$project.addModule(new Module(parentModule, path, name))
+                : Module.createRoot(this.$project, name)
         );
         this.emit('defining.module',moduleToBeDefined,path,name);
         await definer(this.bindDefinerArgs(moduleToBeDefined));
@@ -157,14 +157,14 @@ export class ModuleBuilder extends EventEmitter
         return {
             module,
             include: this.includeMany.bind(this, module),
-            rule: this.#ruleBuilder.bindDefinerAcceptor(module),
-            depends: this.#ruleBuilder.depends,
-            produces: this.#ruleBuilder.produces,
-            after: this.#ruleBuilder.after,
-            to: CommandRecipe.to.bind(null, this.#ruleBuilder, module) as simpleDescriptorBuilderAcceptor,
-            always: this.#ruleBuilder.always,
-            resolve: resolveArtifacts.bind(null, this.#ruleBuilder.artifactManager, module, false),
-            also: this.#ruleBuilder.also,
+            rule: this.$ruleBuilder.bindDefinerAcceptor(module),
+            depends: this.$ruleBuilder.depends,
+            produces: this.$ruleBuilder.produces,
+            after: this.$ruleBuilder.after,
+            to: CommandRecipe.to.bind(null, this.$ruleBuilder, module) as simpleDescriptorBuilderAcceptor,
+            always: this.$ruleBuilder.always,
+            resolve: resolveArtifacts.bind(null, this.$ruleBuilder.artifactManager, module, false),
+            also: this.$ruleBuilder.also,
             API: new ZrupAPI()
         };
     }
@@ -183,8 +183,8 @@ export class ModuleBuilder extends EventEmitter
 
     async loadRootModule()
     {
-        const definer = ModuleBuilder.normalizeDefiner(await this.import(this.#project.path));
-        await this.define(null, this.#project.path, definer.name, definer.definer);
+        const definer = ModuleBuilder.normalizeDefiner(await this.import(this.$project.path));
+        await this.define(null, this.$project.path, definer.name, definer.definer);
     }
 
     private static normalizeDefiner(definerOrDescriptor: ModuleBuilder.definer | ModuleBuilder.Descriptor): ModuleBuilder.Descriptor {

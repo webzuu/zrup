@@ -3,7 +3,7 @@ import { RuleBuilder } from "./rule-builder.js";
 import { ArtifactManager } from "../graph/artifact.js";
 import { ModuleBuilder } from "./module-builder.js";
 export declare class Verbosity {
-    #private;
+    private readonly $verbose;
     constructor(verbose: boolean);
     hookModuleBuilder(moduleBuilder: ModuleBuilder): void;
     hookRuleBuilder(ruleBuilder: RuleBuilder, artifactManager: ArtifactManager): void;

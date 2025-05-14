@@ -14,7 +14,7 @@ export namespace PromiseKeeper {
 
 export class PromiseKeeper  {
 
-    #descriptors : Record<string, Record<string,Descriptor>> = {};
+    private $descriptors : Record<string, Record<string,Descriptor>> = {};
 
     about(key: string, topic: string): Descriptor
     {
@@ -23,7 +23,7 @@ export class PromiseKeeper  {
 
     forget(key: string, topic: string) : this
     {
-        const topicsForKey = this.#descriptors[key];
+        const topicsForKey = this.$descriptors[key];
         if (topicsForKey) {
             delete topicsForKey[topic];
         }
@@ -45,7 +45,7 @@ export class PromiseKeeper  {
     }
 
     private retrieve(key: string, topic: string): (PromiseKeeper.Descriptor | null) {
-        const topicsForKey = this.#descriptors[key];
+        const topicsForKey = this.$descriptors[key];
         if (topicsForKey) {
             if (!(topic in topicsForKey)) return null;
             return topicsForKey[topic] || null;
@@ -73,8 +73,8 @@ export class PromiseKeeper  {
     private store(descriptor: PromiseKeeper.Descriptor): PromiseKeeper.Descriptor
     {
         const {key, topic} = descriptor;
-        if (!(key in this.#descriptors)) this.#descriptors[key] = {};
-        const topics = this.#descriptors[key];
+        if (!(key in this.$descriptors)) this.$descriptors[key] = {};
+        const topics = this.$descriptors[key];
         if (topics && !(topic in topics)) topics[topic] = descriptor;
         return descriptor;
     }

@@ -22,7 +22,7 @@ export declare namespace Artifact {
     };
 }
 export declare abstract class Artifact {
-    #private;
+    private readonly $identity;
     protected constructor(aid: Artifact.Reference);
     get type(): string;
     static computeKey(type: string, identity: string): string;

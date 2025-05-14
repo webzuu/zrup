@@ -1,27 +1,11 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _Rule_module, _Rule_name, _Rule_label, _Rule_recipe;
 import md5 from "md5";
 import { Dependency } from "./dependency.js";
 export class Rule {
     constructor(module, name) {
-        _Rule_module.set(this, void 0);
-        _Rule_name.set(this, void 0);
-        _Rule_label.set(this, void 0);
-        _Rule_recipe.set(this, void 0);
-        __classPrivateFieldSet(this, _Rule_module, module, "f");
-        __classPrivateFieldSet(this, _Rule_name, name.replace(/\W/g, '-'), "f");
-        __classPrivateFieldSet(this, _Rule_label, name, "f");
-        __classPrivateFieldSet(this, _Rule_recipe, null, "f");
+        this.$module = module;
+        this.$name = name.replace(/\W/g, '-');
+        this.$label = name;
+        this.$recipe = null;
         this.outputs = {};
         this.dependencies = {};
         this.also = {};
@@ -29,16 +13,16 @@ export class Rule {
         this.always = false;
     }
     get module() {
-        return __classPrivateFieldGet(this, _Rule_module, "f");
+        return this.$module;
     }
     get name() {
-        return __classPrivateFieldGet(this, _Rule_name, "f");
+        return this.$name;
     }
     get identity() {
         return `rule:${this.module.name}+${this.name}`;
     }
     get recipe() {
-        return __classPrivateFieldGet(this, _Rule_recipe, "f");
+        return this.$recipe;
     }
     get validRecipe() {
         const result = this.recipe;
@@ -47,10 +31,10 @@ export class Rule {
         return result;
     }
     set recipe(recipe) {
-        if (__classPrivateFieldGet(this, _Rule_recipe, "f")) {
+        if (this.$recipe) {
             throw new Error(`Attempt to ${recipe ? "reassign" : "unset"} the recipe of ${this.label}`);
         }
-        __classPrivateFieldSet(this, _Rule_recipe, recipe, "f");
+        this.$recipe = recipe;
     }
     static computeKey(identityString) {
         return md5(JSON.stringify({ identity: identityString }));
@@ -59,10 +43,10 @@ export class Rule {
         return Rule.computeKey(this.identity);
     }
     set label(label) {
-        __classPrivateFieldSet(this, _Rule_label, label, "f");
+        this.$label = label;
     }
     get label() {
-        return __classPrivateFieldGet(this, _Rule_label, "f") || this.formatDefaultLabel();
+        return this.$label || this.formatDefaultLabel();
     }
     formatDefaultLabel() {
         const outputs = Object.values(this.outputs);
@@ -78,7 +62,7 @@ export class Rule {
         const outputs = Object.values(this.outputs);
         switch (outputs.length) {
             case 0:
-                return `[${this.module.pathFromRoot}][${__classPrivateFieldGet(this, _Rule_label, "f") || this.identity}]`;
+                return `[${this.module.pathFromRoot}][${this.$label || this.identity}]`;
             case 1:
                 return `[${this.module.pathFromRoot}]->[${outputs[0].label}]`;
             default: return `[${this.module.pathFromRoot}]->[${outputs[0].label} ...]`;
@@ -99,5 +83,4 @@ export class Rule {
             || (this.outputs[artifact.key] = artifact));
     }
 }
-_Rule_module = new WeakMap(), _Rule_name = new WeakMap(), _Rule_label = new WeakMap(), _Rule_recipe = new WeakMap();
 //# sourceMappingURL=rule.js.map

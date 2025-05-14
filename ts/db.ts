@@ -98,28 +98,28 @@ class Statements implements Record<StatementKey, Statement>
 {
     __db : Database;
     __prepared : {[k:string] : Statement} = {};
-    readonly #getter : (key: StatementKey) => any;
+    private readonly $getter : (key: StatementKey) => any;
 
     constructor(db : Database)
     {
         this.__db=db;
-        this.#getter = __statementGetter.bind(this);
+        this.$getter = __statementGetter.bind(this);
     }
 
-    get has() : Statement { return this.#getter("has"); }
-    get hasVersion() : Statement { return this.#getter("hasVersion"); }
-    get listVersions() : Statement { return this.#getter("listVersions"); }
-    get listVersionSources() : Statement { return this.#getter("listVersionSources"); }
-    get record() : Statement { return this.#getter("record"); }
-    get retract() : Statement { return this.#getter("retract"); }
-    get retractTarget() : Statement { return this.#getter("retractTarget"); }
-    get retractRule() : Statement { return this.#getter("retractRule"); }
-    get listRuleSources() : Statement { return this.#getter("listRuleSources"); }
-    get listRuleTargets() : Statement { return this.#getter("listRuleTargets"); }
-    get getProducingRule() : Statement { return this.#getter("getProducingRule"); }
-    get recordArtifact() : Statement { return this.#getter("recordArtifact"); }
-    get getArtifact() : Statement { return this.#getter("getArtifact"); }
-    get pruneArtifacts() : Statement { return this.#getter("pruneArtifacts"); }
+    get has() : Statement { return this.$getter("has"); }
+    get hasVersion() : Statement { return this.$getter("hasVersion"); }
+    get listVersions() : Statement { return this.$getter("listVersions"); }
+    get listVersionSources() : Statement { return this.$getter("listVersionSources"); }
+    get record() : Statement { return this.$getter("record"); }
+    get retract() : Statement { return this.$getter("retract"); }
+    get retractTarget() : Statement { return this.$getter("retractTarget"); }
+    get retractRule() : Statement { return this.$getter("retractRule"); }
+    get listRuleSources() : Statement { return this.$getter("listRuleSources"); }
+    get listRuleTargets() : Statement { return this.$getter("listRuleTargets"); }
+    get getProducingRule() : Statement { return this.$getter("getProducingRule"); }
+    get recordArtifact() : Statement { return this.$getter("recordArtifact"); }
+    get getArtifact() : Statement { return this.$getter("getArtifact"); }
+    get pruneArtifacts() : Statement { return this.$getter("pruneArtifacts"); }
 }
 
 export class Db {

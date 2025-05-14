@@ -43,11 +43,11 @@ export type ArtifactRecord = {
 };
 export type StatementVerb = "get" | "run" | "all";
 declare class Statements implements Record<StatementKey, Statement> {
-    #private;
     __db: Database;
     __prepared: {
         [k: string]: Statement;
     };
+    private readonly $getter;
     constructor(db: Database);
     get has(): Statement;
     get hasVersion(): Statement;

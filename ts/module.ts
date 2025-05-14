@@ -8,70 +8,70 @@ export class Module
 
 {
     // noinspection TypeScriptFieldCanBeMadeReadonly
-    #project : Project | null;
+    private $project : Project | null;
 
-    readonly #parent : Module | null;
+    private readonly $parent : Module | null;
 
-    readonly #name? : string;
+    private readonly $name? : string;
 
-    #path : string;
+    private $path : string;
 
-    readonly #absolutePath : string;
+    private readonly $absolutePath : string;
 
-    #exports = {};
+    private $exports = {};
 
     constructor(parent : Module|null, path : string, name? : string)
     {
-        this.#project = parent ? parent.project : null;
-        this.#parent = parent;
-        this.#path = path;
-        this.#name = name;
-        this.#absolutePath = this.parent ? fsPath.resolve(this.parent.absolutePath,path) : fsPath.resolve('/',path);
+        this.$project = parent ? parent.project : null;
+        this.$parent = parent;
+        this.$path = path;
+        this.$name = name;
+        this.$absolutePath = this.parent ? fsPath.resolve(this.parent.absolutePath,path) : fsPath.resolve('/',path);
         if (this.project) this.project.addModule(this);
     }
 
-    get project() : Project|null { return this.#project; }
+    get project() : Project|null { return this.$project; }
     get validProject() : Project
     {
-        if (!this.#project) {
+        if (!this.$project) {
             throw new Error("Project reference must be set on the module for this operation");
         }
-        return this.#project;
+        return this.$project;
     }
 
-    get parent() : Module|null { return this.#parent; }
+    get parent() : Module|null { return this.$parent; }
 
-    get pathFromRoot() : string { return fsPath.relative(this.validProject.path, this.#absolutePath); }
+    get pathFromRoot() : string { return fsPath.relative(this.validProject.path, this.$absolutePath); }
 
     get name() : string {
         // noinspection HtmlUnknownTag
-        return this.#name || `<${this.pathFromRoot.split('/').join('•')}>`;
+        return this.$name || `<${this.pathFromRoot.split('/').join('•')}>`;
     }
 
-    get absolutePath() : string { return this.#absolutePath; }
+    get absolutePath() : string { return this.$absolutePath; }
 
     resolve(ref : Artifact.Reference) : string {
         const aid = new AID(''+ref);
         if (aid.module && aid.module !== this.name) {
             return this.validProject.requireModuleByName(aid.module).resolve(aid.withModule((_=>_)()));
         }
-        return fsPath.resolve(this.#absolutePath, aid.ref);
+        return fsPath.resolve(this.$absolutePath, aid.ref);
     }
 
     export(exports : Record<string,any>)
     {
-        this.#exports = Object.assign({}, this.#exports, exports);
+        this.$exports = Object.assign({}, this.$exports, exports);
     }
 
     get exports() : Record<string,any>
     {
-        return Object.assign({}, this.#exports);
+        return Object.assign({}, this.$exports);
     }
 
     static createRoot(project : Project, name : string) : Module
     {
         const rootModule = new Module(null, project.path, name);
-        rootModule.#project = project;
+        rootModule.$project = project;
         project.addModule(rootModule);
         return rootModule;
     }

@@ -1,9 +1,11 @@
 import { Module } from "./module.js";
 import { Graph } from "./graph.js";
 export declare class Project {
-    #private;
+    private $index;
+    private readonly $rootDirectory;
+    private readonly $graph;
+    private $rootModule;
     constructor(rootDirectory: string);
-    /** @return {Graph} */
     get graph(): Graph;
     addModule(module: Module): Module;
     getModuleByName(name: string, require?: boolean): Module | null;

@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { Rule } from "../graph/rule.js";
 import { Module } from "../module.js";
 import { Artifact } from "../graph/artifact.js";
@@ -29,20 +28,20 @@ export declare namespace RuleBuilder {
     interface DefinerAPI {
         /** The {@link Rule} instance being defined. */
         rule: Rule;
-        /** {@see ModuleBuilder.DefinerAPI.depends}*/
+        /** {@link ModuleBuilder.DefinerAPI.depends}*/
         depends: RuleBuilder.artifactNominator;
-        /** {@see ModuleBuilder.DefinerAPI.produces}*/
+        /** {@link ModuleBuilder.DefinerAPI.produces}*/
         produces: RuleBuilder.artifactNominator;
-        /** {@see ModuleBuilder.DefinerAPI.after}*/
+        /** {@link ModuleBuilder.DefinerAPI.after}*/
         after: RuleBuilder.ruleNominator;
-        /** {@see ModuleBuilder.DefinerAPI.always}*/
+        /** {@link ModuleBuilder.DefinerAPI.always}*/
         always: RuleBuilder.flagSetter;
-        /** {@see ModuleBuilder.DefinerAPI.resolve}*/
+        /** {@link ModuleBuilder.DefinerAPI.resolve}*/
         resolve: ModuleBuilder.resolve;
         T: templateStringTag;
     }
     /**
-     * A function type that receives {@see Artifact.Resolvable artifact-resolvables} and presumably designates the
+     * A function type that receives {@link Artifact.Resolvable artifact-resolvables} and presumably designates the
      * corresponding artifacts as relevant to the rule being built, i.e. as dependencies or outputs.
      */
     type artifactNominator = (...resolvables: Artifact.Resolvables[]) => any;
@@ -81,9 +80,12 @@ export declare namespace RuleBuilder {
 }
 /***/
 export declare class RuleBuilder extends EventEmitter {
-    #private;
     protected readonly project: Project;
     readonly artifactManager: ArtifactManager;
+    private $declarations;
+    private $afterEdges;
+    private $alsoEdges;
+    private $currentRule;
     constructor(project: Project, artifactManager: ArtifactManager);
     bindDefinerAcceptor(module: Module): RuleBuilder.definerAcceptor;
     acceptDefiner(module: Module, name: string, definer: RuleBuilder.definer): void;

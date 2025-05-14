@@ -1,15 +1,3 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _CommandRecipe_commandBuilder;
 import { spawn } from "child_process";
 import fs from "fs";
 import * as path from "path";
@@ -23,11 +11,10 @@ const flattenDepth = 16;
 export class CommandRecipe extends Recipe {
     constructor(commandBuilder) {
         super();
-        _CommandRecipe_commandBuilder.set(this, void 0);
         this.stdoutChunks = [];
         this.stderrChunks = [];
         this.combinedChunks = [];
-        __classPrivateFieldSet(this, _CommandRecipe_commandBuilder, commandBuilder.bind(null), "f");
+        this.$commandBuilder = commandBuilder.bind(null);
     }
     createChildProcess(job, config) {
         let { exec, shell, args, cwd, out, err, combined } = config;
@@ -168,7 +155,7 @@ export class CommandRecipe extends Recipe {
             resolve,
             T: reassemble.bind(null, ref => resolveArtifacts(job.build.artifactManager, job.rule.module, false, ref)[0]?.toString() ?? "")
         };
-        __classPrivateFieldGet(this, _CommandRecipe_commandBuilder, "f").call(this, builderParams);
+        this.$commandBuilder(builderParams);
         return spec;
     }
     async executeFor(job, spec) {
@@ -235,7 +222,6 @@ export class CommandRecipe extends Recipe {
         return true;
     }
 }
-_CommandRecipe_commandBuilder = new WeakMap();
 /***/
 export class CommandError extends Error {
     constructor(job, cmd, code, signal) {

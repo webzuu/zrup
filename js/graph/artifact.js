@@ -9,16 +9,15 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _Artifact_identity, _AID_type, _AID_module, _AID_ref, _ArtifactManager_index, _ArtifactManager_defaultType, _ArtifactFactory_manager, _ArtifactFactory_artifactConstructor, _ArtifactFactory_type, _ArtifactFactory_artifactResolver;
+var _AID_type, _AID_module, _AID_ref, _ArtifactManager_index, _ArtifactManager_defaultType, _ArtifactFactory_manager, _ArtifactFactory_artifactConstructor, _ArtifactFactory_type, _ArtifactFactory_artifactResolver;
 import md5 from "md5";
 export class Artifact {
     constructor(aid) {
-        _Artifact_identity.set(this, void 0);
-        __classPrivateFieldSet(this, _Artifact_identity, '' + aid, "f");
+        this.$identity = '' + aid;
         this.validate();
     }
     get type() {
-        return AID.parse(__classPrivateFieldGet(this, _Artifact_identity, "f")).type || '';
+        return AID.parse(this.$identity).type || '';
     }
     static computeKey(type, identity) {
         return md5(JSON.stringify([
@@ -30,7 +29,7 @@ export class Artifact {
         return Artifact.computeKey(this.type, this.identity);
     }
     get identity() {
-        return __classPrivateFieldGet(this, _Artifact_identity, "f");
+        return this.$identity;
     }
     get label() {
         return `${this.type} ${this.identity}`;
@@ -43,13 +42,12 @@ export class Artifact {
         };
     }
     validate() {
-        const aid = AID.parse(__classPrivateFieldGet(this, _Artifact_identity, "f"));
+        const aid = AID.parse(this.$identity);
         if (false === aid) {
-            throw new Error(`Invalid AID string ${__classPrivateFieldGet(this, _Artifact_identity, "f")} used to construct an Artifact instance`);
+            throw new Error(`Invalid AID string ${this.$identity} used to construct an Artifact instance`);
         }
     }
 }
-_Artifact_identity = new WeakMap();
 Artifact.NONEXISTENT_VERSION = "[nonexistent]";
 export class AID {
     constructor(aidString) {

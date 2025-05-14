@@ -1,15 +1,3 @@
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-};
-var _Job_prepared;
 import { RecipeArtifact } from "../graph/artifact/recipe.js";
 import { BuildError } from "./error.js";
 import { Dependency } from "../graph/dependency.js";
@@ -24,7 +12,7 @@ export class Job {
     constructor(build, rule) {
         this.build = build;
         this.rule = rule;
-        _Job_prepared.set(this, false);
+        this.$prepared = false;
         this.recipeInvoked = false;
         this.promise = null;
         this.finished = false;
@@ -158,16 +146,16 @@ export class Job {
                 continue;
             }
             if (mergedDep.whenAbsent !== dep.whenAbsent) {
-                throw new Error("Non-existence policy conflict between two dependencies on the same artifact");
+                throw new Error("Absence policy conflict between two dependencies on the same artifact");
             }
             merged[key] = dep;
         }
         return Object.values(merged);
     }
     prepare() {
-        if (__classPrivateFieldGet(this, _Job_prepared, "f"))
+        if (this.$prepared)
             return;
-        __classPrivateFieldSet(this, _Job_prepared, true, "f");
+        this.$prepared = true;
         this.preCollectOutputs();
         this.collectDependencies();
     }
@@ -279,5 +267,4 @@ export class Job {
         return debugResult;
     }
 }
-_Job_prepared = new WeakMap();
 //# sourceMappingURL=job.js.map

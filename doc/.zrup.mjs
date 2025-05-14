@@ -11,7 +11,7 @@ const docs = async function docs(M) {
             cwd: SRC,
             cmd: [
                 'rm -rf doc/td/*',
-                T`&& ${SRC}/node_modules/.bin/typedoc --gitRevision wip --out doc/td --entryPointStrategy expand ./ts`,
+                T`&& pnpm exec typedoc --gitRevision wip --out doc/td --entryPointStrategy expand ./ts`,
                 T`&& mkdir -p $(dirname ${resolve('internal:built')})`,
                 T`&& cp ${depends('internal:js+built')} ${produces('internal:built')}`
             ]

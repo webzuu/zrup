@@ -1,15 +1,3 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _ModuleBuilder_project, _ModuleBuilder_ruleBuilder;
 import fs from "fs";
 import { CommandRecipe } from "../build/recipe/command.js";
 import { Module, resolveArtifacts } from "../module.js";
@@ -20,18 +8,16 @@ import { isNodeError } from "../util/casts.js";
 export class ModuleBuilder extends EventEmitter {
     constructor(project, ruleBuilder) {
         super();
-        _ModuleBuilder_project.set(this, void 0);
-        _ModuleBuilder_ruleBuilder.set(this, void 0);
-        __classPrivateFieldSet(this, _ModuleBuilder_project, project, "f");
-        __classPrivateFieldSet(this, _ModuleBuilder_ruleBuilder, ruleBuilder, "f");
+        this.$project = project;
+        this.$ruleBuilder = ruleBuilder;
     }
     get project() {
-        return __classPrivateFieldGet(this, _ModuleBuilder_project, "f");
+        return this.$project;
     }
     async define(parentModule, path, name, definer) {
         const moduleToBeDefined = (parentModule
-            ? __classPrivateFieldGet(this, _ModuleBuilder_project, "f").addModule(new Module(parentModule, path, name))
-            : Module.createRoot(__classPrivateFieldGet(this, _ModuleBuilder_project, "f"), name));
+            ? this.$project.addModule(new Module(parentModule, path, name))
+            : Module.createRoot(this.$project, name));
         this.emit('defining.module', moduleToBeDefined, path, name);
         await definer(this.bindDefinerArgs(moduleToBeDefined));
         this.emit('defined.module', moduleToBeDefined, path, name);
@@ -40,14 +26,14 @@ export class ModuleBuilder extends EventEmitter {
         return {
             module,
             include: this.includeMany.bind(this, module),
-            rule: __classPrivateFieldGet(this, _ModuleBuilder_ruleBuilder, "f").bindDefinerAcceptor(module),
-            depends: __classPrivateFieldGet(this, _ModuleBuilder_ruleBuilder, "f").depends,
-            produces: __classPrivateFieldGet(this, _ModuleBuilder_ruleBuilder, "f").produces,
-            after: __classPrivateFieldGet(this, _ModuleBuilder_ruleBuilder, "f").after,
-            to: CommandRecipe.to.bind(null, __classPrivateFieldGet(this, _ModuleBuilder_ruleBuilder, "f"), module),
-            always: __classPrivateFieldGet(this, _ModuleBuilder_ruleBuilder, "f").always,
-            resolve: resolveArtifacts.bind(null, __classPrivateFieldGet(this, _ModuleBuilder_ruleBuilder, "f").artifactManager, module, false),
-            also: __classPrivateFieldGet(this, _ModuleBuilder_ruleBuilder, "f").also,
+            rule: this.$ruleBuilder.bindDefinerAcceptor(module),
+            depends: this.$ruleBuilder.depends,
+            produces: this.$ruleBuilder.produces,
+            after: this.$ruleBuilder.after,
+            to: CommandRecipe.to.bind(null, this.$ruleBuilder, module),
+            always: this.$ruleBuilder.always,
+            resolve: resolveArtifacts.bind(null, this.$ruleBuilder.artifactManager, module, false),
+            also: this.$ruleBuilder.also,
             API: new ZrupAPI()
         };
     }
@@ -60,8 +46,8 @@ export class ModuleBuilder extends EventEmitter {
         return definer.name;
     }
     async loadRootModule() {
-        const definer = ModuleBuilder.normalizeDefiner(await this.import(__classPrivateFieldGet(this, _ModuleBuilder_project, "f").path));
-        await this.define(null, __classPrivateFieldGet(this, _ModuleBuilder_project, "f").path, definer.name, definer.definer);
+        const definer = ModuleBuilder.normalizeDefiner(await this.import(this.$project.path));
+        await this.define(null, this.$project.path, definer.name, definer.definer);
     }
     static normalizeDefiner(definerOrDescriptor) {
         return ("function" === typeof definerOrDescriptor
@@ -108,5 +94,4 @@ export class ModuleBuilder extends EventEmitter {
         return parentModule.resolve(path.join(...subpathSegments));
     }
 }
-_ModuleBuilder_project = new WeakMap(), _ModuleBuilder_ruleBuilder = new WeakMap();
 //# sourceMappingURL=module-builder.js.map

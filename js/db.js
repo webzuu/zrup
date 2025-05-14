@@ -9,7 +9,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _Statements_getter, _Db_db, _Db_stmt;
+var _Db_db, _Db_stmt;
 import { sleep } from "sleepjs";
 import fsi from "fs";
 import path from "path";
@@ -77,26 +77,24 @@ function __statementGetter(key) {
 class Statements {
     constructor(db) {
         this.__prepared = {};
-        _Statements_getter.set(this, void 0);
         this.__db = db;
-        __classPrivateFieldSet(this, _Statements_getter, __statementGetter.bind(this), "f");
+        this.$getter = __statementGetter.bind(this);
     }
-    get has() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "has"); }
-    get hasVersion() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "hasVersion"); }
-    get listVersions() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "listVersions"); }
-    get listVersionSources() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "listVersionSources"); }
-    get record() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "record"); }
-    get retract() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "retract"); }
-    get retractTarget() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "retractTarget"); }
-    get retractRule() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "retractRule"); }
-    get listRuleSources() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "listRuleSources"); }
-    get listRuleTargets() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "listRuleTargets"); }
-    get getProducingRule() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "getProducingRule"); }
-    get recordArtifact() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "recordArtifact"); }
-    get getArtifact() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "getArtifact"); }
-    get pruneArtifacts() { return __classPrivateFieldGet(this, _Statements_getter, "f").call(this, "pruneArtifacts"); }
+    get has() { return this.$getter("has"); }
+    get hasVersion() { return this.$getter("hasVersion"); }
+    get listVersions() { return this.$getter("listVersions"); }
+    get listVersionSources() { return this.$getter("listVersionSources"); }
+    get record() { return this.$getter("record"); }
+    get retract() { return this.$getter("retract"); }
+    get retractTarget() { return this.$getter("retractTarget"); }
+    get retractRule() { return this.$getter("retractRule"); }
+    get listRuleSources() { return this.$getter("listRuleSources"); }
+    get listRuleTargets() { return this.$getter("listRuleTargets"); }
+    get getProducingRule() { return this.$getter("getProducingRule"); }
+    get recordArtifact() { return this.$getter("recordArtifact"); }
+    get getArtifact() { return this.$getter("getArtifact"); }
+    get pruneArtifacts() { return this.$getter("pruneArtifacts"); }
 }
-_Statements_getter = new WeakMap();
 export class Db {
     constructor(dbFilePath) {
         _Db_db.set(this, void 0);

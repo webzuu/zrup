@@ -17,7 +17,7 @@ type VersionFileListEntry = [string, string];
  */
 export class Job  {
 
-    #prepared : boolean = false;
+    private $prepared : boolean = false;
     public recipeInvoked: boolean = false;
     public recipeArtifact: RecipeArtifact;
     public promise: Promise<this> | null = null;
@@ -183,7 +183,7 @@ export class Job  {
                 continue;
             }
             if(mergedDep.whenAbsent !== dep.whenAbsent) {
-                throw new Error("Non-existence policy conflict between two dependencies on the same artifact");
+                throw new Error("Absence policy conflict between two dependencies on the same artifact");
             }
             merged[key] = dep;
         }
@@ -192,8 +192,8 @@ export class Job  {
 
     prepare()
     {
-        if (this.#prepared) return;
-        this.#prepared = true;
+        if (this.$prepared) return;
+        this.$prepared = true;
         this.preCollectOutputs();
         this.collectDependencies();
     }

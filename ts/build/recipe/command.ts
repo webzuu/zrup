@@ -28,7 +28,7 @@ const flattenDepth: number=16;
 
 /***/
 export class CommandRecipe extends Recipe {
-    readonly #commandBuilder: builder;
+    private readonly $commandBuilder: builder;
 
     private readonly stdoutChunks : string[] = [];
 
@@ -38,7 +38,7 @@ export class CommandRecipe extends Recipe {
 
     constructor(commandBuilder: builder) {
         super();
-        this.#commandBuilder = commandBuilder.bind(null);
+        this.$commandBuilder = commandBuilder.bind(null);
     }
 
     createChildProcess(job: Job, config: CommandRecipe.Config): ChildProcessWithoutNullStreams {
@@ -234,7 +234,7 @@ export class CommandRecipe extends Recipe {
             )
         }
 
-        this.#commandBuilder(builderParams);
+        this.$commandBuilder(builderParams);
 
         return spec;
     }

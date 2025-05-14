@@ -11,7 +11,7 @@ export declare namespace PromiseKeeper {
     };
 }
 export declare class PromiseKeeper {
-    #private;
+    private $descriptors;
     about(key: string, topic: string): Descriptor;
     forget(key: string, topic: string): this;
     init(key: string, topic: string, value: any): void;

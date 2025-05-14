@@ -25,7 +25,7 @@ import { Recipe } from "../recipe.js";
 import { Job } from "../job.js";
 /***/
 export declare class WrapperRecipe extends Recipe {
-    #private;
+    private readonly $params;
     constructor(params: WrapperRecipe.Parameters);
     concretizeSpecFor(job: Job): Promise<WrapperRecipe.Spec>;
     describeSpec(spec: WrapperRecipe.Spec): WrapperRecipe.SpecDescription;

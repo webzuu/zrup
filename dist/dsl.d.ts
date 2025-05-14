@@ -5,10 +5,11 @@ import {EventEmitter} from "events";
 import {Transaction} from "better-sqlite3";
 
 declare class Build extends EventEmitter {
-    #private;
     readonly graph: Graph;
     readonly db: Db;
     readonly artifactManager: ArtifactManager;
+    private $whichRulesReliedOnArtifactVersion;
+    private $whichArtifactVersionDidRuleRelyOn;
     index: Build.Index;
     constructor(graph: Graph, db: Db, artifactManager: ArtifactManager);
     getJobFor(dependency: Dependency, require?: boolean): Promise<Job | null>;
@@ -85,7 +86,12 @@ declare class Graph {
 }
 
 declare class Module {
-    #private;
+    private $project;
+    private readonly $parent;
+    private readonly $name?;
+    private $path;
+    private readonly $absolutePath;
+    private $exports;
     constructor(parent: Module | null, path: string, name?: string);
     get project(): Project | null;
     get validProject(): Project;
@@ -105,7 +111,8 @@ declare interface ResolveArtifactResult {
 }
 
 declare class JobSet {
-    #private;
+    private $jobs;
+    private $promise;
     constructor(...jobs: Job[]);
     run(): Promise<void[]>;
     private createRunPromise;
@@ -117,9 +124,9 @@ declare class JobSet {
 }
 
 declare class Job {
-    #private;
     readonly build: Build;
     readonly rule: Rule;
+    private $prepared;
     recipeInvoked: boolean;
     recipeArtifact: RecipeArtifact;
     promise: Promise<this> | null;
@@ -188,9 +195,12 @@ declare class ZrupAPI {
 }
 
 declare class RuleBuilder extends EventEmitter {
-    #private;
     protected readonly project: Project;
     readonly artifactManager: ArtifactManager;
+    private $declarations;
+    private $afterEdges;
+    private $alsoEdges;
+    private $currentRule;
     constructor(project: Project, artifactManager: ArtifactManager);
     bindDefinerAcceptor(module: Module): RuleBuilder.definerAcceptor;
     acceptDefiner(module: Module, name: string, definer: RuleBuilder.definer): void;
@@ -216,7 +226,7 @@ declare class RuleBuilder extends EventEmitter {
 }
 
 declare abstract class Artifact {
-    #private;
+    private readonly $identity;
     protected constructor(aid: Artifact.Reference);
     get type(): string;
     static computeKey(type: string, identity: string): string;
@@ -286,7 +296,8 @@ declare abstract class ArtifactFactory {
 }
 
 declare class Dependency {
-    #private;
+    private readonly $artifact;
+    private readonly $whenAbsent;
     constructor(artifact: Artifact, whenAbsent: Dependency.Absent);
     get artifact(): Artifact;
     get whenAbsent(): Dependency.Absent;
@@ -295,7 +306,10 @@ declare class Dependency {
 }
 
 declare class Rule {
-    #private;
+    private readonly $module;
+    private readonly $name;
+    private $label;
+    private $recipe;
     outputs: Record<string, Artifact>;
     dependencies: Record<string, Dependency>;
     also: Record<string, Rule>;
@@ -320,7 +334,7 @@ declare class Rule {
 }
 
 declare class CommandRecipe extends Recipe {
-    #private;
+    private readonly $commandBuilder;
     private readonly stdoutChunks;
     private readonly stderrChunks;
     private readonly combinedChunks;
@@ -345,7 +359,7 @@ declare class CommandRecipe extends Recipe {
 }
 
 declare class FileArtifact extends Artifact {
-    #private;
+    private readonly $resolvedPath;
     constructor(ref: Artifact.Reference, resolvedPath: string);
     get exists(): Promise<boolean>;
     get version(): Promise<string>;
@@ -359,7 +373,8 @@ declare class FileArtifact extends Artifact {
 }
 
 declare class RecipeArtifact extends Artifact {
-    #private;
+    private $specPromise;
+    private $versionPromise;
     readonly job: Job;
     rm(): Promise<void>;
     constructor(aid: Artifact.Reference, job: Job);
@@ -549,29 +564,29 @@ declare global {
         /**
          * API object for defining rules. It is passed to user-supplied {@link RuleBuilder.definer definer callbacks}.
          * @property {Rule} rule The {@link Rule} instance being defined.
-         * @property {RuleBuilder.artifactNominator} depends {@see ModuleBuilder.DefinerAPI.depends}
-         * @property {RuleBuilder.artifactNominator} produces {@see ModuleBuilder.DefinerAPI.produces}
-         * @property {RuleBuilder.ruleNominator} after {@see ModuleBuilder.DefinerAPI.after}
-         * @property {RuleBuilder.flagSetter} always {@see ModuleBuilder.DefinerAPI.always}
-         * @property {ModuleBuilder.resolve} resolve {@see ModuleBuilder.DefinerAPI.resolve}
+         * @property {RuleBuilder.artifactNominator} depends {@link ModuleBuilder.DefinerAPI.depends}
+         * @property {RuleBuilder.artifactNominator} produces {@link ModuleBuilder.DefinerAPI.produces}
+         * @property {RuleBuilder.ruleNominator} after {@link ModuleBuilder.DefinerAPI.after}
+         * @property {RuleBuilder.flagSetter} always {@link ModuleBuilder.DefinerAPI.always}
+         * @property {ModuleBuilder.resolve} resolve {@link ModuleBuilder.DefinerAPI.resolve}
          */
         interface DefinerAPI {
             /** The {@link Rule} instance being defined. */
             rule: Rule;
-            /** {@see ModuleBuilder.DefinerAPI.depends}*/
+            /** {@link ModuleBuilder.DefinerAPI.depends}*/
             depends: RuleBuilder.artifactNominator;
-            /** {@see ModuleBuilder.DefinerAPI.produces}*/
+            /** {@link ModuleBuilder.DefinerAPI.produces}*/
             produces: RuleBuilder.artifactNominator;
-            /** {@see ModuleBuilder.DefinerAPI.after}*/
+            /** {@link ModuleBuilder.DefinerAPI.after}*/
             after: RuleBuilder.ruleNominator;
-            /** {@see ModuleBuilder.DefinerAPI.always}*/
+            /** {@link ModuleBuilder.DefinerAPI.always}*/
             always: RuleBuilder.flagSetter;
-            /** {@see ModuleBuilder.DefinerAPI.resolve}*/
+            /** {@link ModuleBuilder.DefinerAPI.resolve}*/
             resolve: ModuleBuilder.resolve;
             T: templateStringTag;
         }
         /**
-         * A function type that receives {@see Artifact.Resolvable artifact-resolvables} and presumably designates the
+         * A function type that receives {@link Artifact.Resolvable artifact-resolvables} and presumably designates the
          * corresponding artifacts as relevant to the rule being built, i.e. as dependencies or outputs.
          */
         type artifactNominator = (...resolvables: Artifact.Resolvables[]) => any;
