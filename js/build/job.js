@@ -57,6 +57,7 @@ export class Job {
         catch (e) {
             if (e instanceof Error)
                 throw new BuildError(BuildError.formatRuleFailure(this.rule, e), e);
+            throw e;
         }
         finally {
         }
