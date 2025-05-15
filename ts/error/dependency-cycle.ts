@@ -8,7 +8,7 @@ export class DependencyCycle extends Error
     {
         super(
             "Dependency cycle detected:\n"
-            + chain.map(({rule, artifact}) => `  ${rule.name} -> ${artifact.key}`).join("\n")
+            + chain.map(({rule, artifact}) => `  ${rule.module.name}+${rule.name} -> ${artifact.identity}`).join("\n")
         );
         this.chain = chain;
     }
