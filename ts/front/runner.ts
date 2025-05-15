@@ -34,9 +34,9 @@ async function main()
     }
     const config = await Zrup.loadConfig(there);
     const zrup = new Zrup(there, config, request);
-    const promiseLog = config.promiseLog;
+    const promiseLog = `${there}/${config.promiseLog}`.replace( /<zrupDir>/g, config.zrupDir);
     if (promiseLog) {
-        process.on('beforeExit', (code) => { dump(promiseLog.replace('<zrupDir>',config.zrupDir)); })
+        process.on('exit', (code) => { dump(promiseLog); })
     }
     await zrup.run();
 }
