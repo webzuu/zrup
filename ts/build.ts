@@ -289,13 +289,25 @@ export class Build extends EventEmitter  {
         ]);
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {
 
+            //HERE
             if (actualOutputVersions[recordedVersionsInfo.target] !== recordedVersionsInfo.version) {
                 this.emit("dirty.output", job, {
                     details: "output was modified externally",
+                    rule: job.rule,
+                    output: recordedOutputsByKey[recordedVersionsInfo.target],
                     rec: recordedVersionsInfo,
                     act: actualOutputVersions[recordedVersionsInfo.target],
                 });
                 return false;
+            }
+            else {
+                this.emit("clean.output", job, {
+                    details: "output matches last recorded version",
+                    rule: job.rule,
+                    output: recordedOutputsByKey[recordedVersionsInfo.target],
+                    rec: recordedVersionsInfo,
+                    act: actualOutputVersions[recordedVersionsInfo.target],
+                });
             }
             const recordedSourceKeys = Object.keys(recordedVersionsInfo.sourceVersions);
             let hadRecordedSources = false;
@@ -307,16 +319,30 @@ export class Build extends EventEmitter  {
                 ) {
                     this.emit("changed.source", job, {
                         details: "source was modified",
+                        rule: job.rule,
+                        output: recordedOutputsByKey[recordedVersionsInfo.target],
                         source: dependencyArtifactsByKey[recordedSourceKey],
                         rec: recordedVersionsInfo,
                         act: actualSourceVersions[recordedSourceKey],
                     });
                     return false;
                 }
+                else {
+                    this.emit("unchanged.source", job, {
+                        details: "source matches the build record for target",
+                        rule: job.rule,
+                        output: recordedOutputsByKey[recordedVersionsInfo.target],
+                        source: dependencyArtifactsByKey[recordedSourceKey],
+                        rec: recordedVersionsInfo,
+                        act: actualSourceVersions[recordedSourceKey],
+                    });
+                }
             }
             if (!hadRecordedSources) {
                 this.emit("missing.records", job, {
                     details: "no source versions were recorded for target",
+                    rule: job.rule,
+                    output: recordedOutputsByKey[recordedVersionsInfo.target],
                     rec: recordedVersionsInfo
                 });
                 return false;

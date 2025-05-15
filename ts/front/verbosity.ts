@@ -195,6 +195,26 @@ export class Verbosity {
                 }
             );
             build.on(
+                'unchanged.source',
+                (
+                    job,
+                    {details, source, rec, act}
+                    : { details: string, source: Artifact, rec: RecordedVersionInfo, act: string | null }
+                ) => {
+                    console.log(C(
+                        'UNCHANGED DEPENDENCY',
+                        {
+                            Job: R(job),
+                            Target: THE(rec.target),
+                            Dependency: THE(source.key),
+                            "Recorded Version": rec.sourceVersions[source.key] || "null",
+                            "Current Version": act || "null",
+                            Details: details
+                        }
+                    ))
+                }
+            );
+            build.on(
                 'missing.records',
                 (
                     job,
