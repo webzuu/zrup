@@ -25,7 +25,9 @@ async function main() {
     };
     const config = await Zrup.loadConfig(there);
     const zrup = new Zrup(there, config, request);
-    const promiseLog = `${there}/${config.promiseLog}`.replace(/<zrupDir>/g, config.zrupDir);
+    const promiseLog = config.promiseLog
+        ? `${there}/${config.promiseLog}`.replace(/<zrupDir>/g, config.zrupDir)
+        : undefined;
     if (promiseLog) {
         process.on('exit', (code) => { dump(promiseLog); });
     }

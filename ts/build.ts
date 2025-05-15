@@ -287,9 +287,8 @@ export class Build extends EventEmitter  {
             this.getActualVersionInfo(dependencyArtifacts),
             this.getActualVersionInfo(allOutputs)
         ]);
+        const dependencyKeySet = new Set(Object.keys(dependencyArtifactsByKey));
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {
-
-            //HERE
             if (actualOutputVersions[recordedVersionsInfo.target] !== recordedVersionsInfo.version) {
                 this.emit("dirty.output", job, {
                     details: "output was modified externally",
@@ -310,6 +309,31 @@ export class Build extends EventEmitter  {
                 });
             }
             const recordedSourceKeys = Object.keys(recordedVersionsInfo.sourceVersions);
+            const recordedSourceKeySet = new Set(recordedSourceKeys);
+            const requiredButNotRecorded = dependencyKeySet.difference(recordedSourceKeySet);
+            if (requiredButNotRecorded.size > 0) {
+                this.emit("missing.records", job, {
+                    details: "some required source versions were not recorded for target",
+                    rule: job.rule,
+                    output: recordedOutputsByKey[recordedVersionsInfo.target],
+                    rec: recordedVersionsInfo,
+                    act: actualSourceVersions,
+                    missing: requiredButNotRecorded
+                });
+                return false;
+            }
+            const recordedButNotRequired = recordedSourceKeySet.difference(dependencyKeySet);
+            if (recordedButNotRequired.size > 0) {
+                this.emit("extraneous.records", job, {
+                    details: "some source versions were recorded but not required for target",
+                    rule: job.rule,
+                    output: recordedOutputsByKey[recordedVersionsInfo.target],
+                    rec: recordedVersionsInfo,
+                    act: actualSourceVersions,
+                    unrecorded: recordedButNotRequired
+                });
+                return false;
+            }
             let hadRecordedSources = false;
             for(let recordedSourceKey of recordedSourceKeys) {
                 hadRecordedSources = true;

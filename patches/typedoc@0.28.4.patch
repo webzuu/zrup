@@ -1,0 +1,25 @@
+diff --git a/dist/lib/utils/fs.js b/dist/lib/utils/fs.js
+index 956605e164ba166e21da2868672e0c744ba6e95f..c6b03471e2a315eecb463f3e2ffab8940f5f3fae 100644
+--- a/dist/lib/utils/fs.js
++++ b/dist/lib/utils/fs.js
+@@ -1,6 +1,7 @@
+ import * as fs from "fs";
+ import { promises as fsp } from "fs";
+-import { Minimatch } from "minimatch";
++import * as minimatch_pkg from "minimatch";
++const { Minimatch } = minimatch_pkg;
+ import { dirname, join, relative, resolve } from "path";
+ import { escapeRegExp, Validation } from "#utils";
+ import { normalizePath } from "./paths.js";
+diff --git a/dist/lib/utils/paths.js b/dist/lib/utils/paths.js
+index fb66692ae8773f7319a739653778fa7ab8f6178e..d3da57e761a0a651b50445c9f273878498238103 100644
+--- a/dist/lib/utils/paths.js
++++ b/dist/lib/utils/paths.js
+@@ -1,5 +1,6 @@
+ import { countMatches, filterMap } from "#utils";
+-import { Minimatch } from "minimatch";
++import * as minimatch_pkg from "minimatch";
++const { Minimatch } = minimatch_pkg;
+ import { dirname, isAbsolute, relative, resolve } from "path";
+ export class MinimatchSet {
+     patterns;

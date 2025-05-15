@@ -260,7 +260,7 @@ export function captureTo(artifactRef, job) {
 function stringifyChunk(chunk) {
     return ('string' === typeof chunk
         ? chunk
-        : chunk.toString("utf-8"));
+        : Buffer.from(chunk).toString("utf-8"));
 }
 function captureToArray(dest) {
     return Object.assign((chunk) => {

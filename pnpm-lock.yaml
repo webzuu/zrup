@@ -5,9 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  typedoc:
+  typedoc@0.28.4:
     hash: 85dc782356084b306a35179bbe2e325fca4f3dd2e51879a94604df31e1b6536b
-    path: patches/typedoc.patch
+    path: patches/typedoc@0.28.4.patch
 
 importers:
 
@@ -76,6 +76,9 @@ importers:
       table-layout:
         specifier: ^4.1.1
         version: 4.1.1
+      typedoc:
+        specifier: 0.28.4
+        version: 0.28.4(patch_hash=85dc782356084b306a35179bbe2e325fca4f3dd2e51879a94604df31e1b6536b)(typescript@5.8.3)
       typeof--:
         specifier: ^1.3.3
         version: 1.3.3
@@ -131,9 +134,6 @@ importers:
       tsdoc:
         specifier: ^0.0.4
         version: 0.0.4
-      typedoc:
-        specifier: ^0.28.4
-        version: 0.28.4(patch_hash=85dc782356084b306a35179bbe2e325fca4f3dd2e51879a94604df31e1b6536b)(typescript@5.8.3)
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -302,8 +302,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@gerrit0/mini-shiki@3.4.0':
-    resolution: {integrity: sha512-48lKoQegmfJ0iyR/jRz5OrYOSM3WewG9YWCPqUvYFEC54shQO8RsAaspaK/2PRHVVnjekRqfAFvq8pwCpIo5ig==}
+  '@gerrit0/mini-shiki@3.4.1':
+    resolution: {integrity: sha512-QFyMUwpHkLeriDrkz8HXLhakgO/E1k6U7BRKSTAQJGT8VP9i6fhhGsyHFRW1LH2F1Im4Gz5YsvjHeM50KrALuQ==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -397,8 +397,8 @@ packages:
   '@types/minimatch@5.1.2':
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
 
-  '@types/node@20.12.12':
-    resolution: {integrity: sha512-eWLDGF/FOSPtAvEqeRAQ4C8LSA7M1I7i0ky1I8U7kD1J5ITyW3AsRhQrKVoWf5pFKZ2kILsEGJhsI9r93PYnOw==}
+  '@types/node@22.15.18':
+    resolution: {integrity: sha512-v1DKRfUdyW+jJhZNEI1PYy29S2YRxMV5AOO/x/SjKmW0acCIOqmbj6Haf9eHAhsPmrhlHSxEhv/1WszcLWV4cg==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -1888,8 +1888,8 @@ packages:
   underscore@1.4.2:
     resolution: {integrity: sha512-rPJMAt3ULsAv/C4FMTPjvi0sS/qb/Ec/ydS4rkTUFz4m0074hlFjql66tYpv5mhMY7zoDKkY9m6DWcq1F4G1vA==}
 
-  undici-types@5.26.5:
-    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
   update-browserslist-db@1.0.16:
     resolution: {integrity: sha512-KVbTxlBYlckhF5wgfyZXTWnMn7MMZjMu9XG8bPlliUOP9ThaF4QnhP8qrjrH7DRzHfSk0oQv1wToW+iA5GajEQ==}
@@ -2011,9 +2011,9 @@ packages:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
     engines: {node: '>=10'}
 
-  yaml@2.7.1:
-    resolution: {integrity: sha512-10ULxpnOCQXxJvBgxsn9ptjq6uviG/htZKk9veJGhlqn3w/DxQ631zFF+nlQXLwmImeS5amR2dl2U8sg6U9jsQ==}
-    engines: {node: '>= 14'}
+  yaml@2.8.0:
+    resolution: {integrity: sha512-4lLa/EcQCB0cJkyts+FpIRx5G/llPxfP6VQU5KByHEhLxY3IJCH0f0Hy1MHI8sClTvsIb8qwRJ6R/ZdlDJ/leQ==}
+    engines: {node: '>= 14.6'}
     hasBin: true
 
   yargs-parser@11.1.1:
@@ -2132,7 +2132,7 @@ snapshots:
   '@esbuild/win32-x64@0.18.20':
     optional: true
 
-  '@gerrit0/mini-shiki@3.4.0':
+  '@gerrit0/mini-shiki@3.4.1':
     dependencies:
       '@shikijs/engine-oniguruma': 3.4.1
       '@shikijs/langs': 3.4.1
@@ -2219,7 +2219,7 @@ snapshots:
 
   '@types/blessed@0.1.25':
     dependencies:
-      '@types/node': 20.12.12
+      '@types/node': 22.15.18
 
   '@types/eslint-scope@3.7.7':
     dependencies:
@@ -2236,7 +2236,7 @@ snapshots:
   '@types/glob@8.1.0':
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 20.12.12
+      '@types/node': 22.15.18
 
   '@types/hast@3.0.4':
     dependencies:
@@ -2250,9 +2250,9 @@ snapshots:
 
   '@types/minimatch@5.1.2': {}
 
-  '@types/node@20.12.12':
+  '@types/node@22.15.18':
     dependencies:
-      undici-types: 5.26.5
+      undici-types: 6.21.0
 
   '@types/normalize-package-data@2.4.4': {}
 
@@ -2263,7 +2263,7 @@ snapshots:
   '@types/rimraf@2.0.5':
     dependencies:
       '@types/glob': 8.1.0
-      '@types/node': 20.12.12
+      '@types/node': 22.15.18
 
   '@types/rmfr@2.0.5':
     dependencies:
@@ -2968,7 +2968,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 20.12.12
+      '@types/node': 22.15.18
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -3717,12 +3717,12 @@ snapshots:
 
   typedoc@0.28.4(patch_hash=85dc782356084b306a35179bbe2e325fca4f3dd2e51879a94604df31e1b6536b)(typescript@5.8.3):
     dependencies:
-      '@gerrit0/mini-shiki': 3.4.0
+      '@gerrit0/mini-shiki': 3.4.1
       lunr: 2.3.9
       markdown-it: 14.1.0
       minimatch: 9.0.5
       typescript: 5.8.3
-      yaml: 2.7.1
+      yaml: 2.8.0
 
   typeof--@1.3.3: {}
 
@@ -3732,7 +3732,7 @@ snapshots:
 
   underscore@1.4.2: {}
 
-  undici-types@5.26.5: {}
+  undici-types@6.21.0: {}
 
   update-browserslist-db@1.0.16(browserslist@4.23.0):
     dependencies:
@@ -3872,7 +3872,7 @@ snapshots:
 
   y18n@5.0.8: {}
 
-  yaml@2.7.1: {}
+  yaml@2.8.0: {}
 
   yargs-parser@11.1.1:
     dependencies:

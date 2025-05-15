@@ -418,7 +418,7 @@ export function captureTo(artifactRef: Artifact.Reference,job: Job): outputListe
 {
     const outputFilePath = job.build.artifactManager.resolveToExternalIdentifier(artifactRef);
     let append = false;
-    const result : outputListener = (chunk : string|Buffer) => {
+    const result : outputListener = (chunk : string) => {
         if(!append) {
             fs.mkdirSync(path.dirname(outputFilePath),{mode: 0o755, recursive: true});
             fs.writeFileSync(outputFilePath, chunk);
@@ -436,17 +436,17 @@ export function captureTo(artifactRef: Artifact.Reference,job: Job): outputListe
     return result;
 }
 
-function stringifyChunk(chunk: string|Buffer) : string {
+function stringifyChunk(chunk: string|Uint8Array) : string {
     return (
         'string'===typeof chunk
             ? chunk
-            : chunk.toString("utf-8")
+            : Buffer.from(chunk).toString("utf-8")
     );
 }
 
 function captureToArray(dest : (string)[]) {
     return Object.assign(
-        (chunk : string|Buffer) => {
+        (chunk : string) => {
             const debugStringifiedChunk = stringifyChunk(chunk);
             dest.push(debugStringifiedChunk);
         },
