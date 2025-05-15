@@ -116,7 +116,8 @@ export class Zrup {
 const schema_Config = struct({
     zrupDir: string(),
     dataDir: string(),
-    channels: record(string(), string())
+    channels: record(string(), string()),
+    promiseLog: optional(string()),
 }), schema_RequestOptions = struct({
     version: optional(boolean()),
     init: optional(boolean()),

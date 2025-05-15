@@ -7,6 +7,7 @@ import * as path from "path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { Zrup } from "./zrup.js";
+import { dump } from "../util/insist.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 async function main() {
@@ -22,7 +23,12 @@ async function main() {
         goals: cli.args,
         options: opts
     };
-    const zrup = new Zrup(there, await Zrup.loadConfig(there), request);
+    const config = await Zrup.loadConfig(there);
+    const zrup = new Zrup(there, config, request);
+    const promiseLog = config.promiseLog;
+    if (promiseLog) {
+        process.on('beforeExit', (code) => { dump(promiseLog.replace('<zrupDir>', config.zrupDir)); });
+    }
     await zrup.run();
 }
 async function parseCommandLine() {

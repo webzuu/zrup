@@ -21,6 +21,7 @@ declare const schema_Config: import("hyperval").HyperObject<{
     zrupDir: import("hyperval").Hyper<string, string>;
     dataDir: import("hyperval").Hyper<string, string>;
     channels: import("hyperval").HyperRecord<import("hyperval").Hyper<string, string>, import("hyperval").Hyper<string, string>>;
+    promiseLog: import("hyperval").HyperOptional<import("hyperval").Hyper<string, string>>;
 }>, schema_RequestOptions: import("hyperval").HyperObject<{
     version: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
     init: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;

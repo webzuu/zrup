@@ -2,14 +2,10 @@ import {Artifact} from "./artifact.js";
 
 export class Dependency
 {
-    private readonly $artifact : Artifact;
-    private readonly $whenAbsent;
-
-    constructor(artifact : Artifact, whenAbsent: Dependency.Absent)
-    {
-        this.$artifact = artifact;
-        this.$whenAbsent = ("undefined" === typeof whenAbsent) ? Dependency.Absent.Violation : whenAbsent;
-    }
+   constructor(
+        private readonly $artifact : Artifact,
+        private readonly $whenAbsent: Dependency.Absent = Dependency.Absent.Violation
+    ) {}
 
     get artifact() { return this.$artifact; }
     get whenAbsent() { return this.$whenAbsent; }
@@ -20,8 +16,8 @@ export class Dependency
 
 export namespace Dependency {
     export enum Absent {
-        Violation,
-        State
+        Violation       = Dependency.ABSENT_VIOLATION,
+        State           = Dependency.ABSENT_STATE
     }
 }
 

@@ -19,7 +19,7 @@ export declare class Job {
     outputs: Artifact[];
     dynamicOutputs: Artifact[];
     error: Error | null;
-    requestedBy: Job | null;
+    requestedBy: Set<Job>;
     dependencies: Dependency[];
     recordedDependencies: Dependency[];
     constructor(build: Build, rule: Rule);

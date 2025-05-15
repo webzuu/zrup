@@ -5,6 +5,7 @@ import { AID } from "../graph/artifact.js";
 import { FileArtifact } from "../graph/artifact/file.js";
 import { JobSet } from "./job-set.js";
 import { resolveArtifacts } from "../module.js";
+import { insist } from "../util/insist.js";
 /**
  *
  */
@@ -19,13 +20,13 @@ export class Job {
         this.outputs = [];
         this.dynamicOutputs = [];
         this.error = null;
-        this.requestedBy = null;
+        this.requestedBy = new Set();
         this.dependencies = [];
         this.recordedDependencies = [];
         this.verifyBuiltDependency = async (dependency) => {
-            const ruleKey = await this.build.getRuleKeyForArtifact(dependency.artifact);
+            const ruleKey = await insist(this.build.getRuleKeyForArtifact(dependency.artifact), `Get rule key for dependency ${dependency.artifact.identity} of ${this.rule.label}`);
             const rule = ruleKey ? this.build.graph.index.rule.key.get(ruleKey) : null;
-            if (!(await dependency.artifact.exists)) {
+            if (!(await insist(dependency.artifact.exists, `Check existence of ${dependency.artifact.identity}`))) {
                 if (rule) {
                     throw new BuildError(`${rule.identity} silently failed to build ${dependency.artifact.identity}`);
                 }
@@ -49,9 +50,9 @@ export class Job {
     }
     async guardedWork() {
         try {
-            await this.work();
+            await insist(this.work(), `Main build for ${this.rule.label}`);
             this.finished = true;
-            await this.also();
+            await insist(this.also(), `Also-jobs for ${this.rule.label}`);
             this.promise = null;
         }
         catch (e) {
@@ -74,10 +75,10 @@ export class Job {
      */
     async work() {
         this.prepare();
-        const spec = await this.recipeArtifact.spec;
-        await this.build.recordReliance(this.rule, this.recipeArtifact);
-        const jobSet = await this.getPrerequisiteJobSet();
-        await jobSet.run();
+        const spec = await insist(this.recipeArtifact.spec, `Redeem spec for ${this.rule.label}`);
+        await insist(this.build.recordReliance(this.rule, this.recipeArtifact), `Record reliance on recipe artifact for ${this.rule.label}`);
+        const jobSet = await insist(this.getPrerequisiteJobSet(), `Compute prerequisite job set for ${this.rule.label}`);
+        await insist(jobSet.run(), `Run prerequisite job set for ${this.rule.label}`);
         const mergedDependencies = this.getMergedDependencies();
         await Promise.all(mergedDependencies.map(this.verifyBuiltDependency));
         await Promise.all(mergedDependencies.map(async (dependency) => await this.build.recordReliance(this.rule, dependency.artifact)));
@@ -108,7 +109,7 @@ export class Job {
     async getPrerequisiteRuleKeysToDependencyType() {
         const result = {};
         const mergedDeps = this.getMergedDependencies();
-        const dependencyRuleKeys = (await Promise.all(mergedDeps.map(async (dep) => await this.build.getRuleKeyForArtifact(dep.artifact)))).filter((_) => null !== _);
+        const dependencyRuleKeys = (await Promise.all(mergedDeps.map(async (dep) => await insist(this.build.getRuleKeyForArtifact(dep.artifact), `Get rule key for artifact ${dep.artifact.identity} in ${this.rule.label}`)))).filter((_) => null !== _);
         const afterRuleKeys = Object.keys(this.rule.after || {});
         for (let ruleKey of dependencyRuleKeys)
             result[ruleKey] = "dependency";
@@ -121,11 +122,17 @@ export class Job {
      */
     async getPrerequisiteJobSet() {
         let jobSet = new JobSet();
-        const ruleKeysToDependencyType = await this.getPrerequisiteRuleKeysToDependencyType();
+        const ruleKeysToDependencyType = await insist(this.getPrerequisiteRuleKeysToDependencyType(), `Get map of prerequisite rule keys to dependency type for ${this.rule.label}`);
         for (let ruleKey of Object.keys(ruleKeysToDependencyType)) {
-            jobSet = jobSet.union(ruleKeysToDependencyType[ruleKey] === "dependency"
+            const incoming = ruleKeysToDependencyType[ruleKey] === "dependency"
                 ? this.build.getJobSetForRuleKey(ruleKey)
-                : new JobSet(this.build.requireJobForRuleKey(ruleKey)));
+                : new JobSet(this.build.requireJobForRuleKey(ruleKey));
+            jobSet = jobSet.union(incoming);
+            const added = incoming?.difference(jobSet);
+            for (let prereq of added?.jobs ?? []) {
+                prereq.requestedBy.add(this);
+                this.build.emit('requested.dependency', this.rule.dependencies[prereq.rule.key]);
+            }
         }
         return jobSet;
     }
@@ -165,7 +172,7 @@ export class Job {
     }
     //TODO: test this mechanism!
     async detectRewritesAfterUse() {
-        const rewritesAfterUse = ((await Promise.all(this.dynamicOutputs.map(output => this.detectRewriteAfterUse(output))))
+        const rewritesAfterUse = ((await Promise.all(this.dynamicOutputs.map(output => insist(this.detectRewriteAfterUse(output), `Detect rewrite after use for ${output.identity}`))))
             .filter(msg => msg !== null)
             .join("\n"));
         if (rewritesAfterUse.length > 0) {
