@@ -9,6 +9,7 @@ import EventEmitter from "events";
 import {Project} from "../project.js";
 import {ModuleBuilder} from "./module-builder.js";
 import {flattenResolvables, obtainArtifactReferenceFrom} from "../util/casts.js";
+import {DependencyCycle} from "../error/dependency-cycle.js";
 
 /**
  *
@@ -220,7 +221,68 @@ export class RuleBuilder extends EventEmitter
         this.indexRules();
         this.addRuleEdges(this.$afterEdges, 'addPrerequisiteRule');
         this.addRuleEdges(this.$alsoEdges, 'addAlsoRule');
+        this.validate();
     }
+
+    private validate()
+    {
+        type Node = {
+            artifact: Artifact,
+            color: string,
+            depth: number,
+            via?: Rule
+        }
+        type CycleNode = {
+            artifact: Artifact,
+            rule: Rule
+        }
+        type IdToNode = Map<string, Node>;
+        const nodes : IdToNode = new Map(this.artifactManager.allReferences.map(ref=> [
+            this.artifactManager.get(ref).identity,
+            {
+                artifact: this.artifactManager.get(ref),
+                color: 'white',
+                depth: 0
+            }
+        ]));
+
+        const check = (node: Node, path: Node[] = []) => {
+            node.depth = path.length;
+            path.push(node);
+            if (node.color === 'white') {
+                node.color = 'gray';
+                const ruleKey = this.project.graph.index.output.rule.get(node.artifact.key);
+                if (!ruleKey) { node.color = 'black'; return; }
+                const rule = this.project.graph.index.rule.key.get(ruleKey);
+                if (!rule) { node.color = 'black'; return; }
+                for (let dependency of Object.values(rule.dependencies)) {
+                    const artifact = dependency.artifact;
+                    const artifactNode = nodes.get(artifact.identity);
+                    if (!artifactNode) continue;
+                    artifactNode.via = rule;
+                    check(artifactNode, path);
+                }
+                node.color = 'black';
+            }
+            else if (node.color === 'gray') {
+                const cycle = path.slice(node.depth).map<CycleNode>(({artifact, via}) : CycleNode => {
+                    if (!via) {
+                        throw new Error('Internal error: cycle detection failed');
+                    }
+                    return {
+                        artifact, rule: via
+                    };
+                });
+                throw new DependencyCycle(cycle);
+            }
+        }
+        for (let node of nodes.values()) {
+            if (node.color === 'white') {
+                check(node);
+            }
+        }
+    }
+
 
     private defineRules() {
         for(let {rule, boundDefiner, module} of this.$declarations) {

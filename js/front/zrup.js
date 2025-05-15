@@ -12,7 +12,6 @@ import path from "path";
 import { Build } from "../build.js";
 import * as util from "util";
 import { Verbosity } from "./verbosity.js";
-import { DependencyCycle } from "../error/dependency-cycle.js";
 /***/
 export class Zrup {
     constructor(projectRoot, config, request) {
@@ -35,26 +34,6 @@ export class Zrup {
         let hadError = false;
         try {
             console.log("Loading graph");
-            this.$ruleBuilder.on('defined.rule', (module, rule) => {
-                const targets = new Set(Object.values(rule.outputs).map(artifact => artifact.identity));
-                const checked = new Set();
-                const cycle = [];
-                const check = (rule) => {
-                    if (!rule || checked.has(rule.identity))
-                        return true;
-                    checked.add(rule.identity);
-                    for (let [artifactKey, dependency] of Object.entries(rule.dependencies)) {
-                        const artifact = dependency.artifact;
-                        if (targets.has(artifact.identity) || !check(this.$project.graph.index.rule.key.get(this.$project.graph.index.output.rule.get(artifactKey) ?? ''))) {
-                            cycle.unshift({ rule, artifact });
-                            return false;
-                        }
-                    }
-                    return true;
-                };
-                if (!check(rule))
-                    throw new DependencyCycle(cycle);
-            });
             await this.$moduleBuilder.loadRootModule();
             this.$ruleBuilder.finalize();
             const build = new Build(this.$project.graph, this.$db, this.$artifactManager);

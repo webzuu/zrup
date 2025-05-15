@@ -215,6 +215,7 @@ declare class RuleBuilder extends EventEmitter {
     always: RuleBuilder.flagSetter;
     requireCurrentRule(bindingName: string): Rule;
     finalize(): void;
+    private validate;
     private defineRules;
     private indexRules;
     private addRuleEdges;
