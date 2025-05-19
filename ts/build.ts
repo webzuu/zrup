@@ -196,6 +196,7 @@ export class Build extends EventEmitter  {
                 ...depInfos.map(_ => _.dependency.artifact)
             ]);
             for (let outputInfo of outputInfos) {
+                this.db.retractTarget(outputInfo.output.key);
                 const outputVersion = outputInfo.version;
                 for (let depInfo of depInfos) {
                     this.db.record(
