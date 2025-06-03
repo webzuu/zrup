@@ -1,5 +1,7 @@
 import {AID, Artifact} from "../graph/artifact.js";
 import {Dependency} from "../graph/dependency.js";
+import inspect from "object-inspect";
+
 
 export function obtainArtifactReferenceFrom(resolvable : Artifact.Resolvable) : string {
     if ("string" === typeof resolvable) return resolvable;
@@ -7,7 +9,7 @@ export function obtainArtifactReferenceFrom(resolvable : Artifact.Resolvable) : 
     if (resolvable instanceof Dependency) return resolvable.artifact.identity;
     if (resolvable instanceof AID) return resolvable.toString();
     if (resolvable) return resolvable.artifact.identity;
-    throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
+    throw new Error(`Value ${inspect(resolvable)} passed to obtainArtifactReferenceFrom cannot be converted to artifact reference`);
 }
 
 export interface NodeJSError extends Error {
