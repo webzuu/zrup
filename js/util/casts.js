@@ -9,7 +9,7 @@ export function obtainArtifactReferenceFrom(resolvable) {
         return resolvable.artifact.identity;
     if (resolvable instanceof AID)
         return resolvable.toString();
-    if (null !== resolvable)
+    if (resolvable)
         return resolvable.artifact.identity;
     throw new Error("Object passed to obtainArtifactReferenceFrom cannot be converted to artifact reference");
 }
