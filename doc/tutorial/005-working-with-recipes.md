@@ -12,6 +12,8 @@ Topics covered:
 
 In zrup, a **Recipe** is an abstraction that defines how to execute a build step. While most rules use the convenient `to()` API which creates a CommandRecipe behind the scenes, understanding recipes directly gives you more control.
 
+**Key distinction:** A rule specifies *when* to do something (dependencies, outputs, conditions), and a recipe specifies *what* to do (the actual build action).
+
 ### The Recipe Interface
 
 Every recipe must implement two methods:

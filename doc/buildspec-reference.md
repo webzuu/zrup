@@ -44,6 +44,8 @@ The `include()` function:
 
 The parameter object passed to a module definer contains:
 
+**Key Concept:** Rules specify *when* to build (dependencies, outputs, conditions), and recipes specify *what* to do (the actual commands or actions).
+
 ### `module`
 Type: `Module`
 

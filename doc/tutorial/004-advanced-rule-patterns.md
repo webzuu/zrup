@@ -10,7 +10,7 @@ Topics covered:
 
 ## Rule Ordering: The `after()` Function
 
-Sometimes you need to ensure that one rule runs after another, even when there's no direct artifact dependency between them. This is where `after()` comes in:
+Sometimes you need to ensure that one rule is processed after another, even when there's no direct artifact dependency between them. This is where `after()` comes in:
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
@@ -41,7 +41,7 @@ after("otherModule+rule-name");
 
 ## Side-Effect Rules: The `also()` Function
 
-The `also()` function specifies that when the current rule is required, other rules should also be executed. Unlike `after()`, it doesn't specify order - the execution order is determined by actual dependencies:
+The `also()` function specifies that when the current rule is required, other rules should also be processed. Unlike `after()`, it doesn't specify order - the execution order is determined by actual dependencies:
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
@@ -60,7 +60,7 @@ export default test;
 ```
 
 Common use cases for `also()`:
-- Logging or reporting rules that should always run alongside main rules
+- Logging or reporting rules that should process alongside main rules
 - Cleanup or maintenance tasks
 - Verification steps
 
@@ -72,14 +72,14 @@ also("lint", "format-check", "security-scan");
 
 ## Always-Run Rules: The `always()` Function
 
-By default, zrup checks if a rule's outputs are up-to-date before running it. The `always()` function disables this check, forcing the rule to run every time it's required:
+By default, zrup checks if a rule's outputs are up-to-date before invoking its recipe. The `always()` function disables this check, forcing the recipe to run every time the rule is required:
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
 const deploy = async function deploy({to, always, depends, produces}) {
     
     to("deploy", ({T}) => {
-        always();  // Always deploy, never skip
+        always();  // Always run recipe, never skip
         depends('dist+bundle.js');
         return T`scp dist/bundle.js server:/var/www/ && touch ${produces('internal:deployed')}`;
     });
@@ -335,7 +335,7 @@ export default multistage;
 
 1. **Use `after()` sparingly**: Only when artifact dependencies don't capture the relationship. Prefer expressing dependencies through artifacts when possible.
 
-2. **Be careful with `always()`**: It breaks incremental builds. Document why a rule needs to always run.
+2. **Be careful with `always()`**: It breaks incremental builds. Document why a recipe needs to always run.
 
 3. **Prefer artifact dependencies over rule dependencies**: Instead of:
    ```javascript
@@ -356,9 +356,9 @@ export default multistage;
 
 ## Summary
 
-- **`after()`**: Enforces rule execution order without artifact dependencies
-- **`also()`**: Specifies side-effect rules that should run alongside the current rule
-- **`always()`**: Forces a rule to run every time, bypassing up-to-date checks
+- **`after()`**: Enforces rule processing order without artifact dependencies
+- **`also()`**: Specifies side-effect rules that should be processed alongside the current rule
+- **`always()`**: Forces a recipe to run every time, bypassing up-to-date checks
 - **`cwd`**: Changes the working directory for command execution
 - **`out`, `err`, `combined`**: Redirect command output to artifact files
 - **`args`**: Construct complex command-line arguments programmatically

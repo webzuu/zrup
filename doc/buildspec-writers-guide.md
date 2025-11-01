@@ -70,9 +70,12 @@ A **rule** defines how to build one or more artifacts. Rules specify:
 - What they depend on (inputs)
 - How to build (recipe)
 
+**A rule specifies *when* to do something, and a recipe specifies *what* to do.**
+
 **Key points:**
-- Rules are triggered when their outputs are requested
-- Up-to-date checks prevent unnecessary rebuilds
+- Rules are processed when their outputs are requested
+- The rule's recipe is invoked only if outputs are out-of-date
+- Up-to-date checks determine whether the recipe needs to run
 - Rules can depend on other rules through artifacts
 
 ### 3. Artifacts
@@ -459,9 +462,9 @@ depends("src+input.txt")  // Module-scoped
 depends("internal:input") // Channel-scoped
 ```
 
-#### 2. Rule Never Runs
+#### 2. Recipe Never Runs
 
-**Problem:** Rule never executes even when building its target
+**Problem:** Recipe never executes even when building its target
 
 **Solution:** Ensure the target is actually produced:
 ```javascript

@@ -77,7 +77,7 @@ Examples:
 
 ### The `depends()` Function
 
-Mark artifacts as dependencies of the current rule. The rule will only execute if its dependencies are up-to-date:
+Mark artifacts as dependencies of the current rule. The rule is processed when its targets are requested, and the recipe runs if dependencies have changed:
 
 ```javascript
 to("copy", ({T}) => 
@@ -103,7 +103,7 @@ depends(...inputs);
 
 ### The `produces()` Function
 
-Mark artifacts as outputs of the current rule. When these artifacts are requested, zrup will execute the rule to produce them:
+Mark artifacts as outputs of the current rule. When these artifacts are requested, zrup will process the rule and invoke its recipe to produce them:
 
 ```javascript
 to("build", ({T}) => 
