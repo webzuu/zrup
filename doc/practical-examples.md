@@ -145,12 +145,11 @@ export default api;
 ```javascript
 // packages/web/.zrup.mjs
 /** @type {ModuleBuilder.definer} */
-const web = async function web({to, depends, produces, resolve, T}) {
+const web = async function web({to, depends, produces, T}) {
     
     to("build", () => {
         depends("internal:shared+built");
         return {
-            cwd: resolve("."),
             cmd: "npm run build",
             out: produces("internal:build-log.txt")
         };
@@ -287,7 +286,7 @@ Webpack/Vite build with asset optimization.
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
-const frontend = async function frontend({to, always, depends, produces, resolve, T}) {
+const frontend = async function frontend({to, always, depends, produces, T}) {
     
     // Install dependencies
     to("install", () => {
@@ -312,7 +311,6 @@ const frontend = async function frontend({to, always, depends, produces, resolve
     to("build-dev", () => {
         depends("internal:source-fp");
         return {
-            cwd: resolve("."),
             cmd: "npm run build:dev",
             out: produces("internal:build-dev-log.txt")
         };
@@ -322,7 +320,6 @@ const frontend = async function frontend({to, always, depends, produces, resolve
     to("build-prod", () => {
         depends("internal:source-fp");
         return {
-            cwd: resolve("."),
             cmd: "npm run build:prod",
             out: produces("internal:build-prod-log.txt")
         };

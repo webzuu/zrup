@@ -122,13 +122,14 @@ to("compile", ({T}) => {
 
 ### The `resolve()` Function
 
-Sometimes you need to resolve an artifact reference to an actual path without marking it as a dependency or output. This is where `resolve()` comes in:
+Sometimes you need to get the resolved path of an artifact to parse it or extract parts from it. This is where `resolve()` comes in. This should be rare in well-designed buildspecs.
 
 ```javascript
-to("list-files", ({T}) => ({
-    cwd: resolve("."),  // Resolve current module directory
-    cmd: T`ls -la > ${produces("files.txt")}`
-}));
+to("extract-info", ({T}) => {
+    const buildPath = resolve("internal:built")[0].toString();
+    const parentDir = require('path').dirname(buildPath);
+    return T`./scripts/process.sh ${parentDir} > ${produces("info.txt")}`;
+});
 ```
 
 The `resolve()` function returns an array of resolved paths or artifact information. When used with a single artifact, you typically want the first element:
@@ -230,7 +231,7 @@ export default process;
 
 4. **Use `tmp:` for ephemeral artifacts**: Temporary files that don't need to persist can use the `tmp:` channel.
 
-5. **Minimize use of `resolve()`**: Prefer `depends()` and `produces()` which automatically handle artifact resolution and track dependencies. Use `resolve()` only when you truly need a path without dependency tracking (e.g., for `cwd` settings).
+5. **Minimize use of `resolve()`**: Prefer `depends()` and `produces()` which automatically handle artifact resolution and track dependencies. Use `resolve()` only when you need to parse the resolved path and extract information from it - this should be rare in well-designed buildspecs.
 
 6. **Choose meaningful artifact names**: Use descriptive names that make the build graph easier to understand:
    ```javascript

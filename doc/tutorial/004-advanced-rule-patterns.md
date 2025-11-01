@@ -113,10 +113,10 @@ By default, commands run in the current module's directory. Use the `cwd` proper
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
-const npm = async function npm({to, depends, produces, resolve}) {
+const npm = async function npm({to, depends, produces}) {
     
     to("install", ({T}) => ({
-        cwd: resolve("..")[0].toString(),  // Run in parent directory
+        cwd: "..",  // Run in parent directory
         cmd: T`npm install && touch ${produces('internal:npm-installed')}`
     }));
     
@@ -124,14 +124,19 @@ const npm = async function npm({to, depends, produces, resolve}) {
         cwd: "frontend",  // Relative to module directory
         cmd: T`npm run build && cp dist/bundle.js ${produces('../bundle.js')}`
     }));
+    
+    to("build-in-root", ({T}) => ({
+        cwd: "zrup+",  // Run in root module directory
+        cmd: T`./scripts/build-all.sh && touch ${produces('internal:all-built')}`
+    }));
 }
 export default npm;
 ```
 
 The `cwd` can be:
-- A string path (relative to module directory)
-- An artifact reference resolved with `resolve()`
-- A module reference like `resolve("otherModule+.")[0].toString()`
+- A string path (relative to module directory): `"subdir"`, `".."`
+- An artifact reference string: `"zrup+"`, `"otherModule+"`
+- An artifact identifier: `"module+path"`
 
 ## Output Redirection
 
@@ -240,7 +245,7 @@ args: [
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
-const pipeline = async function pipeline({to, after, also, depends, produces, resolve}) {
+const pipeline = async function pipeline({to, after, also, depends, produces}) {
     
     // Lint source code
     to("lint", ({T}) => 
@@ -252,7 +257,6 @@ const pipeline = async function pipeline({to, after, also, depends, produces, re
         also("lint");  // Always lint when compiling
         depends("internal:source-fp");
         return {
-            cwd: resolve("."),
             cmd: "tsc",
             args: T`--project tsconfig.json`,
             out: produces("internal:compile-log.txt")
@@ -302,7 +306,7 @@ export default conditional;
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
-const multistage = async function multistage({to, depends, produces, resolve}) {
+const multistage = async function multistage({to, depends, produces}) {
     
     // Stage 1: Build in frontend directory
     to("build-frontend", ({T}) => ({
@@ -322,7 +326,7 @@ const multistage = async function multistage({to, depends, produces, resolve}) {
     to("package", ({T}) => {
         depends('internal:frontend-built', 'internal:backend-built');
         return {
-            cwd: resolve("."),
+            cwd: ".",
             cmd: "./scripts/package.sh",
             out: produces("package.tar.gz")
         };
