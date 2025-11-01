@@ -31,6 +31,9 @@ Start here if you're new to zrup:
 - **[Buildspec Writer's Guide](buildspec-writers-guide.md)**  
   Comprehensive guide covering core concepts, best practices, debugging techniques, and advanced topics.
 
+- **[Practical Examples](practical-examples.md)**  
+  Real-world buildspec examples: TypeScript projects, monorepos, C++ builds, Docker, frontend apps, databases, code generation, deployments, and more.
+
 ### By Topic
 
 #### Module Organization
@@ -114,6 +117,21 @@ Quick links to common buildspec patterns:
 - [Multi-stage pipeline](tutorial/004-advanced-rule-patterns.md#example-1-complex-build-pipeline)
 - [Build with different working directories](tutorial/004-advanced-rule-patterns.md#example-3-multi-stage-build-with-different-working-directories)
 - [Error handling with retries](buildspec-writers-guide.md#handle-errors-gracefully)
+
+## Real-World Examples
+
+See **[Practical Examples](practical-examples.md)** for complete real-world buildspecs:
+
+- TypeScript + Node.js project
+- Monorepo with multiple packages
+- C/C++ project with CMake
+- Docker multi-stage builds
+- Frontend build with asset processing
+- Database migrations
+- Code generation workflows
+- Multi-environment deployments
+- Testing at scale
+- Documentation generation
 
 ## Getting Help
 
