@@ -164,11 +164,13 @@ also("lint", "format-check");
 ### `always([value])`
 Type: `(value?: boolean) => void`
 
-Mark the rule as always-run (never skip due to up-to-date check).
+Disable up-to-date checking for the rule. When `always()` is used, the recipe is invoked whenever the rule is processed (i.e., when any of its outputs is requested). This effectively replaces the up-to-date check with `() => false`.
+
+Typically used for rules that observe external state (APIs, databases, filesystems outside the build) where zrup cannot track changes. These rules often don't declare dependencies.
 
 ```javascript
-always();      // Always run
-always(true);  // Always run
+always();      // Recipe always runs when rule is processed
+always(true);  // Recipe always runs when rule is processed
 always(false); // Normal up-to-date checking
 ```
 
@@ -545,12 +547,17 @@ to("build", ({T}) => {
 });
 ```
 
-### Clean Rules
+### Fingerprinting
 
 ```javascript
-to("clean", ({T}) => {
+to("fingerprint", ({T}) => {
     always();
-    return T`rm -rf build dist && mkdir -p build dist && touch ${produces('internal:clean')}`;
+    return T`find src -type f -name "*.ts" | xargs md5sum > ${produces('internal:fp')}`;
+});
+
+to("build", ({T}) => {
+    depends("internal:fp");
+    return T`tsc && touch ${produces('internal:built')}`;
 });
 ```
 

@@ -72,31 +72,38 @@ also("lint", "format-check", "security-scan");
 
 ## Always-Run Rules: The `always()` Function
 
-By default, zrup checks if a rule's outputs are up-to-date before invoking its recipe. The `always()` function disables this check, forcing the recipe to run every time the rule is required:
+The `always()` function modifies how a rule's up-to-date check works. When `always()` is used, the recipe is always invoked whenever the rule is processed (i.e., when any of its outputs is requested), effectively replacing the up-to-date checking logic with `() => false`.
+
+**Key points:**
+- `always()` doesn't cause the rule to always be processed
+- It only ensures the recipe runs whenever the rule IS processed
+- Typically used for rules that observe external state
+- These rules often don't declare dependencies
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
-const deploy = async function deploy({to, always, depends, produces}) {
+const monitor = async function monitor({to, always, produces}) {
     
-    to("deploy", ({T}) => {
-        always();  // Always run recipe, never skip
-        depends('dist+bundle.js');
-        return T`scp dist/bundle.js server:/var/www/ && touch ${produces('internal:deployed')}`;
+    // Check external API status - no dependencies needed
+    to("check-api", ({T}) => {
+        always();  // Recipe runs whenever this target is requested
+        return T`curl -f https://api.example.com/health > ${produces('api-status.txt')}`;
     });
     
+    // Generate timestamp - always fresh
     to("timestamp", ({T}) => {
-        always();  // Always update timestamp
+        always();
         return T`date > ${produces('build-time.txt')}`;
     });
 }
-export default deploy;
+export default monitor;
 ```
 
 Use `always()` for:
-- Rules that check external state (network, databases)
+- Rules that observe external state (network, databases, APIs)
+- Checking conditions outside the build system
 - Timestamp or metadata generation
 - Rules with non-deterministic outputs
-- Deployment or publishing tasks
 
 **Note**: Use `always()` sparingly as it bypasses zrup's incremental build optimization.
 
@@ -229,22 +236,21 @@ args: [
 
 ## Practical Examples
 
-### Example 1: Complex Build Pipeline
+### Example 1: Multi-Stage Build Pipeline
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
 const pipeline = async function pipeline({to, after, also, depends, produces, resolve}) {
     
-    // Setup
-    to("clean", ({T}) => {
-        always();
-        return T`rm -rf build && mkdir -p build && touch ${produces('internal:clean')}`;
-    });
+    // Lint source code
+    to("lint", ({T}) => 
+        T`eslint src/ > ${produces('lint-results.txt')}`
+    );
     
-    // Compile (must be after clean)
+    // Compile TypeScript
     to("compile", ({T}) => {
-        after("clean");
         also("lint");  // Always lint when compiling
+        depends("internal:source-fp");
         return {
             cwd: resolve("."),
             cmd: "tsc",
@@ -252,11 +258,6 @@ const pipeline = async function pipeline({to, after, also, depends, produces, re
             out: produces("internal:compile-log.txt")
         };
     });
-    
-    // Lint (runs in parallel with compile if also() triggers it)
-    to("lint", ({T}) => 
-        T`eslint src/ > ${produces('lint-results.txt')}`
-    );
     
     // Test (after compile)
     to("test", ({T}) => {
@@ -276,23 +277,22 @@ const pipeline = async function pipeline({to, after, also, depends, produces, re
 export default pipeline;
 ```
 
-### Example 2: Conditional Execution Pattern
+### Example 2: Observing External State
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
-const conditional = async function conditional({to, depends, produces}) {
+const conditional = async function conditional({to, always, depends, produces}) {
     
-    // Check if rebuild is needed
-    to("check-need-rebuild", ({T}) => {
-        always();  // Always check
-        return T`./scripts/check-rebuild.sh > ${produces('internal:rebuild-needed')}`;
+    // Check if external database schema changed
+    to("check-schema", ({T}) => {
+        always();  // Always check external state
+        return T`./scripts/check-db-schema.sh > ${produces('internal:schema-check')}`;
     });
     
-    // Rebuild only runs after check
-    to("rebuild", ({T}) => {
-        after("check-need-rebuild");
-        depends('internal:rebuild-needed');
-        return T`make clean && make all && touch ${produces('internal:rebuilt')}`;
+    // Regenerate code only if schema changed
+    to("generate-models", ({T}) => {
+        depends('internal:schema-check');
+        return T`./scripts/generate-models.sh && touch ${produces('internal:models-generated')}`;
     });
 }
 export default conditional;
@@ -335,7 +335,7 @@ export default multistage;
 
 1. **Use `after()` sparingly**: Only when artifact dependencies don't capture the relationship. Prefer expressing dependencies through artifacts when possible.
 
-2. **Be careful with `always()`**: It breaks incremental builds. Document why a recipe needs to always run.
+2. **Be careful with `always()`**: Use it only for observing external state. Recipes with `always()` should typically not have dependencies, as they're meant to check conditions outside the build graph.
 
 3. **Prefer artifact dependencies over rule dependencies**: Instead of:
    ```javascript
@@ -352,13 +352,15 @@ export default multistage;
 
 6. **Choose appropriate output redirection**: Use `out` for data, `err` for errors, `combined` when you need both in sequence.
 
-7. **Document complex patterns**: When using `after()`, `also()`, and `always()` together, add comments explaining the intended behavior.
+7. **Avoid stateful pipelines**: Zrup is designed to make incremental builds reliable. Don't create rules that delete dependencies or require explicit "clean" steps.
+
+8. **Document complex patterns**: When using `after()`, `also()`, and `always()` together, add comments explaining the intended behavior.
 
 ## Summary
 
 - **`after()`**: Enforces rule processing order without artifact dependencies
 - **`also()`**: Specifies side-effect rules that should be processed alongside the current rule
-- **`always()`**: Forces a recipe to run every time, bypassing up-to-date checks
+- **`always()`**: Disables up-to-date checking, ensuring the recipe runs whenever the rule is processed (typically for observing external state)
 - **`cwd`**: Changes the working directory for command execution
 - **`out`, `err`, `combined`**: Redirect command output to artifact files
 - **`args`**: Construct complex command-line arguments programmatically

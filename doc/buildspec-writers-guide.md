@@ -323,7 +323,7 @@ const stages = async function stages({to, after, also, depends, produces, T}) {
     // Stage 5: Deploy (after package)
     to("deploy", () => {
         after("package");
-        always();  // Always deploy
+        depends('internal:packaged');
         return T`./scripts/deploy.sh && touch ${produces('internal:deployed')}`;
     });
 }
@@ -402,7 +402,7 @@ export default robust;
 **Don't:**
 - Create rules that do too much
 - Use `after()` when artifact dependencies suffice
-- Overuse `always()` - it breaks incremental builds
+- Overuse `always()` - use it only for observing external state
 
 ### 3. Artifact Management
 
@@ -440,7 +440,7 @@ export default robust;
 - Profile build times and optimize bottlenecks
 
 **Don't:**
-- Use `always()` on expensive rules
+- Use `always()` on expensive rules (use it only for observing external state)
 - Create unnecessary intermediate artifacts
 - Over-specify dependencies (creates serialization)
 
@@ -483,15 +483,15 @@ to("build", ({T}) =>
 
 **Problem:** Everything rebuilds every time
 
-**Solution:** Check for `always()` or missing dependencies:
+**Solution:** Check for unnecessary `always()` or missing dependencies:
 ```javascript
-// Wrong
+// Wrong - using always() when not needed
 to("compile", ({T}) => {
-    always();  // Oops!
+    always();  // Oops! Only use for external state observation
     return T`tsc > ${produces('internal:compiled')}`;
 });
 
-// Right
+// Right - use proper dependencies
 to("compile", ({T}) => {
     depends('internal:source-fp');  // Only rebuild when sources change
     return T`tsc > ${produces('internal:compiled')}`;

@@ -431,11 +431,8 @@ export default codegen;
 Deploying to different environments with proper staging.
 
 ```javascript
-import {DelayedRecipe} from "./js/build/recipe/delayed.js";
-import {CommandRecipe} from "./js/build/recipe/command.js";
-
 /** @type {ModuleBuilder.definer} */
-const deploy = async function deploy({rule, to, always, after, depends, produces, T}) {
+const deploy = async function deploy({to, after, depends, produces, T}) {
     
     // Build production bundle
     to("build-bundle", () => {
@@ -445,37 +442,25 @@ const deploy = async function deploy({rule, to, always, after, depends, produces
     
     // Deploy to staging
     to("deploy-staging", () => {
-        always();
         depends("internal:bundle-built");
         return T`./scripts/deploy.sh staging && echo "deployed" > ${produces('internal:deployed-staging')}`;
     });
     
     // Run smoke tests on staging
     to("smoke-test-staging", () => {
-        always();
-        after("deploy-staging");
+        depends("internal:deployed-staging");
         return T`./scripts/smoke-test.sh staging > ${produces('staging-smoke-test.txt')}`;
     });
     
-    // Deploy to production (delayed by 5 minutes)
-    rule(function deployProduction() {
-        always();
+    // Deploy to production
+    to("deploy-production", () => {
         depends("staging-smoke-test.txt");
-        
-        const deployRecipe = new CommandRecipe(({exec, args, combined}) => {
-            exec("./scripts/deploy.sh");
-            args("production");
-            combined(produces("production-deploy.log"));
-        });
-        
-        // 5 minute delay before production deployment
-        return new DelayedRecipe(deployRecipe, 300000);
+        return T`./scripts/deploy.sh production && echo "deployed" > ${produces('internal:deployed-production')}`;
     });
     
     // Smoke test production
     to("smoke-test-production", () => {
-        always();
-        after("deployProduction");
+        depends("internal:deployed-production");
         return T`./scripts/smoke-test.sh production > ${produces('production-smoke-test.txt')}`;
     });
 }
