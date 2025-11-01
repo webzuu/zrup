@@ -114,11 +114,12 @@ to("build", ({T}) =>
 Multiple outputs are also supported:
 
 ```javascript
-to("compile", ({T}) => {
-    produces("output.o", "output.d");
-    return T`gcc -c -MMD ${depends("source.c")} -o output.o`;
-});
+to("compile", ({T}) => 
+    T`gcc -c -MMD ${depends("source.c")} -o ${produces("output.o")}`
+);
 ```
+
+Note: When declaring multiple outputs, you can use `produces()` inline in the command if the tool accepts absolute paths, or call it separately if you need to track the outputs in the rule definition.
 
 ### The `resolve()` Function
 
