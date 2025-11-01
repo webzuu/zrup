@@ -136,9 +136,11 @@ Sometimes you need to get the resolved path of an artifact to parse it or extrac
 to("extract-info", ({T}) => {
     const buildPath = resolve("internal:built")[0].toString();
     const parentDir = require('path').dirname(buildPath);
-    return T`./scripts/process.sh ${parentDir} > ${produces("info.txt")}`;
+    return T`./scripts/process.sh #${parentDir} > ${produces("info.txt")}`;
 });
 ```
+
+**Note:** Inside the `T` template tag, use `#${variable}` to escape variables that should NOT be interpreted as artifact references. Without the `#` prefix, `${parentDir}` would be treated as an AID string and double-resolved.
 
 The `resolve()` function returns an array of resolved paths or artifact information. When used with a single artifact, you typically want the first element:
 
