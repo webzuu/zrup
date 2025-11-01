@@ -75,6 +75,10 @@ Examples:
 
 ## Using Artifacts in Rules
 
+**Important:** The functions `depends()`, `produces()`, `after()`, `also()`, and `always()` can **only** be used within rule definer callbacks (the functions passed to `to()` or `rule()`). This is because they operate on the current rule, which is only known inside the rule definer. While these functions can be destructured from the module definer params at the module level for convenience, they must be called inside rule definers.
+
+The `resolve()` function does not have this restriction - it can be used anywhere within the module definer.
+
 ### The `depends()` Function
 
 Mark artifacts as dependencies of the current rule. The rule is processed when its targets are requested, and the recipe runs if dependencies have changed:
