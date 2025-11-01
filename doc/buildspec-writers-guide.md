@@ -177,13 +177,14 @@ export default frontend;
 
 ### Use Channels Effectively
 
-Channels organize artifacts that don't belong to specific modules:
+Channels organize artifacts using parallel directory trees that mirror your project structure:
 
 ```javascript
 /** @type {ModuleBuilder.definer} */
 const build = async function build({to, depends, produces, T}) {
     
-    // Track source changes
+    // Track source changes in internal channel
+    // This creates: .zrup/channels/internal/<module-path>/source-fp
     to("source-fingerprint", () => {
         always();
         return T`find src -name "*.ts" | xargs md5sum > ${produces('internal:source-fp')}`;
@@ -195,7 +196,8 @@ const build = async function build({to, depends, produces, T}) {
         return T`tsc && touch ${produces('internal:compiled')}`;
     });
     
-    // Test with temporary test data
+    // Test with temporary test data in tmp channel
+    // This creates: .zrup/channels/tmp/<module-path>/test-data
     to("test", () => {
         depends('internal:compiled');
         return T`./scripts/generate-test-data.sh > ${produces('tmp:test-data')} &&
@@ -402,15 +404,16 @@ export default robust;
 ### 3. Artifact Management
 
 **Do:**
-- Use channels for cross-cutting artifacts
-- Choose meaningful artifact names
-- Use `internal:` for persistent state
+- Understand that all artifacts use channels (default is `file:`)
+- Use `internal:` for persistent build state (creates parallel tree under `.zrup/channels/internal/`)
 - Use `tmp:` for temporary files
+- Use module-scoped channel references: `internal:module+artifact` works and preserves hierarchy
+- Choose meaningful artifact names
 
 **Don't:**
-- Pollute module directories with build artifacts
+- Forget that channels mirror your project structure
 - Use unclear artifact names
-- Mix concerns (put different types in different channels)
+- Put unrelated artifacts in the same location
 
 ### 4. Command Construction
 

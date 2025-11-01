@@ -304,10 +304,24 @@ Redirect both stdout and stderr to this artifact.
 
 ## Artifact References
 
+### Understanding Channels
+
+**Every artifact in zrup uses a channel.** Channels define where artifacts are stored:
+
+- **`file:`** (implicit default) - Maps directly to your source tree
+- **Other channels** (e.g., `internal:`, `tmp:`) - Create parallel directory trees under `.zrup/channels/<channel>/` that mirror your project structure
+
+For example:
+- `output.txt` → Uses `file:` channel → `<module-path>/output.txt`
+- `internal:output.txt` → Uses `internal:` channel → `.zrup/channels/internal/<module-path>/output.txt`
+- `internal:cloud+built` → Uses `internal:` channel → `.zrup/channels/internal/<path-to-cloud-module>/built`
+
+Channels preserve module hierarchy, so artifacts from different modules don't collide.
+
 ### Formats
 
 #### Simple Path
-Relative to current module directory:
+Relative to current module directory (uses implicit `file:` channel):
 ```javascript
 "output.txt"
 "dist/bundle.js"
@@ -315,24 +329,25 @@ Relative to current module directory:
 ```
 
 #### Module-Scoped
-Reference files in other modules:
+Reference files in other modules (uses implicit `file:` channel):
 ```javascript
 "moduleName+file.txt"
 "frontend+dist/bundle.js"
 ```
 
 #### Channel-Scoped
-Reference artifacts in channels:
+Reference artifacts in specific channels:
 ```javascript
-"internal:build-state"
-"tmp:intermediate-file"
+"internal:build-state"              // Current module, internal channel
+"internal:cloud+built"              // cloud module, internal channel
+"tmp:intermediate-file"             // Current module, tmp channel
 ```
 
 #### Fully Qualified
-Combine type, module, and path:
+Combine type, channel, module, and path:
 ```javascript
-"file:src+input.txt"
-"file:internal:compiled"
+"file:src+input.txt"                // Explicit file channel
+"internal:frontend+compiled"        // Internal channel, frontend module
 ```
 
 ### Special References

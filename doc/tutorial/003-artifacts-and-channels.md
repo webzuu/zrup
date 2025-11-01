@@ -33,16 +33,22 @@ The module name is the one defined in the module's definer function.
 
 ### Channel References
 
-Channels are special namespaces for artifacts that don't belong to any particular module. They are useful for intermediate build artifacts, temporary files, or cross-cutting concerns. The format is `channel:artifact-name`:
+**Every artifact in zrup uses a channel.** The default channel is `file:`, which maps directly to your source tree. Other channels create parallel directory trees under `.zrup/channels/<channel>` that mirror your project's structure.
+
+When you use a channel, artifacts are stored in paths that preserve the module hierarchy. For example, `internal:cloud+built` resolves to `<project-root>/.zrup/channels/internal/<path-to-cloud-module>/built`.
+
+The format is `channel:artifact-name` or `channel:module+path`:
 
 ```javascript
-produces("internal:compiled")   // Internal channel artifact
-produces("tmp:cache-file")      // Temporary channel artifact
+produces("internal:compiled")      // Internal channel, current module
+produces("internal:cloud+built")   // Internal channel, cloud module
+produces("tmp:cache-file")         // Temporary channel artifact
 ```
 
 Common channels:
-- **internal**: For build artifacts that persist across builds and are part of the build graph
-- **tmp**: For temporary artifacts that can be cleaned up
+- **file** (implicit default): Maps to your source tree
+- **internal**: For build artifacts that persist across builds, stored in parallel tree under `.zrup/channels/internal/`
+- **tmp**: For temporary artifacts that can be cleaned up, stored under `.zrup/channels/tmp/`
 
 Channels are configured in `.zrup.json`:
 
@@ -216,24 +222,29 @@ export default process;
 
 ## Best Practices
 
-1. **Use channels for intermediate artifacts**: When an artifact is used across modules or is purely a build byproduct, use the `internal:` channel.
+1. **Understand channel mapping**: Remember that channels create parallel directory trees. `internal:cloud+state` maps to `.zrup/channels/internal/<path-to-cloud-module>/state`, preserving the module hierarchy.
 
-2. **Use module-scoped references for module-owned files**: Files that logically belong to a module should use simple paths or module-scoped references.
+2. **Use `internal:` for persistent build state**: Build artifacts that need to persist across builds and track changes should use the `internal:` channel.
 
-3. **Minimize use of `resolve()`**: Prefer `depends()` and `produces()` which automatically handle artifact resolution and track dependencies. Use `resolve()` only when you truly need a path without dependency tracking (e.g., for `cwd` settings).
+3. **Use `file:` (implicit) for source and final outputs**: Keep actual source files and final build outputs in the default `file:` channel (your source tree).
 
-4. **Choose meaningful artifact names**: Especially for channel artifacts, use descriptive names that make the build graph easier to understand:
+4. **Use `tmp:` for ephemeral artifacts**: Temporary files that don't need to persist can use the `tmp:` channel.
+
+5. **Minimize use of `resolve()`**: Prefer `depends()` and `produces()` which automatically handle artifact resolution and track dependencies. Use `resolve()` only when you truly need a path without dependency tracking (e.g., for `cwd` settings).
+
+6. **Choose meaningful artifact names**: Use descriptive names that make the build graph easier to understand:
    ```javascript
    produces('internal:typescript-compiled')  // Good
    produces('internal:tsc')                  // Less clear
    ```
 
-5. **Use tmp channel for truly temporary artifacts**: If an artifact is only needed during a single build and doesn't need to be tracked across builds, use the `tmp:` channel.
+7. **Module-scoped channel references work**: You can reference artifacts in other modules within non-file channels: `internal:frontend+built` is valid and resolves to the internal channel's parallel tree.
 
 ## Summary
 
 - **AIDs** uniquely identify artifacts in various formats: simple paths, module-scoped (`module+path`), or channel-scoped (`channel:name`)
-- **Channels** provide namespaces for artifacts that don't belong to specific modules
+- **Channels** are parallel directory trees for different types of artifacts; every artifact uses a channel (default is `file:`)
+- Non-`file:` channels mirror your project structure under `.zrup/channels/<channel>/`
 - **`depends()`** marks inputs and creates dependency edges in the build graph
 - **`produces()`** marks outputs and makes artifacts buildable
 - **`resolve()`** converts artifact references to paths without creating dependencies
