@@ -41,6 +41,8 @@ The parameters object passed to the module definer contains several properties, 
 
 There are several ways to define rules. The most convenient is the `to()` function provided by the module definer parameters object. This function takes a name string, and a callback function that returns a specification object. We will call this function a rule definer.
 
+**Important:** A rule specifies *when* to do something (dependencies, outputs, ordering), and a recipe specifies *what* to do (the actual command or build action).
+
 ```javascript
 /** @type {ModuleBuilder~definer} */
 const hello = async function hello({to})
