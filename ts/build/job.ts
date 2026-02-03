@@ -53,7 +53,7 @@ export class Job  {
         try {
             await insist(this.work(),`Main build for ${this.rule.label}`);
             this.finished = true;
-            await insist (this.also(), `Also-jobs for ${this.rule.label}`);
+            await insist(this.also(), `Also-jobs for ${this.rule.label}`);
             this.promise = null;
         }
         catch(e) {
