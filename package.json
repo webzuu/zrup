@@ -1,6 +1,6 @@
 {
   "name": "zrup",
-  "version": "0.20.4",
+  "version": "0.20.5",
   "description": "Build system experiment",
   "main": "js/front/runner.js",
   "typings": "./dist/zrup.d.ts",
@@ -71,5 +71,9 @@
   },
   "trustedDependencies": [
     "better-sqlite3"
-  ]
+  ],
+  "overrides": {
+    "blake3-wasm": "^3.0.0",
+    "@c4312/blake3-internal": "^3.0.0"
+  }
 }
