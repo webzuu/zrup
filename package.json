@@ -1,6 +1,6 @@
 {
   "name": "zrup",
-  "version": "0.20.3",
+  "version": "0.20.4",
   "description": "Build system experiment",
   "main": "js/front/runner.js",
   "typings": "./dist/zrup.d.ts",
@@ -12,7 +12,7 @@
   "dependencies": {
     "better-path-resolve": "^1.0.0",
     "better-sqlite3": "^11.0.0",
-    "blake3": "^2.1.7",
+    "blake3": "^3.0.0",
     "blessed": "^0.1.81",
     "commander": "^13.1",
     "ducktype": "^1.2.2",
@@ -64,14 +64,12 @@
     "dsl": "node js/tools/make-dsl-defs/make-dsl-defs.js > dist/dsl.d.ts",
     "docs": "rm -rf doc/td/* && typedoc --tsconfig ./tsconfig.json --gitRevision wip --out doc/td ts/",
     "build": "tsc && cp src/util/testing.js js/util/testing.js && bun run dsl",
-    "build-all": "tsc && bun run docs && bun run dsl",
-    "postinstall": "node postinstall.cjs"
+    "build-all": "tsc && bun run docs && bun run dsl"
   },
   "bin": {
     "zrup": "js/front/runner.js"
   },
   "trustedDependencies": [
-    "better-sqlite3",
-    "blake3"
+    "better-sqlite3"
   ]
 }
