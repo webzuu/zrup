@@ -2,36 +2,56 @@ import EventEmitter from "events";
 import { BuildError } from "./build/error.js";
 import { JobSet } from "./build/job-set.js";
 import { Job } from "./build/job.js";
+import { Artifact } from "./graph/artifact.js";
 import throwThe from "./util/throw-error.js";
 /**
  * Class that manages transient information necessary to fulfill a particular build request.
  */
 export class Build extends EventEmitter {
-    constructor(graph, db, artifactManager) {
+    constructor(graph, db, artifactManager, hashService) {
         super();
         this.graph = graph;
         this.db = db;
         this.artifactManager = artifactManager;
+        this.hashService = hashService;
         this.$whichRulesReliedOnArtifactVersion = {};
         this.$whichArtifactVersionDidRuleRelyOn = {};
+        this.$triplesNeedingMigration = [];
         this.getRecordedVersionInfo = async (output) => {
             const nonresult = {
                 target: output.key,
                 version: null,
-                sourceVersions: {}
+                targetAlgorithm: null,
+                sourceVersions: {},
+                sourceAlgorithms: {}
             };
             if (!(await output.exists))
                 return nonresult;
-            const version = await output.version;
-            const versionSourcesResult = this.db.listVersionSources(output.key, version);
+            // Get ALL recorded versions for this target (not filtered by version yet)
+            const allVersions = this.db.listVersions(output.key);
+            const firstVersion = allVersions[0];
+            if (!firstVersion)
+                return nonresult;
+            // Use the first recorded version (typically there's only one)
+            const recordedVersion = firstVersion.version;
+            const versionSourcesResult = this.db.listVersionSources(output.key, recordedVersion);
             const sourceVersions = {};
+            const sourceAlgorithms = {};
+            let targetAlgorithm = null;
             for (let row of versionSourcesResult) {
                 sourceVersions[row.source] = row.version;
+                sourceAlgorithms[row.source] = row.algorithm;
+                // Target algorithm is the same for all rows - get from first
+                if (!targetAlgorithm && versionSourcesResult.length > 0) {
+                    targetAlgorithm = row.target_algorithm;
+                }
             }
             return {
                 target: output.key,
-                version,
-                sourceVersions
+                version: recordedVersion,
+                targetAlgorithm,
+                sourceVersions,
+                sourceAlgorithms
             };
         };
         this.index = {
@@ -40,6 +60,8 @@ export class Build extends EventEmitter {
                 jobSet: new Map()
             }
         };
+        // Set hash service on Artifact for version computation
+        Artifact.setHashService(hashService);
     }
     async getJobFor(dependency, require = false) {
         return await this.getJobForArtifact(dependency.artifact, require);
@@ -106,6 +128,7 @@ export class Build extends EventEmitter {
         return ruleKey;
     }
     async recordVersionInfo(job, dependencies, outputs) {
+        const algorithm = this.hashService.algorithm;
         const depInfos = dependencies.map((dependency) => ({
             dependency: dependency,
             version: this.getVersionReliedOn(job.rule, dependency.artifact, true)
@@ -114,10 +137,10 @@ export class Build extends EventEmitter {
             output,
             version: await output.version
         })));
-        const transaction = this.createRecordVersionInfoTransaction(outputInfos, depInfos, job);
+        const transaction = this.createRecordVersionInfoTransaction(outputInfos, depInfos, job, algorithm);
         transaction();
     }
-    createRecordVersionInfoTransaction(outputInfos, depInfos, job) {
+    createRecordVersionInfoTransaction(outputInfos, depInfos, job, algorithm) {
         return this.db.db.transaction(() => {
             this.recordArtifacts([
                 ...outputInfos.map(_ => _.output),
@@ -127,7 +150,7 @@ export class Build extends EventEmitter {
                 this.db.retractTarget(outputInfo.output.key);
                 const outputVersion = outputInfo.version;
                 for (let depInfo of depInfos) {
-                    this.db.record(outputInfo.output.key, outputVersion, job.rule.key, depInfo.dependency.artifact.key, depInfo.version);
+                    this.db.record(outputInfo.output.key, outputVersion, algorithm, job.rule.key, depInfo.dependency.artifact.key, depInfo.version, algorithm);
                 }
             }
         });
@@ -139,11 +162,18 @@ export class Build extends EventEmitter {
         for (let artifact of artifacts)
             this.db.recordArtifact(artifact.key, artifact.type, artifact.identity);
     }
-    async getActualVersionInfo(artifacts) {
+    async getActualVersionInfo(artifacts, algorithms) {
         const actualVersions = {};
         await Promise.all([...new Set(artifacts).values()].map(async (artifact) => {
-            actualVersions[artifact.key] =
-                (await artifact.exists) ? (await artifact.version) : null;
+            if (!(await artifact.exists)) {
+                actualVersions[artifact.key] = null;
+            }
+            else {
+                const algorithm = algorithms?.[artifact.key];
+                actualVersions[artifact.key] = algorithm
+                    ? await artifact.getVersionUsing(algorithm)
+                    : await artifact.version;
+            }
         }));
         return actualVersions;
     }
@@ -187,10 +217,26 @@ export class Build extends EventEmitter {
         const dependencyArtifactsByKey = {};
         for (let d of dependencyArtifacts)
             dependencyArtifactsByKey[d.key] = d;
-        const [recordedSourceVersionsByOutput, actualSourceVersions, actualOutputVersions] = await Promise.all([
-            Promise.all(allOutputs.map(this.getRecordedVersionInfo)),
-            this.getActualVersionInfo(dependencyArtifacts),
-            this.getActualVersionInfo(allOutputs)
+        // Get recorded version info first to extract algorithms
+        const recordedSourceVersionsByOutput = await Promise.all(allOutputs.map(this.getRecordedVersionInfo));
+        // Build algorithm maps: use recorded algorithm for comparison, track if different from current
+        const sourceAlgorithms = {};
+        const targetAlgorithms = {};
+        const currentAlgorithm = this.hashService.algorithm;
+        for (let recordedInfo of recordedSourceVersionsByOutput) {
+            // Map target algorithm
+            const targetAlgo = recordedInfo.targetAlgorithm || 'md5';
+            targetAlgorithms[recordedInfo.target] = targetAlgo;
+            // Map source algorithms
+            for (let sourceKey of Object.keys(recordedInfo.sourceVersions)) {
+                const sourceAlgo = recordedInfo.sourceAlgorithms[sourceKey] || 'md5';
+                sourceAlgorithms[sourceKey] = sourceAlgo;
+            }
+        }
+        // Compute actual versions using SAME algorithms as recorded (for accurate comparison)
+        const [actualSourceVersions, actualOutputVersions] = await Promise.all([
+            this.getActualVersionInfo(dependencyArtifacts, sourceAlgorithms),
+            this.getActualVersionInfo(allOutputs, targetAlgorithms)
         ]);
         const dependencyKeySet = new Set(Object.keys(dependencyArtifactsByKey));
         for (let recordedVersionsInfo of recordedSourceVersionsByOutput) {
@@ -274,6 +320,19 @@ export class Build extends EventEmitter {
                 });
                 return false;
             }
+            // Job is up-to-date: track triples with old algorithms for migration
+            // ONLY track here (after determining up-to-date) to avoid race with recordVersionInfo()
+            const targetNeedsMigration = (recordedVersionsInfo.targetAlgorithm || 'md5') !== currentAlgorithm;
+            for (let recordedSourceKey of recordedSourceKeys) {
+                const sourceNeedsMigration = (recordedVersionsInfo.sourceAlgorithms[recordedSourceKey] || 'md5') !== currentAlgorithm;
+                if (targetNeedsMigration || sourceNeedsMigration) {
+                    this.$triplesNeedingMigration.push({
+                        source: recordedSourceKey,
+                        rule: job.rule.key,
+                        target: recordedVersionsInfo.target
+                    });
+                }
+            }
         }
         return true;
     }
@@ -332,6 +391,43 @@ export class Build extends EventEmitter {
     }
     requireJobForRuleKey(ruleKey) {
         return this.getJobForRuleKey(ruleKey) || throwThe(new Error(`Internal error: unable to obtain build job for rule with key ${ruleKey}`));
+    }
+    /**
+     * Execute hash algorithm migration for tracked (source, target) pairs.
+     * Computes new hashes for artifacts and batch-updates database records.
+     */
+    async executeHashMigration() {
+        if (this.$triplesNeedingMigration.length === 0) {
+            return;
+        }
+        // Deduplicate pairs (source, target)
+        const pairSet = new Set();
+        const pairs = [];
+        for (let item of this.$triplesNeedingMigration) {
+            const key = `${item.source}|${item.target}`;
+            if (!pairSet.has(key)) {
+                pairSet.add(key);
+                pairs.push({ source: item.source, target: item.target });
+            }
+        }
+        console.log(`Migrating ${pairs.length} state record pairs to ${this.hashService.algorithm} algorithm...`);
+        // Extract unique artifact keys
+        const artifactKeys = new Set();
+        for (let pair of pairs) {
+            artifactKeys.add(pair.source);
+            artifactKeys.add(pair.target);
+        }
+        // Compute new hashes for each unique artifact
+        const newHashes = {};
+        await Promise.all([...artifactKeys].map(async (key) => {
+            const artifact = this.artifactManager.findByKey(key);
+            if (artifact && await artifact.exists) {
+                newHashes[key] = await artifact.getVersionUsing(this.hashService.algorithm);
+            }
+        }));
+        // Batch update database records
+        await this.db.migrateStateRecords(pairs, newHashes, this.hashService.algorithm);
+        console.log(`Migration complete: ${pairs.length} record pairs updated`);
     }
 }
 //# sourceMappingURL=build.js.map

@@ -22,6 +22,7 @@ declare const schema_Config: import("hyperval").HyperObject<{
     dataDir: import("hyperval").Hyper<string, string>;
     channels: import("hyperval").HyperRecord<import("hyperval").Hyper<string, string>, import("hyperval").Hyper<string, string>>;
     promiseLog: import("hyperval").HyperOptional<import("hyperval").Hyper<string, string>>;
+    hashAlgorithm: import("hyperval").HyperOptional<import("hyperval").Hyper<string, string>>;
 }>, schema_RequestOptions: import("hyperval").HyperObject<{
     version: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
     init: import("hyperval").HyperOptional<import("hyperval").Hyper<boolean, boolean>>;
@@ -37,6 +38,8 @@ declare const schema_Config: import("hyperval").HyperObject<{
     goals: import("hyperval").HyperArray<import("hyperval").Hyper<string, string>>;
 }>;
 export declare namespace Zrup {
+    const SUPPORTED_HASH_ALGORITHMS: readonly ["md5", "blake3"];
+    type HashAlgorithm = typeof SUPPORTED_HASH_ALGORITHMS[number];
     type Config = HyperVal<typeof schema_Config>;
     type RequestOptions = HyperVal<typeof schema_RequestOptions>;
     type Request = HyperVal<typeof schema_Request>;

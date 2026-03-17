@@ -31,6 +31,18 @@ export class MockArtifact extends Artifact
         return this.$pk.about(this.key, "version").promise;
     }
 
+    set version(versionPromise: Promise<string>) {
+        versionPromise.then(v => {
+            this.$pk.forget(this.key, "version");
+            this.$pk.set(this.key, "version", v);
+        });
+    }
+
+    getVersionUsing(_algorithm: string): Promise<string> {
+        // MockArtifact ignores algorithm - version controlled by PromiseKeeper
+        return this.version;
+    }
+
     async getContents() : Promise<string>
     {
         return await this.$pk.about(this.key, "contents").promise;

@@ -8,10 +8,12 @@ declare class Build extends EventEmitter {
     readonly graph: Graph;
     readonly db: Db;
     readonly artifactManager: ArtifactManager;
+    readonly hashService: HashService;
     private $whichRulesReliedOnArtifactVersion;
     private $whichArtifactVersionDidRuleRelyOn;
+    private $triplesNeedingMigration;
     index: Build.Index;
-    constructor(graph: Graph, db: Db, artifactManager: ArtifactManager);
+    constructor(graph: Graph, db: Db, artifactManager: ArtifactManager, hashService: HashService);
     getJobFor(dependency: Dependency, require?: boolean): Promise<Job | null>;
     getJobSetFor(dependency: Dependency, require?: boolean): Promise<(JobSet | null)>;
     getJobForArtifact(artifact: Artifact, require?: boolean): Promise<Job | null>;
@@ -29,10 +31,10 @@ declare class Build extends EventEmitter {
     }[], depInfos: {
         dependency: Dependency;
         version: string;
-    }[], job: Job): Transaction;
+    }[], job: Job, algorithm: string): Transaction;
     recordStandardVersionInfo(job: Job): Promise<void>;
     recordArtifacts(artifacts: Artifact[]): void;
-    getActualVersionInfo(artifacts: Artifact[]): Promise<Record<string, string | null>>;
+    getActualVersionInfo(artifacts: Artifact[], algorithms?: Record<string, string>): Promise<Record<string, string | null>>;
     isUpToDate(job: Job): Promise<boolean>;
     cleanOutputs(job: Job): Promise<void>;
     getArtifactReliances(artifactKey: string): Record<string, Record<string, Rule>>;
@@ -40,6 +42,11 @@ declare class Build extends EventEmitter {
     getVersionReliedOn(rule: Rule, artifact: Artifact, required: boolean): string | undefined;
     formatRelianceConflictMessage(relianceInfo: Build.ArtifactRelianceInfo, artifact: Artifact, version: string, rule: Rule): string;
     requireJobForRuleKey(ruleKey: string): Job;
+    /**
+     * Execute hash algorithm migration for tracked (source, target) pairs.
+     * Computes new hashes for artifacts and batch-updates database records.
+     */
+    executeHashMigration(): Promise<void>;
 }
 
 declare class Db {
@@ -48,16 +55,18 @@ declare class Db {
     queryCount: number;
     queryTime: number;
     constructor(dbFilePath: string);
+    getDb(): Promise<Database>;
     get db(): Database;
+    getStmt(): Promise<Statements>;
     get stmt(): Statements;
     has(targetId: string): boolean;
     hasVersion(targetId: string, version: string): boolean;
     listVersions(targetId: string): VersionRecord[];
     listVersionSources(targetId: string, version: string): VersionSourcesRecord[];
-    record(targetId: string, targetVersion: string, ruleKey: string, sourceId: string, sourceVersion: string): any;
-    retract(targetId: string, targetVersion: string): any;
-    retractTarget(targetId: string): any;
-    retractRule(ruleKey: string): any;
+    record(targetId: string, targetVersion: string, targetAlgorithm: string, ruleKey: string, sourceId: string, sourceVersion: string, sourceAlgorithm: string): BetterSqlite3.RunResult;
+    retract(targetId: string, targetVersion: string): BetterSqlite3.RunResult;
+    retractTarget(targetId: string): BetterSqlite3.RunResult;
+    retractRule(ruleKey: string): BetterSqlite3.RunResult;
     listRuleSources(ruleKey: string): RuleSourcesRecord[];
     listRuleTargets(ruleKey: string): RuleTargetsRecord[];
     /**
@@ -66,15 +75,24 @@ declare class Db {
      * @param {string} version
      * @return {Promise<string|null>}
      */
-    getProducingRule(target: string, version: string): string | null;
-    recordArtifact(key: string, type: string, identity: string): any;
-    getArtifact(key: string): ArtifactRecord;
+    getProducingRule(target: string, version: string): string | undefined;
+    recordArtifact(key: string, type: string, identity: string): BetterSqlite3.RunResult;
+    getArtifact(key: string): ArtifactRecord | null;
     pruneArtifacts(): void;
+    /**
+     * Migrate state records to use new hash algorithm.
+     * Updates version and algorithm columns for all states matching (source, target) pairs.
+     * Rule is queried from states table.
+     */
+    migrateStateRecords(pairs: Array<{
+        source: string;
+        target: string;
+    }>, newHashes: Record<string, string>, newAlgorithm: string): Promise<void>;
     close(): Promise<void>;
-    query(verb: StatementVerb, statementKey: StatementKey, data: object): any;
-    get(statementKey: StatementKey, data: object): any;
-    run(statementKey: StatementKey, data: object): any;
-    all(statementKey: StatementKey, data: object): any;
+    query<T>(verb: StatementVerb, statementKey: StatementKey, data: object): T;
+    get<T>(statementKey: StatementKey, data: object): T | undefined;
+    run(statementKey: StatementKey, data: object): BetterSqlite3.RunResult;
+    all<T>(statementKey: StatementKey, data: object): T[];
 }
 
 declare class Graph {
@@ -227,11 +245,19 @@ declare class RuleBuilder extends EventEmitter {
 
 declare abstract class Artifact {
     private readonly $identity;
+    protected static hashService?: any;
+    /**
+     * Set the global hash service for all Artifact instances.
+     * Should be called once during Build initialization.
+     */
+    static setHashService(service: any): void;
     protected constructor(aid: Artifact.Reference);
     get type(): string;
     static computeKey(type: string, identity: string): string;
     get key(): string;
     abstract get version(): Promise<string>;
+    abstract set version(versionPromise: Promise<string>);
+    abstract getVersionUsing(algorithm: string): Promise<string>;
     abstract get exists(): Promise<boolean>;
     get identity(): string;
     get label(): string;
@@ -360,9 +386,29 @@ declare class CommandRecipe extends Recipe {
 
 declare class FileArtifact extends Artifact {
     private readonly $resolvedPath;
+    private $versionCache;
     constructor(ref: Artifact.Reference, resolvedPath: string);
     get exists(): Promise<boolean>;
+    /**
+     * Get version using the default (configured) hash algorithm.
+     * Caches the promise to avoid redundant hashing.
+     */
     get version(): Promise<string>;
+    /**
+     * Explicitly set the version when we know it (e.g., after rebuilding).
+     * Purges cache and stores single entry with configured algorithm.
+     * Caller must wrap the value in a Promise.
+     */
+    set version(versionPromise: Promise<string>);
+    /**
+     * Get version using a specific hash algorithm.
+     * Used during migration to compute versions with different algorithms.
+     * Caches per algorithm to avoid redundant computation.
+     *
+     * @param algorithm Algorithm to use
+     */
+    getVersionUsing(algorithm: string): Promise<string>;
+    private computeVersion;
     get contents(): Promise<string>;
     getContents(): Promise<string>;
     rm(): Promise<void>;
@@ -374,13 +420,15 @@ declare class FileArtifact extends Artifact {
 
 declare class RecipeArtifact extends Artifact {
     private $specPromise;
-    private $versionPromise;
+    private $versionCache;
     readonly job: Job;
     rm(): Promise<void>;
     constructor(aid: Artifact.Reference, job: Job);
     get exists(): Promise<boolean>;
     get spec(): Promise<Object>;
     get version(): Promise<string>;
+    set version(versionPromise: Promise<string>);
+    getVersionUsing(algorithm: string): Promise<string>;
     static makeFor(job: Job): RecipeArtifact;
 }
 
@@ -389,7 +437,9 @@ declare global {
         interface RecordedVersionInfo {
             target: string;
             version: string | null;
+            targetAlgorithm: string | null;
             sourceVersions: Record<string, string>;
+            sourceAlgorithms: Record<string, string | null>;
         }
         interface Index {
             rule: {

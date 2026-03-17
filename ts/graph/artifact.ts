@@ -27,6 +27,15 @@ export namespace Artifact {
 export abstract class Artifact  {
 
     private readonly $identity : string;
+    protected static hashService?: any;  // HashService, but avoiding circular import
+
+    /**
+     * Set the global hash service for all Artifact instances.
+     * Should be called once during Build initialization.
+     */
+    static setHashService(service: any): void {
+        Artifact.hashService = service;
+    }
 
     protected constructor(aid : Artifact.Reference)
     {
@@ -53,6 +62,8 @@ export abstract class Artifact  {
     }
 
     abstract get version() : Promise<string>;
+    abstract set version(versionPromise: Promise<string>);
+    abstract getVersionUsing(algorithm: string): Promise<string>;
     abstract get exists() : Promise<boolean>;
 
     get identity() : string

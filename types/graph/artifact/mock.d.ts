@@ -8,6 +8,8 @@ export declare class MockArtifact extends Artifact {
     get type(): string;
     get exists(): Promise<boolean>;
     get version(): Promise<string>;
+    set version(versionPromise: Promise<string>);
+    getVersionUsing(_algorithm: string): Promise<string>;
     getContents(): Promise<string>;
     putContents(contents: string): Promise<void>;
     rm(): Promise<void>;

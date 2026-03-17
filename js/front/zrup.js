@@ -12,6 +12,7 @@ import path from "path";
 import { Build } from "../build.js";
 import * as util from "util";
 import { Verbosity } from "./verbosity.js";
+import { HashService } from "../hash/hash-service.js";
 /***/
 export class Zrup {
     constructor(projectRoot, config, request) {
@@ -33,10 +34,15 @@ export class Zrup {
     async run() {
         let hadError = false;
         try {
+            console.log("Initializing database");
+            await this.$db.getDb(); // Initialize database and run migrations
+            // Initialize hash service with configured algorithm
+            const hashAlgo = (this.$config.hashAlgorithm || "md5");
+            const hashService = new HashService(hashAlgo);
             console.log("Loading graph");
             await this.$moduleBuilder.loadRootModule();
             this.$ruleBuilder.finalize();
-            const build = new Build(this.$project.graph, this.$db, this.$artifactManager);
+            const build = new Build(this.$project.graph, this.$db, this.$artifactManager, hashService);
             this.$verbosity.hookBuild(build, this.$artifactManager);
             console.log("Resolving artifacts");
             const requestedArtifacts = this.$request.goals.map(ref => this.$artifactManager.get(ref));
@@ -48,6 +54,8 @@ export class Zrup {
             console.time('Running build jobs');
             await Promise.all(runs);
             console.timeEnd('Running build jobs');
+            // Execute hash algorithm migration for up-to-date artifacts
+            await build.executeHashMigration();
             console.log("All done");
         }
         catch (e) {
@@ -97,6 +105,7 @@ const schema_Config = struct({
     dataDir: string(),
     channels: record(string(), string()),
     promiseLog: optional(string()),
+    hashAlgorithm: optional(string()),
 }), schema_RequestOptions = struct({
     version: optional(boolean()),
     init: optional(boolean()),
@@ -108,6 +117,7 @@ const schema_Config = struct({
     goals: array(string())
 });
 (function (Zrup) {
+    Zrup.SUPPORTED_HASH_ALGORITHMS = ["md5", "blake3"];
     Zrup.Schema = {
         Config: schema_Config,
         RequestOptions: schema_RequestOptions,

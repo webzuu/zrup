@@ -23,11 +23,19 @@ export declare namespace Artifact {
 }
 export declare abstract class Artifact {
     private readonly $identity;
+    protected static hashService?: any;
+    /**
+     * Set the global hash service for all Artifact instances.
+     * Should be called once during Build initialization.
+     */
+    static setHashService(service: any): void;
     protected constructor(aid: Artifact.Reference);
     get type(): string;
     static computeKey(type: string, identity: string): string;
     get key(): string;
     abstract get version(): Promise<string>;
+    abstract set version(versionPromise: Promise<string>);
+    abstract getVersionUsing(algorithm: string): Promise<string>;
     abstract get exists(): Promise<boolean>;
     get identity(): string;
     get label(): string;

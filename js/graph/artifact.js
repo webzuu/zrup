@@ -12,6 +12,13 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _AID_type, _AID_module, _AID_ref, _ArtifactManager_index, _ArtifactManager_defaultType, _ArtifactFactory_manager, _ArtifactFactory_artifactConstructor, _ArtifactFactory_type, _ArtifactFactory_artifactResolver;
 import md5 from "md5";
 export class Artifact {
+    /**
+     * Set the global hash service for all Artifact instances.
+     * Should be called once during Build initialization.
+     */
+    static setHashService(service) {
+        Artifact.hashService = service;
+    }
     constructor(aid) {
         this.$identity = '' + aid;
         this.validate();

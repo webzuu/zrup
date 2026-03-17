@@ -4,13 +4,15 @@ import { Job } from "../../build/job.js";
 import { Project } from "../../project.js";
 export declare class RecipeArtifact extends Artifact {
     private $specPromise;
-    private $versionPromise;
+    private $versionCache;
     readonly job: Job;
     rm(): Promise<void>;
     constructor(aid: Artifact.Reference, job: Job);
     get exists(): Promise<boolean>;
     get spec(): Promise<Object>;
     get version(): Promise<string>;
+    set version(versionPromise: Promise<string>);
+    getVersionUsing(algorithm: string): Promise<string>;
     static makeFor(job: Job): RecipeArtifact;
 }
 export declare class RecipeArtifactResolver extends ArtifactResolver {

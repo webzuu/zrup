@@ -6,6 +6,17 @@ export class Recipe {
             instance: this.describeSpec(spec)
         }))();
     }
+    hashSpecUsing(spec, algorithm, hashService) {
+        return (async () => {
+            const specDescriptor = {
+                class: this.constructor.name,
+                instance: this.describeSpec(spec)
+            };
+            // Use object-hash to get normalized string, then hash with specified algorithm
+            const normalizedString = hash(specDescriptor, { algorithm: 'passthrough' });
+            return hashService.hashObject(normalizedString, algorithm);
+        })();
+    }
     describeSpec(spec) {
         return spec;
     }

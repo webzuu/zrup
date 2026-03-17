@@ -9,7 +9,7 @@ export class RecipeArtifact extends Artifact
 
 {
     private $specPromise : Promise<Object>|null = null;
-    private $versionPromise : Promise<string>|null = null;
+    private $versionCache : Map<string, Promise<string>> = new Map();
     public readonly job: Job;
 
     async rm(): Promise<void> {
@@ -41,17 +41,29 @@ export class RecipeArtifact extends Artifact
 
     get version()
     {
-        return (
-            this.$versionPromise
-            ||
-            (
-                this.$versionPromise
-                =
-                (async () => {
-                    return await this.job.rule.validRecipe.hashSpec(await this.spec)
-                })()
-            )
-        );
+        return this.getVersionUsing(this.job.build.hashService.algorithm);
+    }
+
+    set version(versionPromise: Promise<string>) {
+        this.$versionCache.clear();
+        this.$versionCache.set(this.job.build.hashService.algorithm, versionPromise);
+    }
+
+    getVersionUsing(algorithm: string): Promise<string>
+    {
+        const cached = this.$versionCache.get(algorithm);
+        if (cached) return cached;
+
+        const promise = (async () => {
+            const spec = await this.spec;
+            return await this.job.rule.validRecipe.hashSpecUsing(
+                spec,
+                algorithm,
+                this.job.build.hashService
+            );
+        })();
+        this.$versionCache.set(algorithm, promise);
+        return promise;
     }
 
     static makeFor(job : Job) : RecipeArtifact

@@ -3,9 +3,29 @@ import { Module } from "../../module.js";
 import { Project } from "../../project.js";
 export declare class FileArtifact extends Artifact {
     private readonly $resolvedPath;
+    private $versionCache;
     constructor(ref: Artifact.Reference, resolvedPath: string);
     get exists(): Promise<boolean>;
+    /**
+     * Get version using the default (configured) hash algorithm.
+     * Caches the promise to avoid redundant hashing.
+     */
     get version(): Promise<string>;
+    /**
+     * Explicitly set the version when we know it (e.g., after rebuilding).
+     * Purges cache and stores single entry with configured algorithm.
+     * Caller must wrap the value in a Promise.
+     */
+    set version(versionPromise: Promise<string>);
+    /**
+     * Get version using a specific hash algorithm.
+     * Used during migration to compute versions with different algorithms.
+     * Caches per algorithm to avoid redundant computation.
+     *
+     * @param algorithm Algorithm to use
+     */
+    getVersionUsing(algorithm: string): Promise<string>;
+    private computeVersion;
     get contents(): Promise<string>;
     getContents(): Promise<string>;
     rm(): Promise<void>;

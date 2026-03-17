@@ -8,22 +8,62 @@ import { isNodeError } from "../../util/casts.js";
 export class FileArtifact extends Artifact {
     constructor(ref, resolvedPath) {
         super(`${ref}`);
+        this.$versionCache = new Map();
         this.$resolvedPath = resolvedPath;
     }
     get exists() {
         return Promise.resolve(fs.existsSync(this.$resolvedPath));
     }
+    /**
+     * Get version using the default (configured) hash algorithm.
+     * Caches the promise to avoid redundant hashing.
+     */
     get version() {
-        return (async () => {
-            try {
+        if (!Artifact.hashService) {
+            throw new Error("HashService not initialized. Call Artifact.setHashService() first.");
+        }
+        return this.getVersionUsing(Artifact.hashService.algorithm);
+    }
+    /**
+     * Explicitly set the version when we know it (e.g., after rebuilding).
+     * Purges cache and stores single entry with configured algorithm.
+     * Caller must wrap the value in a Promise.
+     */
+    set version(versionPromise) {
+        if (!Artifact.hashService) {
+            throw new Error("HashService not initialized. Call FileArtifact.setHashService() first.");
+        }
+        this.$versionCache.clear();
+        this.$versionCache.set(Artifact.hashService.algorithm, versionPromise);
+    }
+    /**
+     * Get version using a specific hash algorithm.
+     * Used during migration to compute versions with different algorithms.
+     * Caches per algorithm to avoid redundant computation.
+     *
+     * @param algorithm Algorithm to use
+     */
+    getVersionUsing(algorithm) {
+        const cached = this.$versionCache.get(algorithm);
+        if (cached)
+            return cached;
+        const promise = this.computeVersion(algorithm);
+        this.$versionCache.set(algorithm, promise);
+        return promise;
+    }
+    async computeVersion(algorithm) {
+        try {
+            if (!Artifact.hashService) {
+                // Fallback to MD5 for testing or non-Build contexts
                 return await md5File(this.$resolvedPath);
             }
-            catch (e) {
-                if (!isNodeError(e) || e.code !== "ENOENT")
-                    throw e;
-            }
-            return Artifact.NONEXISTENT_VERSION;
-        })();
+            return await Artifact.hashService.hashFile(this.$resolvedPath, algorithm);
+        }
+        catch (e) {
+            if (!isNodeError(e) || e.code !== "ENOENT")
+                throw e;
+        }
+        return Artifact.NONEXISTENT_VERSION;
     }
     get contents() { return this.getContents(); }
     async getContents() {

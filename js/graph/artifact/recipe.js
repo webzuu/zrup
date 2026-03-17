@@ -9,7 +9,7 @@ export class RecipeArtifact extends Artifact {
     constructor(aid, job) {
         super(aid);
         this.$specPromise = null;
-        this.$versionPromise = null;
+        this.$versionCache = new Map();
         this.job = job;
     }
     get exists() {
@@ -23,13 +23,22 @@ export class RecipeArtifact extends Artifact {
                         this.job.rule.validRecipe.concretizeSpecFor(this.job)));
     }
     get version() {
-        return (this.$versionPromise
-            ||
-                (this.$versionPromise
-                    =
-                        (async () => {
-                            return await this.job.rule.validRecipe.hashSpec(await this.spec);
-                        })()));
+        return this.getVersionUsing(this.job.build.hashService.algorithm);
+    }
+    set version(versionPromise) {
+        this.$versionCache.clear();
+        this.$versionCache.set(this.job.build.hashService.algorithm, versionPromise);
+    }
+    getVersionUsing(algorithm) {
+        const cached = this.$versionCache.get(algorithm);
+        if (cached)
+            return cached;
+        const promise = (async () => {
+            const spec = await this.spec;
+            return await this.job.rule.validRecipe.hashSpecUsing(spec, algorithm, this.job.build.hashService);
+        })();
+        this.$versionCache.set(algorithm, promise);
+        return promise;
     }
     static makeFor(job) {
         const ref = `recipe:${job.rule.module.name}+${job.rule.name}`;

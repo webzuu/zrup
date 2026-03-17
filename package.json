@@ -1,6 +1,6 @@
 {
   "name": "zrup",
-  "version": "0.19.3",
+  "version": "0.20.0",
   "description": "Build system experiment",
   "main": "js/front/runner.js",
   "typings": "./dist/zrup.d.ts",
@@ -12,6 +12,7 @@
   "dependencies": {
     "better-path-resolve": "^1.0.0",
     "better-sqlite3": "^11.0.0",
+    "blake3": "^2.1.7",
     "blessed": "^0.1.81",
     "commander": "^13.1",
     "ducktype": "^1.2.2",
@@ -28,6 +29,7 @@
     "object-inspect": "^1.13.1",
     "read-pkg-up": "^7.0.1",
     "rimraf": "^3.0.2",
+    "semver": "^7.6.0",
     "sleepjs": "^4.0.3",
     "sqlite": "^4.2.1",
     "table-layout": "^4.1.1",
@@ -36,12 +38,13 @@
   },
   "devDependencies": {
     "@esbuild-kit/esm-loader": "^2.6.5",
-    "@types/better-sqlite3": "^5.4.3",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/blessed": "^0.1.25",
     "@types/md5": "^2.3.5",
     "@types/object-hash": "^2.2.1",
     "@types/object-inspect": "^1.13.0",
     "@types/rmfr": "^2.0.5",
+    "@types/semver": "^7.7.1",
     "bumper": "^1.1.0",
     "chai": "^4.4.1",
     "chai-as-promised": "^7.1.2",
@@ -60,18 +63,13 @@
     "test": "mocha",
     "dsl": "node js/tools/make-dsl-defs/make-dsl-defs.js > dist/dsl.d.ts",
     "docs": "rm -rf doc/td/* && typedoc --tsconfig ./tsconfig.json --gitRevision wip --out doc/td ts/",
-    "build": "tsc && cp src/util/testing.js js/util/testing.js && pnpm run dsl",
-    "build-all": "tsc && pnpm run docs && pnpm run dsl"
+    "build": "tsc && cp src/util/testing.js js/util/testing.js && bun run dsl",
+    "build-all": "tsc && bun run docs && bun run dsl"
   },
   "bin": {
     "zrup": "js/front/runner.js"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3"
-    ],
-    "patchedDependencies": {
-      "typedoc@0.28.4": "patches/typedoc@0.28.4.patch"
-    }
-  }
+  "trustedDependencies": [
+    "better-sqlite3"
+  ]
 }

@@ -5,12 +5,73 @@ import {performance} from "perf_hooks"
 
 import {fileURLToPath} from 'url';
 import {dirname} from 'path';
-import BetterSqlite3, {Database, Statement} from "better-sqlite3";
+import BetterSqlite3 from "better-sqlite3";
+import type {Database, Statement} from "better-sqlite3";
+import semver from "semver";
+import type {Migration} from "./db/migration.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-function openDb(filename: string) : Database
+/**
+ * Run database migrations
+ */
+async function runMigrations(db: Database): Promise<void> {
+    // Get current schema version
+    const currentVersionRow = db.prepare(
+        "SELECT value FROM schema_meta WHERE key = 'version'"
+    ).get() as {value: string} | undefined;
+    const currentVersion = currentVersionRow?.value || "0.0.0";
+
+    // Find all migration files
+    const migrationsDir = path.join(__dirname, 'db/migrations');
+    if (!fsi.existsSync(migrationsDir)) return;
+
+    const migrationFiles = fsi.readdirSync(migrationsDir)
+        .filter(f => f.endsWith('.js') && f !== 'migration.js')
+        .sort();  // Lexicographic sort ensures numeric prefix order
+
+    // Load and filter migrations
+    const migrations: Array<{ version: string; migrate: string | ((db: Database) => void) }> = [];
+
+    for (const file of migrationFiles) {
+        const modulePath = path.join(migrationsDir, file);
+        const module = await import(modulePath);
+        const migration: Migration = module.migration;
+
+        if (semver.gt(migration.newVersion, currentVersion)) {
+            migrations.push({
+                version: migration.newVersion,
+                migrate: migration.migrate
+            });
+        }
+    }
+
+    // Sort by semver
+    migrations.sort((a, b) => semver.compare(a.version, b.version));
+
+    // Run migrations (framework manages transaction and version update)
+    for (const migration of migrations) {
+        console.log(`Running migration to ${migration.version}...`);
+
+        const transaction = db.transaction(() => {
+            // Execute migration
+            if (typeof migration.migrate === 'string') {
+                db.exec(migration.migrate);
+            } else {
+                migration.migrate(db);
+            }
+
+            // Update schema version
+            db.prepare("UPDATE schema_meta SET value = ? WHERE key = 'version'")
+                .run(migration.version);
+        });
+
+        transaction();
+    }
+}
+
+async function openDb(filename: string) : Promise<Database>
 {
     let db: Database;
     try {
@@ -20,7 +81,14 @@ function openDb(filename: string) : Database
     catch(e) {
         throw e;
     }
+
+    // Load base schema
     db.exec(fsi.readFileSync(path.join(__dirname, 'sql/schema.sql'), 'utf-8'));
+
+    // Run migrations
+    await runMigrations(db);
+
+    // Set pragmas
     db.exec("PRAGMA journal_mode = MEMORY; PRAGMA synchronous = OFF;");
     return db;
 }
@@ -33,11 +101,14 @@ const queries = {
     listVersions:
         'SELECT target_version AS version FROM states WHERE target = @target',
     listVersionSources:
-        'SELECT source, source_version AS version FROM states WHERE target = @target AND target_version = @version',
+        'SELECT source, source_version AS version, source_algorithm AS algorithm, target_algorithm FROM states WHERE target = @target AND target_version = @version',
     record: `
-        INSERT INTO states (target, target_version, rule, source, source_version)
-        VALUES (@target, @targetVersion, @rule, @source, @sourceVersion)
-        ON CONFLICT(target,target_version,source) DO UPDATE SET source_version = @sourceVersion
+        INSERT INTO states (target, target_version, target_algorithm, rule, source, source_version, source_algorithm)
+        VALUES (@target, @targetVersion, @targetAlgorithm, @rule, @source, @sourceVersion, @sourceAlgorithm)
+        ON CONFLICT(target,target_version,source) DO UPDATE SET
+            source_version = @sourceVersion,
+            source_algorithm = @sourceAlgorithm,
+            target_algorithm = @targetAlgorithm
     `,
     retract:
         'DELETE FROM states WHERE target = @target AND target_version = @version',
@@ -77,7 +148,7 @@ export type StatementKey = keyof typeof queries;
 
 
 export type VersionRecord = {version: string};
-export type VersionSourcesRecord = { source: string, version: string };
+export type VersionSourcesRecord = { source: string, version: string, algorithm: string | null, target_algorithm: string | null };
 export type RuleSourcesRecord = {key: string, type: string, identity: string};
 export type RuleTargetsRecord = {key: string, type: string, identity: string};
 export type ProducingRuleRecord = {rule: string};
@@ -125,6 +196,7 @@ class Statements implements Record<StatementKey, Statement>
 export class Db {
 
     #db : Database|null;
+    #dbPromise : Promise<Database>|null;
     #stmt : Statements|null;
 
     public dbFilePath: string;
@@ -135,43 +207,63 @@ export class Db {
     {
         this.dbFilePath = dbFilePath;
         this.#db = null;
+        this.#dbPromise = null;
         this.#stmt = null;
         this.queryCount = 0;
         this.queryTime = 0;
     }
 
+    async getDb() : Promise<Database>
+    {
+        if (!this.#db) {
+            if (!this.#dbPromise) {
+                this.#dbPromise = openDb(this.dbFilePath);
+            }
+            this.#db = await this.#dbPromise;
+            this.#stmt = new Statements(this.#db);
+        }
+        return this.#db;
+    }
+
     get db() : Database
     {
         if (!this.#db) {
-            this.#db = openDb(this.dbFilePath);
+            throw new Error("Database not initialized. Call getDb() first or use async methods.");
         }
         return this.#db;
+    }
+
+    async getStmt() : Promise<Statements>
+    {
+        if (!this.#stmt) {
+            this.#stmt = new Statements(await this.getDb());
+        }
+        return this.#stmt;
     }
 
     get stmt() : Statements
     {
         if (!this.#stmt) {
-            this.#stmt = new Statements(this.db);
+            throw new Error("Statements not initialized. Call getStmt() first or use async methods.");
         }
         return this.#stmt;
     }
 
     has(targetId: string) : boolean
     {
-        const queryResult = this.get('has', {
+        const queryResult = this.get<{c: number}>('has', {
             target: targetId
         });
-        return queryResult.c > 0;
+        return queryResult!.c > 0;
     }
 
     hasVersion(targetId: string, version : string) : boolean
     {
-        const countResponse = this.get('hasVersion',{
+        const countResponse = this.get<{c: number}>('hasVersion',{
             target: targetId,
             version
         });
-        // noinspection JSUnresolvedVariable
-        return countResponse.c > 0;
+        return countResponse!.c > 0;
     }
 
     listVersions(targetId: string) : VersionRecord[]
@@ -189,14 +281,24 @@ export class Db {
         });
     }
 
-    record(targetId: string, targetVersion: string, ruleKey: string, sourceId: string, sourceVersion: string)
+    record(
+        targetId: string,
+        targetVersion: string,
+        targetAlgorithm: string,
+        ruleKey: string,
+        sourceId: string,
+        sourceVersion: string,
+        sourceAlgorithm: string
+    )
     {
         return this.run('record', {
             target: targetId,
             targetVersion,
+            targetAlgorithm,
             rule: ruleKey,
             source: sourceId,
-            sourceVersion
+            sourceVersion,
+            sourceAlgorithm
         });
     }
 
@@ -242,9 +344,9 @@ export class Db {
      * @param {string} version
      * @return {Promise<string|null>}
      */
-    getProducingRule(target: string, version: string) : string|null
+    getProducingRule(target: string, version: string) : string | undefined
     {
-        const result : ProducingRuleRecord = this.get('getProducingRule',{target, version});
+        const result = this.get<ProducingRuleRecord>('getProducingRule',{target, version});
         return result && result.rule;
     }
 
@@ -253,13 +355,54 @@ export class Db {
         return this.run('recordArtifact', {key, type, identity});
     }
 
-    getArtifact(key:string) : ArtifactRecord
+    getArtifact(key:string) : ArtifactRecord | null
     {
-        return this.get('getArtifact',{key}) || null;
+        return this.get<ArtifactRecord>('getArtifact',{key}) || null;
     }
 
     pruneArtifacts() {
         this.run('pruneArtifacts',{});
+    }
+
+    /**
+     * Migrate state records to use new hash algorithm.
+     * Updates version and algorithm columns for all states matching (source, target) pairs.
+     * Rule is queried from states table.
+     */
+    async migrateStateRecords(
+        pairs: Array<{source: string; target: string}>,
+        newHashes: Record<string, string>,
+        newAlgorithm: string
+    ): Promise<void> {
+        const transaction = this.db.transaction(() => {
+            const updateStmt = this.db.prepare(`
+                UPDATE states
+                SET target_version = @targetVersion,
+                    target_algorithm = @targetAlgorithm,
+                    source_version = @sourceVersion,
+                    source_algorithm = @sourceAlgorithm
+                WHERE target = @target
+                  AND source = @source
+            `);
+
+            for (let pair of pairs) {
+                const targetVersion = newHashes[pair.target];
+                const sourceVersion = newHashes[pair.source];
+
+                if (targetVersion && sourceVersion) {
+                    updateStmt.run({
+                        target: pair.target,
+                        source: pair.source,
+                        targetVersion,
+                        targetAlgorithm: newAlgorithm,
+                        sourceVersion,
+                        sourceAlgorithm: newAlgorithm
+                    });
+                }
+            }
+        });
+
+        transaction();
     }
 
     async close() {
@@ -284,38 +427,37 @@ export class Db {
         this.#stmt = null;
     }
 
-    query(verb: StatementVerb, statementKey: StatementKey, data : object)
+    query<T>(verb: StatementVerb, statementKey: StatementKey, data : object): T
     {
         const statements = this.stmt;
         const prepared = statements[statementKey];
-        let result, start : number;
+        let result: T;
+        let start: number = performance.now();
         try {
-            start = performance.now();
-            result = prepared[verb](data);
+            result = prepared[verb](data) as T;
         }
         catch(e) {
             throw e;
         }
         finally {
-            // @ts-ignore
             this.queryTime += performance.now()-start;
             ++this.queryCount;
         }
         return result;
     }
 
-    get(statementKey: StatementKey, data : object)
+    get<T>(statementKey: StatementKey, data : object): T | undefined
     {
-        return this.query('get', statementKey, data);
+        return this.query<T | undefined>('get', statementKey, data);
     }
 
-    run(statementKey : StatementKey, data : object)
+    run(statementKey : StatementKey, data : object): BetterSqlite3.RunResult
     {
-        return this.query('run', statementKey, data);
+        return this.query<BetterSqlite3.RunResult>('run', statementKey, data);
     }
 
-    all(statementKey : StatementKey, data : object)
+    all<T>(statementKey : StatementKey, data : object): T[]
     {
-        return this.query('all', statementKey, data);
+        return this.query<T[]>('all', statementKey, data);
     }
 }

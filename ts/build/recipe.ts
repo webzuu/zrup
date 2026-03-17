@@ -15,6 +15,19 @@ export abstract class Recipe
         }))();
     }
 
+    hashSpecUsing(spec : Record<string,any>, algorithm: string, hashService: any) : Promise<string>
+    {
+        return (async () => {
+            const specDescriptor = {
+                class: this.constructor.name,
+                instance: this.describeSpec(spec)
+            };
+            // Use object-hash to get normalized string, then hash with specified algorithm
+            const normalizedString = hash(specDescriptor, { algorithm: 'passthrough' });
+            return hashService.hashObject(normalizedString, algorithm);
+        })();
+    }
+
     protected describeSpec(spec : Object) : Object
     {
         return spec;

@@ -1,4 +1,5 @@
-import { Database, Statement } from "better-sqlite3";
+import BetterSqlite3 from "better-sqlite3";
+import type { Database, Statement } from "better-sqlite3";
 declare const queries: {
     has: string;
     hasVersion: string;
@@ -22,6 +23,8 @@ export type VersionRecord = {
 export type VersionSourcesRecord = {
     source: string;
     version: string;
+    algorithm: string | null;
+    target_algorithm: string | null;
 };
 export type RuleSourcesRecord = {
     key: string;
@@ -70,16 +73,18 @@ export declare class Db {
     queryCount: number;
     queryTime: number;
     constructor(dbFilePath: string);
+    getDb(): Promise<Database>;
     get db(): Database;
+    getStmt(): Promise<Statements>;
     get stmt(): Statements;
     has(targetId: string): boolean;
     hasVersion(targetId: string, version: string): boolean;
     listVersions(targetId: string): VersionRecord[];
     listVersionSources(targetId: string, version: string): VersionSourcesRecord[];
-    record(targetId: string, targetVersion: string, ruleKey: string, sourceId: string, sourceVersion: string): any;
-    retract(targetId: string, targetVersion: string): any;
-    retractTarget(targetId: string): any;
-    retractRule(ruleKey: string): any;
+    record(targetId: string, targetVersion: string, targetAlgorithm: string, ruleKey: string, sourceId: string, sourceVersion: string, sourceAlgorithm: string): BetterSqlite3.RunResult;
+    retract(targetId: string, targetVersion: string): BetterSqlite3.RunResult;
+    retractTarget(targetId: string): BetterSqlite3.RunResult;
+    retractRule(ruleKey: string): BetterSqlite3.RunResult;
     listRuleSources(ruleKey: string): RuleSourcesRecord[];
     listRuleTargets(ruleKey: string): RuleTargetsRecord[];
     /**
@@ -88,15 +93,24 @@ export declare class Db {
      * @param {string} version
      * @return {Promise<string|null>}
      */
-    getProducingRule(target: string, version: string): string | null;
-    recordArtifact(key: string, type: string, identity: string): any;
-    getArtifact(key: string): ArtifactRecord;
+    getProducingRule(target: string, version: string): string | undefined;
+    recordArtifact(key: string, type: string, identity: string): BetterSqlite3.RunResult;
+    getArtifact(key: string): ArtifactRecord | null;
     pruneArtifacts(): void;
+    /**
+     * Migrate state records to use new hash algorithm.
+     * Updates version and algorithm columns for all states matching (source, target) pairs.
+     * Rule is queried from states table.
+     */
+    migrateStateRecords(pairs: Array<{
+        source: string;
+        target: string;
+    }>, newHashes: Record<string, string>, newAlgorithm: string): Promise<void>;
     close(): Promise<void>;
-    query(verb: StatementVerb, statementKey: StatementKey, data: object): any;
-    get(statementKey: StatementKey, data: object): any;
-    run(statementKey: StatementKey, data: object): any;
-    all(statementKey: StatementKey, data: object): any;
+    query<T>(verb: StatementVerb, statementKey: StatementKey, data: object): T;
+    get<T>(statementKey: StatementKey, data: object): T | undefined;
+    run(statementKey: StatementKey, data: object): BetterSqlite3.RunResult;
+    all<T>(statementKey: StatementKey, data: object): T[];
 }
 export {};
 //# sourceMappingURL=db.d.ts.map

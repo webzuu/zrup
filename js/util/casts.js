@@ -2,6 +2,7 @@ import { AID, Artifact } from "../graph/artifact.js";
 import { Dependency } from "../graph/dependency.js";
 import inspect from "object-inspect";
 export function obtainArtifactReferenceFrom(resolvable) {
+    const _r = resolvable; // preserved before TS narrows resolvable to never
     if ("string" === typeof resolvable)
         return resolvable;
     if (resolvable instanceof Artifact)
@@ -10,9 +11,24 @@ export function obtainArtifactReferenceFrom(resolvable) {
         return resolvable.artifact.identity;
     if (resolvable instanceof AID)
         return resolvable.toString();
-    if (resolvable)
+    // ResolveArtifactResult or similar object with .artifact property
+    if (resolvable && typeof resolvable === 'object' && 'artifact' in resolvable) {
         return resolvable.artifact.identity;
-    throw new Error(`Value ${inspect(resolvable)} passed to obtainArtifactReferenceFrom cannot be converted to artifact reference`);
+    }
+    // Build safe error message — _r is unknown here because JS callers may pass garbage
+    const typeInfo = typeof _r;
+    const constructorInfo = (typeof _r === 'object' && _r !== null)
+        ? ` (constructor: ${Object.getPrototypeOf(_r)?.constructor?.name ?? 'unknown'})`
+        : '';
+    let valuePreview = '';
+    try {
+        const inspected = inspect(_r);
+        valuePreview = inspected.length > 200 ? inspected.slice(0, 200) + '...[truncated]' : inspected;
+    }
+    catch (e) {
+        valuePreview = '[inspect failed]';
+    }
+    throw new Error(`Value cannot be normalized to artifact reference. Type: ${typeInfo}${constructorInfo}. Preview: ${valuePreview}. Expected: string, Artifact, Dependency, AID, or ResolveArtifactResult.`);
 }
 export function flattenResolvables(resolvables) {
     let result = [];

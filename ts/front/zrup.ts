@@ -19,6 +19,7 @@ import {Module} from "../module";
 import {Rule} from "../graph/rule";
 import {DependencyCycle} from "../error/dependency-cycle.js";
 import {Dependency} from "../graph/dependency.js";
+import {HashService} from "../hash/hash-service.js";
 
 /***/
 export class Zrup
@@ -77,10 +78,17 @@ export class Zrup
 
         let hadError: boolean = false;
         try {
+            console.log("Initializing database");
+            await this.$db.getDb();  // Initialize database and run migrations
+
+            // Initialize hash service with configured algorithm
+            const hashAlgo = (this.$config.hashAlgorithm || "md5") as Zrup.HashAlgorithm;
+            const hashService = new HashService(hashAlgo);
+
             console.log("Loading graph");
             await this.$moduleBuilder.loadRootModule();
             this.$ruleBuilder.finalize();
-            const build = new Build(this.$project.graph, this.$db, this.$artifactManager);
+            const build = new Build(this.$project.graph, this.$db, this.$artifactManager, hashService);
             this.$verbosity.hookBuild(build, this.$artifactManager);
             console.log("Resolving artifacts");
             const requestedArtifacts = this.$request.goals.map(ref => this.$artifactManager.get(ref));
@@ -94,6 +102,10 @@ export class Zrup
             console.time('Running build jobs');
             await Promise.all(runs);
             console.timeEnd('Running build jobs');
+
+            // Execute hash algorithm migration for up-to-date artifacts
+            await build.executeHashMigration();
+
             console.log("All done");
         }
         catch(e) {
@@ -150,6 +162,7 @@ const
         dataDir: string(),
         channels: record(string(), string()),
         promiseLog: optional(string()),
+        hashAlgorithm: optional(string()),
     }),
     schema_RequestOptions = struct({
         version: optional(boolean()),
@@ -165,6 +178,9 @@ const
     });
 
 export namespace Zrup {
+    export const SUPPORTED_HASH_ALGORITHMS = ["md5", "blake3"] as const;
+    export type HashAlgorithm = typeof SUPPORTED_HASH_ALGORITHMS[number];
+
     export type Config = HyperVal<typeof schema_Config>;
     export type RequestOptions = HyperVal<typeof schema_RequestOptions>;
     export type Request = HyperVal<typeof schema_Request>;

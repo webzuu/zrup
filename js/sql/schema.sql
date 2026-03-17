@@ -1,3 +1,12 @@
+-- Schema version tracking
+CREATE TABLE IF NOT EXISTS schema_meta (
+    key VARCHAR(32) PRIMARY KEY,
+    value TEXT
+);
+
+-- Initialize version if not exists
+INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('version', '0.0.0');
+
 CREATE TABLE IF NOT EXISTS states (
     target CHAR(32),
     target_version CHAR(32),

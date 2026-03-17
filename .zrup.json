@@ -1,6 +1,7 @@
 {
     "zrupDir": ".zrup",
     "dataDir": "<zrupDir>/data",
+    "hashAlgorithm": "blake3",
     "channels": {
         "internal": "<zrupDir>/channels/internal",
         "tmp": "<zrupDir>/channels/tmp"

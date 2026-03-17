@@ -3,6 +3,7 @@ export declare abstract class Recipe {
     abstract concretizeSpecFor(job: Job): Promise<Object>;
     abstract executeFor(job: Job, spec: Object): Promise<void>;
     hashSpec(spec: Record<string, any>): Promise<string>;
+    hashSpecUsing(spec: Record<string, any>, algorithm: string, hashService: any): Promise<string>;
     protected describeSpec(spec: Object): Object;
     get consoleOutput(): string;
 }
