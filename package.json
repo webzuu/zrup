@@ -1,6 +1,6 @@
 {
   "name": "zrup",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "description": "Build system experiment",
   "main": "js/front/runner.js",
   "typings": "./dist/zrup.d.ts",
@@ -12,9 +12,9 @@
   "dependencies": {
     "better-path-resolve": "^1.0.0",
     "better-sqlite3": "^11.0.0",
-    "blake3": "^3.0.0",
     "blessed": "^0.1.81",
     "commander": "^13.1",
+    "hash-wasm": "^4.11.0",
     "ducktype": "^1.2.2",
     "execa": "^5.1.1",
     "find-up": "^5.0.0",
@@ -71,9 +71,5 @@
   },
   "trustedDependencies": [
     "better-sqlite3"
-  ],
-  "overrides": {
-    "blake3-wasm": "^3.0.0",
-    "@c4312/blake3-internal": "^3.0.0"
-  }
+  ]
 }
