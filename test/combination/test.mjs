@@ -1,35 +1,26 @@
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import Database from 'better-sqlite3';
+import rimraf from 'rmfr';
+
+const fsp = fs.promises;
+const execAsync = promisify(exec);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RUNNER = path.join(__dirname, '../../js/front/runner.js');
-const CACHE_FILE = path.join(__dirname, 'initial-state.tar.gz');
+const CONCURRENCY = 12;  // Number of parallel workers
 
 // Timing instrumentation
 const timings = {
     cacheCreate: 0,
     cacheRestore: 0,
+    restoreCount: 0,
     builds: 0,
     buildCount: 0
 };
-
-function timeOperation(name, fn) {
-    const start = performance.now();
-    const result = fn();
-    const elapsed = performance.now() - start;
-
-    if (name === 'cacheCreate') timings.cacheCreate += elapsed;
-    else if (name === 'cacheRestore') timings.cacheRestore += elapsed;
-    else if (name === 'build') {
-        timings.builds += elapsed;
-        timings.buildCount++;
-    }
-
-    return result;
-}
 
 // Artifacts in the system
 const ARTIFACTS = {
@@ -48,56 +39,67 @@ const DEPS = {
 const ALWAYS_RULES = new Set(['E.txt']);
 
 // Helper: Reset environment
-function reset() {
+async function reset(workerDir) {
     const files = [...ARTIFACTS.sources, ...ARTIFACTS.built, '.zrup.json'];
     for (const file of files) {
-        try { fs.unlinkSync(file); } catch {}
+        try { await fsp.unlink(path.join(workerDir, file)); } catch {}
     }
-    try { execSync('rm -rf .zrup', { cwd: __dirname }); } catch {}
+    try { await rimraf(path.join(workerDir, '.zrup')); } catch {}
 }
 
 // Helper: Create source files with original content
-function createSources() {
+async function createSources(workerDir) {
     for (const source of ARTIFACTS.sources) {
-        fs.writeFileSync(path.join(__dirname, source), `original ${source}\n`);
+        await fsp.writeFile(path.join(workerDir, source), `original ${source}\n`);
     }
 }
 
 // Helper: Change an artifact
-function changeArtifact(artifact) {
-    const filepath = path.join(__dirname, artifact);
+async function changeArtifact(artifact, workerDir) {
+    const filepath = path.join(workerDir, artifact);
     if (ARTIFACTS.sources.includes(artifact)) {
         // Source file: replace content
-        fs.writeFileSync(filepath, `changed ${artifact}\n`);
+        await fsp.writeFile(filepath, `changed ${artifact}\n`);
     } else {
         // Built file: append to it
-        fs.appendFileSync(filepath, 'changed\n');
+        await fsp.appendFile(filepath, 'changed\n');
     }
 }
 
 // Helper: Run zrup and capture output
-function runBuild(target) {
-    return timeOperation('build', () => {
-        try {
-            const output = execSync(`node ${RUNNER} combination+${target}`, {
-                cwd: __dirname,
+async function runBuild(target, workerDir) {
+    const start = performance.now();
+    try {
+        const { stdout, stderr } = await execAsync(
+            `node ${RUNNER} combination+${target}`,
+            {
+                cwd: workerDir,
                 encoding: 'utf8',
-                stdio: 'pipe'
-            });
-            return { success: true, output };
-        } catch (error) {
-            return { success: false, output: error.stdout + error.stderr, error: error.message };
-        }
-    });
+                maxBuffer: 10 * 1024 * 1024  // 10MB buffer
+            }
+        );
+        const elapsed = performance.now() - start;
+        timings.builds += elapsed;
+        timings.buildCount++;
+        return { success: true, output: stdout };
+    } catch (error) {
+        const elapsed = performance.now() - start;
+        timings.builds += elapsed;
+        timings.buildCount++;
+        return {
+            success: false,
+            output: error.stdout + error.stderr,
+            error: error.message
+        };
+    }
 }
 
 // Helper: Initialize zrup
-function initZrup() {
+async function initZrup(workerDir) {
     try {
-        execSync(`node ${RUNNER} --init`, {
-            cwd: __dirname,
-            encoding: 'utf8',
-            stdio: 'pipe'
+        await execAsync(`node ${RUNNER} --init`, {
+            cwd: workerDir,
+            encoding: 'utf8'
         });
     } catch (error) {
         throw new Error(`Init failed: ${error.message}`);
@@ -105,55 +107,63 @@ function initZrup() {
 }
 
 // Helper: Check if database exists
-function hasDatabaseFile() {
-    const dbPath = path.join(__dirname, '.zrup/data/state.sqlite');
+function hasDatabaseFile(workerDir) {
+    const dbPath = path.join(workerDir, '.zrup/data/state.sqlite');
     return fs.existsSync(dbPath);
 }
 
 // Helper: Create initial state cache
-function createInitialStateCache() {
-    return timeOperation('cacheCreate', () => {
-        reset();
-        createSources();
-        initZrup();
+async function createInitialStateCache(workerDir) {
+    const start = performance.now();
 
-        // Check if DB was created
-        if (!hasDatabaseFile()) {
-            console.log('Database not created by --init, trying dummy build...');
-            // Try building a dummy target to initialize DB
-            runBuild('E.txt');
-            if (!hasDatabaseFile()) {
-                throw new Error('Cannot initialize database - please fix zrup initialization');
-            }
+    await reset(workerDir);
+    await createSources(workerDir);
+    await initZrup(workerDir);
+
+    // Check if DB was created
+    if (!hasDatabaseFile(workerDir)) {
+        console.log('Database not created by --init, trying dummy build...');
+        // Try building a dummy target to initialize DB
+        await runBuild('E.txt', workerDir);
+        if (!hasDatabaseFile(workerDir)) {
+            throw new Error('Cannot initialize database - please fix zrup initialization');
         }
+    }
 
-        // Create tar.gz of initial state
-        execSync('tar czf initial-state.tar.gz .zrup .zrup.json *.txt', {
-            cwd: __dirname
-        });
+    // Create tar.gz of initial state
+    await execAsync('tar czf initial-state.tar.gz .zrup .zrup.json *.txt', {
+        cwd: workerDir
     });
+
+    const elapsed = performance.now() - start;
+    timings.cacheCreate += elapsed;
 }
 
 // Helper: Restore from cache
-function restoreFromCache() {
-    return timeOperation('cacheRestore', () => {
-        reset();
-        execSync(`tar xzf ${CACHE_FILE}`, { cwd: __dirname });
-    });
+async function restoreFromCache(workerDir) {
+    const start = performance.now();
+
+    await reset(workerDir);
+    const cacheFile = path.join(workerDir, 'initial-state.tar.gz');
+    await execAsync(`tar xzf ${cacheFile}`, { cwd: workerDir });
+
+    const elapsed = performance.now() - start;
+    timings.cacheRestore += elapsed;
+    timings.restoreCount++;
 }
 
 // Helper: Change hash algorithm in config
-function setHashAlgorithm(algo) {
-    const configPath = path.join(__dirname, '.zrup.json');
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+async function setHashAlgorithm(algo, workerDir) {
+    const configPath = path.join(workerDir, '.zrup.json');
+    const config = JSON.parse(await fsp.readFile(configPath, 'utf8'));
     config.hashAlgorithm = algo;
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+    await fsp.writeFile(configPath, JSON.stringify(config, null, 4));
 }
 
 // Helper: Get file mtime (returns null if file doesn't exist)
-function getMtime(filename) {
+async function getMtime(filename, workerDir) {
     try {
-        const stats = fs.statSync(path.join(__dirname, filename));
+        const stats = await fsp.stat(path.join(workerDir, filename));
         return stats.mtimeMs;
     } catch {
         return null;
@@ -161,10 +171,10 @@ function getMtime(filename) {
 }
 
 // Helper: Capture mtimes of all built artifacts
-function captureTimestamps() {
+async function captureTimestamps(workerDir) {
     const timestamps = {};
     for (const artifact of ARTIFACTS.built) {
-        timestamps[artifact] = getMtime(artifact);
+        timestamps[artifact] = await getMtime(artifact, workerDir);
     }
     return timestamps;
 }
@@ -191,9 +201,9 @@ function getRebuiltArtifacts(beforeTimestamps, afterTimestamps) {
 }
 
 // Helper: Read file content
-function readFile(filename) {
+async function readFile(filename, workerDir) {
     try {
-        return fs.readFileSync(path.join(__dirname, filename), 'utf8');
+        return await fsp.readFile(path.join(workerDir, filename), 'utf8');
     } catch {
         return null;
     }
@@ -244,8 +254,8 @@ function getRelevantArtifacts(target) {
 }
 
 // Helper: Verify hash algorithms for target and dependencies
-function verifyHashAlgorithms(target, expectedAlgorithm) {
-    const dbPath = path.join(__dirname, '.zrup/data/state.sqlite');
+function verifyHashAlgorithms(target, expectedAlgorithm, workerDir) {
+    const dbPath = path.join(workerDir, '.zrup/data/state.sqlite');
     if (!fs.existsSync(dbPath)) return { success: false, error: 'Database not found' };
 
     try {
@@ -405,12 +415,12 @@ function computeExpectedRebuilds(changedArtifacts, requestedTarget) {
 }
 
 // Main test for one combination and target
-function testCombination(changedArtifacts, target) {
+async function testCombination(changedArtifacts, target, workerDir) {
     // ===== PART 1: Regular build and rebuild =====
-    restoreFromCache();
+    await restoreFromCache(workerDir);
 
     // Initial build
-    const build1 = runBuild(target);
+    const build1 = await runBuild(target, workerDir);
     if (!build1.success) {
         return {
             part1: { success: false, error: `Initial build failed: ${build1.error}` },
@@ -436,7 +446,7 @@ function testCombination(changedArtifacts, target) {
     const part1InitialErrors = [];
     for (const file of Array.from(initiallyBuilt)) {
         const expected = getExpectedContent(file, []);
-        const actual = readFile(file);
+        const actual = await readFile(file, workerDir);
         if (actual !== expected) {
             part1InitialErrors.push(`${file} content mismatch`);
         }
@@ -444,14 +454,14 @@ function testCombination(changedArtifacts, target) {
 
     // Apply changes
     for (const artifact of changedArtifacts) {
-        changeArtifact(artifact);
+        await changeArtifact(artifact, workerDir);
     }
 
     // Capture timestamps before rebuild
-    const beforeRebuild = captureTimestamps();
+    const beforeRebuild = await captureTimestamps(workerDir);
 
     // Rebuild
-    const build2 = runBuild(target);
+    const build2 = await runBuild(target, workerDir);
     if (!build2.success) {
         return {
             part1: { success: false, error: `Rebuild failed: ${build2.error}`, initialErrors: part1InitialErrors },
@@ -460,7 +470,7 @@ function testCombination(changedArtifacts, target) {
     }
 
     // Capture timestamps after rebuild
-    const afterRebuild = captureTimestamps();
+    const afterRebuild = await captureTimestamps(workerDir);
     const actuallyRebuilt = getRebuiltArtifacts(beforeRebuild, afterRebuild);
     const expected2 = computeExpectedRebuilds(changedArtifacts, target);
 
@@ -485,31 +495,31 @@ function testCombination(changedArtifacts, target) {
     const part1ContentErrors = [];
     for (const file of Array.from(initiallyBuilt)) {
         const expected = getExpectedContent(file, changedArtifacts);
-        const actual = readFile(file);
+        const actual = await readFile(file, workerDir);
         if (actual !== expected) {
             part1ContentErrors.push(`${file} content mismatch after rebuild`);
         }
     }
 
     // ===== PART 2: Simultaneous rebuilds and hash upgrades =====
-    restoreFromCache();
+    await restoreFromCache(workerDir);
 
     // Initial build with md5
-    runBuild(target);
+    await runBuild(target, workerDir);
 
     // Apply changes
     for (const artifact of changedArtifacts) {
-        changeArtifact(artifact);
+        await changeArtifact(artifact, workerDir);
     }
 
     // Switch to blake3
-    setHashAlgorithm('blake3');
+    await setHashAlgorithm('blake3', workerDir);
 
     // Capture timestamps before blake3 rebuild
-    const beforeBlake3 = captureTimestamps();
+    const beforeBlake3 = await captureTimestamps(workerDir);
 
     // Rebuild with blake3
-    const build3 = runBuild(target);
+    const build3 = await runBuild(target, workerDir);
     if (!build3.success) {
         return {
             part1: {
@@ -525,7 +535,7 @@ function testCombination(changedArtifacts, target) {
     }
 
     // Capture timestamps after blake3 rebuild
-    const afterBlake3 = captureTimestamps();
+    const afterBlake3 = await captureTimestamps(workerDir);
     const actuallyRebuilt3 = getRebuiltArtifacts(beforeBlake3, afterBlake3);
     const expected3 = computeExpectedRebuilds(changedArtifacts, target);
 
@@ -547,7 +557,7 @@ function testCombination(changedArtifacts, target) {
     }
 
     // Verify algorithms upgraded to blake3
-    const algoCheck = verifyHashAlgorithms(target, 'blake3');
+    const algoCheck = verifyHashAlgorithms(target, 'blake3', workerDir);
     const part2AlgoErrors = algoCheck.success ? [] : [algoCheck.error];
 
     return {
@@ -570,39 +580,39 @@ function testCombination(changedArtifacts, target) {
 }
 
 // Special test: partial migration
-function testPartialMigration() {
-    restoreFromCache();
+async function testPartialMigration(workerDir) {
+    await restoreFromCache(workerDir);
 
     // Build A.txt with md5
-    const build1 = runBuild('A.txt');
+    const build1 = await runBuild('A.txt', workerDir);
     if (!build1.success) {
         return { success: false, error: `Initial build of A.txt failed` };
     }
 
     // Switch to blake3
-    setHashAlgorithm('blake3');
+    await setHashAlgorithm('blake3', workerDir);
 
     // Build E.txt - should rebuild (always rule)
-    const beforeE = captureTimestamps();
-    const build2 = runBuild('E.txt');
+    const beforeE = await captureTimestamps(workerDir);
+    const build2 = await runBuild('E.txt', workerDir);
     if (!build2.success) {
         return { success: false, error: `Build of E.txt failed` };
     }
 
-    const afterE = captureTimestamps();
+    const afterE = await captureTimestamps(workerDir);
     const rebuiltE = getRebuiltArtifacts(beforeE, afterE);
     if (!rebuiltE.includes('E.txt')) {
         return { success: false, error: `E.txt should rebuild (always) but didn't`, rebuilt: rebuiltE };
     }
 
     // Build C.txt - should NOT rebuild (E.txt content unchanged, just algorithm changed)
-    const beforeC = captureTimestamps();
-    const build3 = runBuild('C.txt');
+    const beforeC = await captureTimestamps(workerDir);
+    const build3 = await runBuild('C.txt', workerDir);
     if (!build3.success) {
         return { success: false, error: `Build of C.txt failed` };
     }
 
-    const afterC = captureTimestamps();
+    const afterC = await captureTimestamps(workerDir);
     const rebuiltC = getRebuiltArtifacts(beforeC, afterC);
 
     // E should rebuild (always), C should NOT
@@ -639,49 +649,161 @@ function formatCombinationName(artifacts) {
     return artifacts.map(a => a.replace('.txt', '')).join(',');
 }
 
+// Helper: Setup worker directories
+async function setupWorkers(count) {
+    const workersDir = path.join(__dirname, '.workers');
+    await rimraf(workersDir);  // Clean old workers
+
+    console.log(`Setting up ${count} workers...`);
+    for (let i = 0; i < count; i++) {
+        const workerDir = path.join(workersDir, `worker-${i}`);
+        await fsp.mkdir(workerDir, { recursive: true });
+
+        // Copy buildspec
+        await fsp.copyFile(
+            path.join(__dirname, '.zrup.mjs'),
+            path.join(workerDir, '.zrup.mjs')
+        );
+
+        // Create worker's initial state cache (in worker dir)
+        await createInitialStateCache(workerDir);
+    }
+}
+
+// Helper: Cleanup worker directories
+async function cleanupWorkers(count) {
+    const workersDir = path.join(__dirname, '.workers');
+    await rimraf(workersDir);
+}
+
+// Worker function: Processes jobs from the queue
+async function worker(workerId, jobs, results) {
+    const workerDir = path.join(__dirname, '.workers', `worker-${workerId}`);
+
+    while (jobs.length > 0) {
+        const job = jobs.shift();  // Get next job from queue
+        if (!job) break;
+
+        // Run test in worker directory
+        let result;
+        if (job.type === 'combination') {
+            result = await testCombination(
+                job.combination,
+                job.target,
+                workerDir
+            );
+            const comboName = formatCombinationName(job.combination);
+            const targetName = job.target.replace('.txt', '');
+            results.combinations[comboName][targetName] = result;
+
+            const part1Ok = result.part1.success ? '✓' : '✗';
+            const part2Ok = result.part2.success ? '✓' : '✗';
+            console.log(`Worker ${workerId}: ${comboName}/${targetName} Part1=${part1Ok} Part2=${part2Ok}`);
+        } else {
+            result = await testPartialMigration(workerDir);
+            results['incremental-hash-upgrade'] = result;
+            const specialOk = result.success ? '✓' : '✗';
+            console.log(`Worker ${workerId}: Incremental hash upgrade ${specialOk}`);
+        }
+    }
+}
+
 // Main
 async function main() {
     const targets = ['A.txt', 'C.txt', 'E.txt'];
+
+    // Parse command-line filter (e.g., "NONE/A", "NONE", "special")
+    const filter = process.argv[2];
+
+    // Pre-initialize results structure
     const results = {
         combinations: {},
         'incremental-hash-upgrade': {}
     };
 
-    console.log('Creating initial state cache...');
-    createInitialStateCache();
-
-    // Test all combinations
-    for (const combination of generateCombinations()) {
+    // Generate job queue
+    const jobs = [];
+    const combinations = Array.from(generateCombinations());
+    for (const combination of combinations) {
         const comboName = formatCombinationName(combination);
-        results.combinations[comboName] = {};
+        results.combinations[comboName] = {};  // Pre-initialize
 
         for (const target of targets) {
-            const targetName = target.replace('.txt', '');
-            const result = testCombination(combination, target);
-            results.combinations[comboName][targetName] = result;
-
-            const part1Ok = result.part1.success ? '✓' : '✗';
-            const part2Ok = result.part2.success ? '✓' : '✗';
-            console.log(`${comboName}/${targetName}: Part1=${part1Ok} Part2=${part2Ok}`);
+            jobs.push({ type: 'combination', combination, target });
         }
     }
+    jobs.push({ type: 'special', name: 'incremental-hash-upgrade' });
 
-    // Special test
-    console.log('Running incremental hash upgrade test...');
-    results['incremental-hash-upgrade'] = testPartialMigration();
-    const specialOk = results['incremental-hash-upgrade'].success ? '✓' : '✗';
-    console.log(`Incremental hash upgrade: ${specialOk}`);
+    // Filter jobs if specified
+    let filteredJobs = jobs;
+    if (filter) {
+        if (filter === 'special' || filter === 'incremental-hash-upgrade') {
+            filteredJobs = jobs.filter(j => j.type === 'special');
+        } else if (filter.includes('/')) {
+            // Specific combo/target like "NONE/A"
+            const [comboFilter, targetFilter] = filter.split('/');
+            filteredJobs = jobs.filter(j => {
+                if (j.type !== 'combination') return false;
+                const comboName = formatCombinationName(j.combination);
+                const targetName = j.target.replace('.txt', '');
+                return comboName === comboFilter && targetName === targetFilter;
+            });
+        } else {
+            // Just combo like "NONE" - all targets for that combo
+            filteredJobs = jobs.filter(j => {
+                if (j.type !== 'combination') return false;
+                const comboName = formatCombinationName(j.combination);
+                return comboName === filter;
+            });
+        }
+        console.log(`Running ${filteredJobs.length} tests matching "${filter}" with ${CONCURRENCY} workers...`);
+    } else {
+        console.log(`Running ${filteredJobs.length} tests with ${CONCURRENCY} workers...`);
+    }
 
-    // Cleanup
-    reset();
-    try { fs.unlinkSync(CACHE_FILE); } catch {}
+    // Setup worker directories
+    await setupWorkers(CONCURRENCY);
 
-    // Write results
+    // Launch workers
+    const workers = [];
+    for (let i = 0; i < CONCURRENCY; i++) {
+        workers.push(worker(i, filteredJobs, results));
+    }
+
+    // Wait for all workers to complete
+    await Promise.all(workers);
+
+    // Cleanup workers
+    await cleanupWorkers(CONCURRENCY);
+
+    // Write results (merge with existing if filter was active)
     const outputPath = path.join(__dirname, 'test-results.json');
-    fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
+    let finalResults = results;
+    if (filter && fs.existsSync(outputPath)) {
+        // Read existing results and merge in new ones
+        const existingResults = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
+
+        // Merge combinations
+        for (const [comboName, targets] of Object.entries(results.combinations)) {
+            if (!existingResults.combinations[comboName]) {
+                existingResults.combinations[comboName] = {};
+            }
+            for (const [targetName, result] of Object.entries(targets)) {
+                existingResults.combinations[comboName][targetName] = result;
+            }
+        }
+
+        // Merge special test if present
+        if (results['incremental-hash-upgrade'] && Object.keys(results['incremental-hash-upgrade']).length > 0) {
+            existingResults['incremental-hash-upgrade'] = results['incremental-hash-upgrade'];
+        }
+
+        finalResults = existingResults;
+    }
+    fs.writeFileSync(outputPath, JSON.stringify(finalResults, null, 2));
     console.log(`\nResults written to ${outputPath}`);
 
-    // Compute summary
+    // Compute summary (only for tests that were run, not entire results file)
     let totalTests = 0;
     let failedTests = 0;
     for (const combo of Object.values(results.combinations)) {
@@ -691,8 +813,10 @@ async function main() {
             if (!target.part2.success) failedTests++;
         }
     }
-    if (!results['incremental-hash-upgrade'].success) failedTests++;
-    totalTests++;
+    if (results['incremental-hash-upgrade'] && Object.keys(results['incremental-hash-upgrade']).length > 0) {
+        if (!results['incremental-hash-upgrade'].success) failedTests++;
+        totalTests++;
+    }
 
     console.log(`\n${'='.repeat(60)}`);
     console.log(`Total tests: ${totalTests}`);
@@ -703,7 +827,7 @@ async function main() {
     console.log(`\n${'='.repeat(60)}`);
     console.log('TIMING BREAKDOWN:');
     console.log(`Cache create:    ${(timings.cacheCreate / 1000).toFixed(2)}s`);
-    console.log(`Cache restore:   ${(timings.cacheRestore / 1000).toFixed(2)}s (${timings.cacheRestore / totalTests * timings.buildCount | 0} restores)`);
+    console.log(`Cache restore:   ${(timings.cacheRestore / 1000).toFixed(2)}s (${timings.restoreCount} restores)`);
     console.log(`Builds:          ${(timings.builds / 1000).toFixed(2)}s (${timings.buildCount} builds, avg ${(timings.builds / timings.buildCount).toFixed(0)}ms/build)`);
     const total = timings.cacheCreate + timings.cacheRestore + timings.builds;
     console.log(`Total measured:  ${(total / 1000).toFixed(2)}s`);

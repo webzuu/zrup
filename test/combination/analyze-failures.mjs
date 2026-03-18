@@ -21,8 +21,7 @@ for (const [combo, targets] of Object.entries(results.combinations)) {
 
 console.log(`Total failures: ${failures.length}\n`);
 
-// Show first 10 failures
-failures.slice(0, 10).forEach((f, i) => {
+failures.forEach((f, i) => {
     console.log(`${i + 1}. ${f.combo}/${f.target}`);
     console.log(`   Part1: ${f.part1Success ? '✓' : '✗'}, Part2: ${f.part2Success ? '✓' : '✗'}`);
     if (f.part1RebuildErrors.length > 0) {
