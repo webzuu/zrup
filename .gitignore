@@ -116,6 +116,7 @@ web_modules/
 
 /.zrup
 /tmp
+/.debug
 
 /CLAUDE.md
 /bootstrap

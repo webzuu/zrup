@@ -27,27 +27,52 @@ export class Build extends EventEmitter {
             };
             if (!(await output.exists))
                 return nonresult;
-            // Get artifact's CURRENT version, then query DB for sources based on that version
-            const version = await output.version;
-            const versionSourcesResult = this.db.listVersionSources(output.key, version);
-            const sourceVersions = {};
-            const sourceAlgorithms = {};
-            let targetAlgorithm = null;
-            for (let row of versionSourcesResult) {
-                sourceVersions[row.source] = row.version;
-                sourceAlgorithms[row.source] = row.algorithm;
-                // Target algorithm is the same for all rows - get from first
-                if (!targetAlgorithm && versionSourcesResult.length > 0) {
-                    targetAlgorithm = row.target_algorithm;
+            // Get all recorded versions for this target
+            const allVersions = this.db.listVersions(output.key);
+            if (allVersions.length === 0) {
+                // No build records - return current version with empty dependencies
+                return {
+                    target: output.key,
+                    version: await output.version,
+                    targetAlgorithm: this.hashService.algorithm,
+                    sourceVersions: {},
+                    sourceAlgorithms: {}
+                };
+            }
+            // Try each recorded version: compute current hash with that version's algorithm
+            // and see if it matches. This handles algorithm switching correctly.
+            for (const versionRecord of allVersions) {
+                const recordedVersion = versionRecord.version;
+                const sourcesResult = this.db.listVersionSources(output.key, recordedVersion);
+                if (sourcesResult.length === 0)
+                    continue;
+                // Get the algorithm used for this version
+                const firstRow = sourcesResult[0];
+                if (!firstRow)
+                    continue;
+                const recordedAlgorithm = firstRow.target_algorithm || 'md5';
+                // Compute current hash with the SAME algorithm
+                const currentVersionWithRecordedAlgo = await output.getVersionUsing(recordedAlgorithm);
+                // Does current content match this recorded version?
+                if (currentVersionWithRecordedAlgo === recordedVersion) {
+                    // Match! Use this version's dependency info
+                    const sourceVersions = {};
+                    const sourceAlgorithms = {};
+                    for (let row of sourcesResult) {
+                        sourceVersions[row.source] = row.version;
+                        sourceAlgorithms[row.source] = row.algorithm;
+                    }
+                    return {
+                        target: output.key,
+                        version: recordedVersion,
+                        targetAlgorithm: recordedAlgorithm,
+                        sourceVersions,
+                        sourceAlgorithms
+                    };
                 }
             }
-            return {
-                target: output.key,
-                version,
-                targetAlgorithm,
-                sourceVersions,
-                sourceAlgorithms
-            };
+            // No matching version found - artifact was modified or never built
+            return nonresult;
         };
         this.index = {
             rule: {
