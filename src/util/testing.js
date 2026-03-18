@@ -202,6 +202,12 @@ export const ProjectTesting = class ProjectTesting
         afterEach(this.down.bind(this));
     }
 
+    async build(callback) {
+        this.down();
+        this.up();
+        return await callback({project: this.project, artifactManager: this.artifactManager});
+    }
+
     static #defaults = {
         createRootModule: true
     };

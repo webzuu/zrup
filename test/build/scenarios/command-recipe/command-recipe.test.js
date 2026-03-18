@@ -46,36 +46,40 @@ describe("CommandRecipe", () => {
 
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
         await db.getStmt();
-        await db.getStmt();
         const hashService = new HashService("md5");
-        Artifact.setHashService(hashService);
 
-        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
-        ruleBuilder.finalize();
-
-        const actual = d.artifactManager.get('actual.txt');
-        const expected = d.artifactManager.get('expected.txt');
-
-        let jobs = null;
-        async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
-            return jobs;
+        async function runBuild() {
+            return await d.build(async ({project, artifactManager}) => {
+                Artifact.setHashService(hashService);
+                const rb = new RuleBuilder(project, artifactManager);
+                await new ModuleBuilder(project, rb).loadRootModule();
+                rb.finalize();
+                const actual = artifactManager.get('actual.txt');
+                const expected = artifactManager.get('expected.txt');
+                const jobs = await new Build(project.graph, db, artifactManager, hashService).getJobSetForArtifact(actual);
+                await jobs.run();
+                return {jobs, actual, expected};
+            });
         }
 
         //build fresh
-        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
-        expect(await actual.version).to.equal(await expected.version);
+        let r = await runBuild();
+        expect(r.jobs.jobs[0].recipeInvoked).to.be.true;
+        expect(await r.actual.version).to.equal(await r.expected.version);
 
         //don't rebuild if dependencies unchanged
-        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.false;
+        r = await runBuild();
+        expect(r.jobs.jobs[0].recipeInvoked).to.be.false;
 
         //rebuild if dependency changed
         fs.appendFileSync(path.join(d.tmpDir.toString(),'src/input2.txt'),"Some more input added\n");
-        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
-        expect(await actual.version).to.not.equal(await expected.version);
+        r = await runBuild();
+        expect(r.jobs.jobs[0].recipeInvoked).to.be.true;
+        expect(await r.actual.version).to.not.equal(await r.expected.version);
 
         //don't rebuild if dependencies unchanged again
-        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.false;
+        r = await runBuild();
+        expect(r.jobs.jobs[0].recipeInvoked).to.be.false;
     });
 
     it('captures empty output', async() => {
@@ -229,23 +233,23 @@ describe("CommandRecipe", () => {
     it('always runs a rule specified with always flag', async() => {
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
         await db.getStmt();
-        await db.getStmt();
         const hashService = new HashService("md5");
-        Artifact.setHashService(hashService);
 
-        await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
-        ruleBuilder.finalize();
-
-        const actual = d.artifactManager.get('internal:foo/bar/handle-always.txt');
-
-        let jobs = null;
-        async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
-            return jobs;
+        async function runBuild() {
+            return await d.build(async ({project, artifactManager}) => {
+                Artifact.setHashService(hashService);
+                const rb = new RuleBuilder(project, artifactManager);
+                await new ModuleBuilder(project, rb).loadRootModule();
+                rb.finalize();
+                const actual = artifactManager.get('internal:foo/bar/handle-always.txt');
+                const jobs = await new Build(project.graph, db, artifactManager, hashService).getJobSetForArtifact(actual);
+                await jobs.run();
+                return jobs;
+            });
         }
 
-        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
-        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
+        expect((await runBuild()).jobs[0].recipeInvoked).to.be.true;
+        expect((await runBuild()).jobs[0].recipeInvoked).to.be.true;
     });
 
     it('accepts a string as command-only simple descriptor', async() => {
