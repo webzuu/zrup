@@ -11,38 +11,53 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+console.log('=== ZRUP POSTINSTALL DEBUG ===');
+console.log('Script location:', __dirname);
+
 // Find the root of the consuming project (where package.json with zrup dependency lives)
 function findProjectRoot() {
     let dir = path.join(__dirname, '..');  // Start from zrup's root
+    console.log('Starting search from:', dir);
 
     // Walk up looking for the real project root (has node_modules with zrup in it)
-    for (let i = 0; i < 10; i++) {  // Limit iterations to prevent infinite loop
+    for (let i = 0; i < 10; i++) {
         const parentNodeModules = path.join(dir, '..', 'node_modules');
         const zrupInParent = path.join(parentNodeModules, 'zrup');
 
+        console.log(`  [${i}] Checking:`, parentNodeModules);
+        console.log(`      zrup path:`, zrupInParent);
+        console.log(`      exists:`, fs.existsSync(zrupInParent));
+
         // If parent has node_modules/zrup, we found consuming project
         if (fs.existsSync(zrupInParent)) {
-            return path.dirname(parentNodeModules);
+            const root = path.dirname(parentNodeModules);
+            console.log('Found project root:', root);
+            return root;
         }
 
         dir = path.dirname(dir);
-        if (dir === path.dirname(dir)) break;  // Hit root
+        if (dir === path.dirname(dir)) {
+            console.log('Hit filesystem root, stopping');
+            break;
+        }
     }
 
-    // Fallback: if we can't find it, we're probably in dev mode
+    console.log('Could not find project root');
     return null;
 }
 
 const projectRoot = findProjectRoot();
 
 if (!projectRoot) {
-    // We're probably in zrup's own dev environment, not installed as dependency
     console.log('Skipping better-sqlite3 rebuild (development mode)');
     process.exit(0);
 }
 
 // Check if better-sqlite3 exists in consuming project
 const betterSqlitePath = path.join(projectRoot, 'node_modules', 'better-sqlite3');
+console.log('Looking for better-sqlite3 at:', betterSqlitePath);
+console.log('Exists:', fs.existsSync(betterSqlitePath));
+
 if (!fs.existsSync(betterSqlitePath)) {
     console.log('better-sqlite3 not found, skipping rebuild');
     process.exit(0);
@@ -54,43 +69,60 @@ const possibleBindings = [
     path.join(betterSqlitePath, 'build/Debug/better_sqlite3.node'),
 ];
 
+console.log('Checking for existing bindings:');
+possibleBindings.forEach(p => {
+    console.log(`  ${p}: ${fs.existsSync(p) ? 'EXISTS' : 'MISSING'}`);
+});
+
 const bindingsExist = possibleBindings.some(p => fs.existsSync(p));
 
 if (bindingsExist) {
-    console.log('better-sqlite3 bindings already exist');
+    console.log('better-sqlite3 bindings already exist, skipping rebuild');
     process.exit(0);
 }
 
 // Rebuild from project root
-console.log(`Building better-sqlite3 native bindings from ${projectRoot}...`);
+console.log(`\n=== Building better-sqlite3 native bindings ===`);
+console.log(`Project root: ${projectRoot}`);
 
 try {
     // Detect package manager from lockfiles
-    let rebuildCmd;
-    if (fs.existsSync(path.join(projectRoot, 'bun.lockb')) || fs.existsSync(path.join(projectRoot, 'bun.lock'))) {
-        rebuildCmd = 'bun rebuild better-sqlite3';
-    } else if (fs.existsSync(path.join(projectRoot, 'pnpm-lock.yaml'))) {
-        rebuildCmd = 'pnpm rebuild better-sqlite3';
-    } else if (fs.existsSync(path.join(projectRoot, 'yarn.lock'))) {
-        rebuildCmd = 'yarn rebuild better-sqlite3';
-    } else {
-        rebuildCmd = 'npm rebuild better-sqlite3';
+    const lockfiles = {
+        'bun.lockb': 'bun rebuild better-sqlite3',
+        'bun.lock': 'bun rebuild better-sqlite3',
+        'pnpm-lock.yaml': 'pnpm rebuild better-sqlite3',
+        'yarn.lock': 'yarn rebuild better-sqlite3',
+        'package-lock.json': 'npm rebuild better-sqlite3'
+    };
+
+    let rebuildCmd = 'npm rebuild better-sqlite3';  // default
+
+    for (const [lockfile, cmd] of Object.entries(lockfiles)) {
+        const lockpath = path.join(projectRoot, lockfile);
+        if (fs.existsSync(lockpath)) {
+            console.log(`Detected ${lockfile}`);
+            rebuildCmd = cmd;
+            break;
+        }
     }
 
     console.log(`Running: ${rebuildCmd}`);
+    console.log(`CWD: ${projectRoot}\n`);
+
     execSync(rebuildCmd, {
         cwd: projectRoot,
         stdio: 'inherit'
     });
 
-    console.log('✓ better-sqlite3 rebuilt successfully');
+    console.log('\n✓ better-sqlite3 rebuilt successfully');
     process.exit(0);
 } catch (error) {
+    console.error('\n✗ Build failed!');
+    console.error('Error:', error.message);
     console.error('\n⚠ Warning: Could not build better-sqlite3 native bindings automatically.');
     console.error(`Please run this command from ${projectRoot}:`);
     console.error('  bun rebuild better-sqlite3');
     console.error('  OR');
     console.error('  npm rebuild better-sqlite3\n');
-    // Don't fail - warn and continue
-    process.exit(0);
+    process.exit(0);  // Don't fail the install
 }
