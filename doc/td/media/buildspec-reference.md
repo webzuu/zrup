@@ -485,7 +485,6 @@ The project configuration file:
 {
     "zrupDir": ".zrup",
     "dataDir": "<zrupDir>/data",
-    "hashAlgorithm": "md5",
     "channels": {
         "internal": "<zrupDir>/channels/internal",
         "tmp": "<zrupDir>/channels/tmp",
@@ -494,30 +493,14 @@ The project configuration file:
 }
 ```
 
-#### `zrupDir` (required)
-Directory for zrup's internal files. Default: `".zrup"`
+#### `zrupDir`
+Directory for zrup's internal files.
 
-#### `dataDir` (required)
-Directory for the build database. Supports `<zrupDir>` placeholder. Default: `"<zrupDir>/data"`
+#### `dataDir`
+Directory for the build database.
 
-#### `hashAlgorithm` (optional)
-Hash algorithm for computing artifact versions. Supported values:
-- `"md5"` - Legacy MD5 hashing (32 hex characters, default)
-- `"blake3"` - Fast BLAKE3 hashing (64 hex characters)
-
-When switching algorithms, zrup automatically handles version migrations - artifacts are only rebuilt if their content actually changes, not just because the algorithm changed.
-
-#### `channels` (required)
+#### `channels`
 Map of channel names to their storage directories. Use `<zrupDir>` as a placeholder for the zrupDir value.
-
-Channels create parallel directory trees for different types of artifacts:
-- `file` (implicit) - Regular project files
-- `internal` - Persistent build state (markers, stamps)
-- `tmp` - Temporary build artifacts
-- Custom channels - Define your own for project-specific needs
-
-#### `promiseLog` (optional)
-Path to a debug log file for tracking promise chains. Used for debugging internal async operations. Generally not needed for normal use.
 
 ## Common Patterns
 
