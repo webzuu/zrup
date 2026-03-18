@@ -21,6 +21,7 @@ export declare class FileArtifact extends Artifact {
      * Get version using a specific hash algorithm.
      * Used during migration to compute versions with different algorithms.
      * Caches per algorithm to avoid redundant computation.
+     * Cache entries are invalidated when artifact is rebuilt.
      *
      * @param algorithm Algorithm to use
      */

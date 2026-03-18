@@ -1,2 +1,2 @@
-export default function throwThe<T = any, E = Error>(e: E): T;
+export default function throwThe<E = Error>(e: E): never;
 //# sourceMappingURL=throw-error.d.ts.map

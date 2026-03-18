@@ -1,7 +1,5 @@
-import md5File from "md5-file";
-import { hash as blake3 } from "blake3";
-import fs from "fs/promises";
-import crypto from "crypto";
+import { md5, blake3, createMD5, createBLAKE3 } from "hash-wasm";
+import fs from "fs";
 
 export type HashAlgorithm = "md5" | "blake3";
 
@@ -26,17 +24,45 @@ export class HashService {
         const algorithm = algo || this.algorithm;
 
         switch (algorithm) {
-            case "md5":
-                return await md5File(filePath);
+            case "md5": {
+                const hasher = await createMD5();
+                const stream = fs.createReadStream(filePath);
+                for await (const chunk of stream) {
+                    hasher.update(chunk);
+                }
+                return hasher.digest('hex');
+            }
 
             case "blake3": {
-                const data = await fs.readFile(filePath);
-                return blake3(data).toString("hex");
+                const hasher = await createBLAKE3();
+                const stream = fs.createReadStream(filePath);
+                for await (const chunk of stream) {
+                    hasher.update(chunk);
+                }
+                return hasher.digest('hex');
             }
 
             default:
                 throw new Error(`Unsupported hash algorithm: ${algorithm}`);
         }
+    }
+
+    /**
+     * Normalize an object for hashing by recursively sorting keys.
+     * This ensures order-independent hashes like the old object-hash library.
+     */
+    private normalizeForHash(obj: any): any {
+        if (obj === null || typeof obj !== 'object') {
+            return obj;
+        }
+        if (Array.isArray(obj)) {
+            return obj.map(item => this.normalizeForHash(item));
+        }
+        const sorted: any = {};
+        for (const key of Object.keys(obj).sort()) {
+            sorted[key] = this.normalizeForHash(obj[key]);
+        }
+        return sorted;
     }
 
     /**
@@ -46,17 +72,17 @@ export class HashService {
      * @param algo Algorithm to use (defaults to service's algorithm)
      * @returns Hex-encoded hash string
      */
-    hashObject(obj: any, algo?: HashAlgorithm): string {
+    async hashObject(obj: any, algo?: HashAlgorithm): Promise<string> {
         const algorithm = algo || this.algorithm;
-        const json = JSON.stringify(obj);
+        const normalized = this.normalizeForHash(obj);
+        const json = JSON.stringify(normalized);
 
         switch (algorithm) {
             case "md5":
-                return crypto.createHash("md5").update(json).digest("hex");
+                return await md5(json);
 
-            case "blake3": {
-                return blake3(json).toString("hex");
-            }
+            case "blake3":
+                return await blake3(json);
 
             default:
                 throw new Error(`Unsupported hash algorithm: ${algorithm}`);

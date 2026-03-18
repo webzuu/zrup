@@ -18,12 +18,17 @@ export declare class HashService {
      */
     hashFile(filePath: string, algo?: HashAlgorithm): Promise<string>;
     /**
+     * Normalize an object for hashing by recursively sorting keys.
+     * This ensures order-independent hashes like the old object-hash library.
+     */
+    private normalizeForHash;
+    /**
      * Compute hash of an object (for RecipeArtifact) using the specified algorithm.
      *
      * @param obj Object to hash
      * @param algo Algorithm to use (defaults to service's algorithm)
      * @returns Hex-encoded hash string
      */
-    hashObject(obj: any, algo?: HashAlgorithm): string;
+    hashObject(obj: any, algo?: HashAlgorithm): Promise<string>;
 }
 //# sourceMappingURL=hash-service.d.ts.map

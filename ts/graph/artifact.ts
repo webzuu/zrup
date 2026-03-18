@@ -28,6 +28,18 @@ export abstract class Artifact  {
 
     private readonly $identity : string;
     protected static hashService?: any;  // HashService, but avoiding circular import
+    private $built: boolean = false;
+
+    get built(): boolean {
+        return this.$built;
+    }
+
+    set built(value: true) {
+        if (this.$built) {
+            throw new Error("Artifact.built can only be set to true once");
+        }
+        this.$built = value;
+    }
 
     /**
      * Set the global hash service for all Artifact instances.

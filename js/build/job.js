@@ -98,6 +98,13 @@ export class Job {
                     .map(_ => `${prefix} ${_}\n`)
                     .join(""));
             }
+            // Mark outputs as built to invalidate version caches
+            for (const output of this.outputs) {
+                output.built = true;
+            }
+            for (const output of this.dynamicOutputs) {
+                output.built = true;
+            }
             this.build.emit('invoked.recipe', this.rule);
             await this.detectRewritesAfterUse();
             await this.build.recordStandardVersionInfo(this);

@@ -24,6 +24,9 @@ export declare namespace Artifact {
 export declare abstract class Artifact {
     private readonly $identity;
     protected static hashService?: any;
+    private $built;
+    get built(): boolean;
+    set built(value: true);
     /**
      * Set the global hash service for all Artifact instances.
      * Should be called once during Build initialization.

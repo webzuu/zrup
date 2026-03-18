@@ -13,6 +13,8 @@ import {ModuleBuilder} from "../../../../js/front/module-builder.js";
 import {Build} from "../../../../js/build.js";
 import {Db} from "../../../../js/db.js";
 import {Job} from "../../../../js/build/job.js";
+import {HashService} from "../../../../js/hash/hash-service.js";
+import {Artifact} from "../../../../js/graph/artifact.js";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
 
@@ -39,6 +41,10 @@ describe('Version list idiom', function() {
     it('records autodependency and autotarget versions', async() => {
 
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -57,12 +63,12 @@ describe('Version list idiom', function() {
         /** @type {(JobSet|null)} */
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(target)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(target)).run();
             return jobs;
         }
 
         await runNewJob();
-        expect(jobs.job).to.be.instanceOf(Job);
+        expect(jobs.jobs[0]).to.be.instanceOf(Job);
         expect(await actual.in_list.contents).to.equal(await expected.in_list.contents);
         expect(await actual.in_state.contents).to.equal(await expected.in_state.contents);
         expect(await actual.out_list.contents).to.equal(await expected.out_list.contents);

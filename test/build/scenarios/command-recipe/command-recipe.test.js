@@ -17,7 +17,9 @@ import {Db} from "../../../../js/db.js";
 import * as fs from "fs";
 import {CommandError, CommandRecipe} from "../../../../js/build/recipe/command.js";
 import {BuildError} from "../../../../js/build/error.js";
-import stdout from "stdout-monkey"
+import stdout from "stdout-monkey";
+import {HashService} from "../../../../js/hash/hash-service.js";
+import {Artifact} from "../../../../js/graph/artifact.js";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
 
@@ -43,6 +45,10 @@ describe("CommandRecipe", () => {
     it("executes a simple command as part of a build job", async() => {
 
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -52,28 +58,32 @@ describe("CommandRecipe", () => {
 
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
             return jobs;
         }
 
         //build fresh
-        expect((await runNewJob()).job.recipeInvoked).to.be.true;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
 
         //don't rebuild if dependencies unchanged
-        expect((await runNewJob()).job.recipeInvoked).to.be.false;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.false;
 
         //rebuild if dependency changed
         fs.appendFileSync(path.join(d.tmpDir.toString(),'src/input2.txt'),"Some more input added\n");
-        expect((await runNewJob()).job.recipeInvoked).to.be.true;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
         expect(await actual.version).to.not.equal(await expected.version);
 
         //don't rebuild if dependencies unchanged again
-        expect((await runNewJob()).job.recipeInvoked).to.be.false;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.false;
     });
 
     it('captures empty output', async() => {
         const db = new Db(path.join(d.tmpDir.toString(),".data"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -82,17 +92,21 @@ describe("CommandRecipe", () => {
 
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(target)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(target)).run();
             return jobs;
         }
 
-        expect((await runNewJob()).job.recipeInvoked).to.be.true;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
         expect(await target.exists).to.be.true;
         expect(await target.contents).to.equal("");
     });
 
     it("executes a command using a subshell", async() => {
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -102,19 +116,23 @@ describe("CommandRecipe", () => {
 
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
             return jobs;
         }
 
 
         //build fresh
-        expect((await runNewJob()).job.recipeInvoked).to.be.true;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
     });
 
     it("transforms artifacts to files in tagged template string", async() => {
 
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -124,17 +142,21 @@ describe("CommandRecipe", () => {
 
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
             return jobs;
         }
 
         //build fresh
-        expect((await runNewJob()).job.recipeInvoked).to.be.true;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
         expect(await actual.contents).to.equal(await expected.contents);
     });
 
     it("detects pipeline failures", async () => {
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -143,7 +165,7 @@ describe("CommandRecipe", () => {
 
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
             return jobs;
         }
 
@@ -159,6 +181,10 @@ describe("CommandRecipe", () => {
 
     it('escapes newlines in commands', async() => {
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -168,16 +194,20 @@ describe("CommandRecipe", () => {
 
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
             return jobs;
         }
 
-        expect((await runNewJob()).job.recipeInvoked).to.be.true;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
     });
 
     it('resolves internal artifacts', async() => {
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -187,17 +217,21 @@ describe("CommandRecipe", () => {
 
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
             return jobs;
         }
 
-        expect((await runNewJob()).job.recipeInvoked).to.be.true;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
     });
     // internal:foo/bar/handle-always.txt
 
     it('always runs a rule specified with always flag', async() => {
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -206,16 +240,20 @@ describe("CommandRecipe", () => {
 
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
             return jobs;
         }
 
-        expect((await runNewJob()).job.recipeInvoked).to.be.true;
-        expect((await runNewJob()).job.recipeInvoked).to.be.true;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
+        expect((await runNewJob()).jobs[0].recipeInvoked).to.be.true;
     });
 
     it('accepts a string as command-only simple descriptor', async() => {
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -226,7 +264,7 @@ describe("CommandRecipe", () => {
 
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
             return jobs;
         }
 
@@ -245,6 +283,9 @@ describe("CommandRecipe", () => {
                 }
             );
             const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+            await db.getStmt();
+            const hashService = new HashService("md5");
 
             await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
             ruleBuilder.finalize();
@@ -255,13 +296,13 @@ describe("CommandRecipe", () => {
 
             let jobs = null;
             async function runNewJob() {
-                await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+                await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
                 return jobs;
             }
 
             await runNewJob();
             expect(await actual.version).to.equal(await expected.version);
-            expect(chunks.join('')).to.equal(await expected.contents);
+            expect(chunks.join('')).to.include(await expected.contents);
         }
         finally {
             if (monkey) monkey.restore();

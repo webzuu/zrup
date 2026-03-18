@@ -173,14 +173,9 @@ export class Build extends EventEmitter  {
         }
         if (!(await output.exists)) return nonresult;
 
-        // Get ALL recorded versions for this target (not filtered by version yet)
-        const allVersions = this.db.listVersions(output.key);
-        const firstVersion = allVersions[0];
-        if (!firstVersion) return nonresult;
-
-        // Use the first recorded version (typically there's only one)
-        const recordedVersion = firstVersion.version;
-        const versionSourcesResult = this.db.listVersionSources(output.key, recordedVersion);
+        // Get artifact's CURRENT version, then query DB for sources based on that version
+        const version = await output.version;
+        const versionSourcesResult = this.db.listVersionSources(output.key, version);
         const sourceVersions : Record<string, string> = {};
         const sourceAlgorithms : Record<string, string | null> = {};
         let targetAlgorithm: string | null = null;
@@ -196,7 +191,7 @@ export class Build extends EventEmitter  {
 
         return {
             target: output.key,
-            version: recordedVersion,
+            version,
             targetAlgorithm,
             sourceVersions,
             sourceAlgorithms
@@ -334,32 +329,25 @@ export class Build extends EventEmitter  {
         // Get recorded version info first to extract algorithms
         const recordedSourceVersionsByOutput = await Promise.all(allOutputs.map(this.getRecordedVersionInfo));
 
-        // Build algorithm maps: use recorded algorithm for comparison, track if different from current
-        const sourceAlgorithms: Record<string, string> = {};
-        const targetAlgorithms: Record<string, string> = {};
+        // Compute actual versions with CURRENT algorithm
         const currentAlgorithm = this.hashService.algorithm;
-
-        for (let recordedInfo of recordedSourceVersionsByOutput) {
-            // Map target algorithm
-            const targetAlgo = recordedInfo.targetAlgorithm || 'md5';
-            targetAlgorithms[recordedInfo.target] = targetAlgo;
-
-            // Map source algorithms
-            for (let sourceKey of Object.keys(recordedInfo.sourceVersions)) {
-                const sourceAlgo = recordedInfo.sourceAlgorithms[sourceKey] || 'md5';
-                sourceAlgorithms[sourceKey] = sourceAlgo;
-            }
-        }
-
-        // Compute actual versions using SAME algorithms as recorded (for accurate comparison)
         const [actualSourceVersions, actualOutputVersions] = await Promise.all([
-            this.getActualVersionInfo(dependencyArtifacts, sourceAlgorithms),
-            this.getActualVersionInfo(allOutputs, targetAlgorithms)
+            this.getActualVersionInfo(dependencyArtifacts),
+            this.getActualVersionInfo(allOutputs)
         ]);
 
         const dependencyKeySet = new Set(Object.keys(dependencyArtifactsByKey));
         for(let recordedVersionsInfo of recordedSourceVersionsByOutput) {
-            if (actualOutputVersions[recordedVersionsInfo.target] !== recordedVersionsInfo.version) {
+            const targetArtifact = recordedOutputsByKey[recordedVersionsInfo.target]
+                || throwThe(new BuildError(`Internal error: target artifact ${recordedVersionsInfo.target} not found in recordedOutputsByKey`));
+            const recordedAlgorithm = recordedVersionsInfo.targetAlgorithm || 'md5';
+
+            // For comparison, use recorded algorithm if different from current
+            const versionForComparison = recordedAlgorithm !== currentAlgorithm
+                ? await targetArtifact.getVersionUsing(recordedAlgorithm)
+                : actualOutputVersions[recordedVersionsInfo.target];
+
+            if (versionForComparison !== recordedVersionsInfo.version) {
                 this.emit("dirty.output", job, {
                     details: "output was modified externally",
                     rule: job.rule,
@@ -407,15 +395,24 @@ export class Build extends EventEmitter  {
             let hadRecordedSources = false;
             for(let recordedSourceKey of recordedSourceKeys) {
                 hadRecordedSources = true;
+                const sourceArtifact = dependencyArtifactsByKey[recordedSourceKey]
+                    || throwThe(new BuildError(`Internal error: source artifact ${recordedSourceKey} not found in dependencyArtifactsByKey`));
+                const recordedSourceAlgorithm = recordedVersionsInfo.sourceAlgorithms[recordedSourceKey] || 'md5';
+
+                // For comparison, use recorded algorithm if different from current
+                const sourceVersionForComparison = recordedSourceAlgorithm !== currentAlgorithm
+                    ? await sourceArtifact.getVersionUsing(recordedSourceAlgorithm)
+                    : actualSourceVersions[recordedSourceKey];
+
                 if (
                     recordedVersionsInfo.sourceVersions[recordedSourceKey]
-                    !== actualSourceVersions[recordedSourceKey]
+                    !== sourceVersionForComparison
                 ) {
                     this.emit("changed.source", job, {
                         details: "source was modified",
                         rule: job.rule,
                         output: recordedOutputsByKey[recordedVersionsInfo.target],
-                        source: dependencyArtifactsByKey[recordedSourceKey],
+                        source: sourceArtifact,
                         rec: recordedVersionsInfo,
                         act: actualSourceVersions[recordedSourceKey],
                     });
@@ -426,7 +423,7 @@ export class Build extends EventEmitter  {
                         details: "source matches the build record for target",
                         rule: job.rule,
                         output: recordedOutputsByKey[recordedVersionsInfo.target],
-                        source: dependencyArtifactsByKey[recordedSourceKey],
+                        source: sourceArtifact,
                         rec: recordedVersionsInfo,
                         act: actualSourceVersions[recordedSourceKey],
                     });

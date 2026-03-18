@@ -27,14 +27,21 @@ export class ArtifactList extends Artifact {
             throw new Error("HashService not initialized. Call Artifact.setHashService() first.");
         }
         this.$versionCache.clear();
-        this.$versionCache.set(Artifact.hashService.algorithm, versionPromise);
+        this.$versionCache.set(Artifact.hashService.algorithm, {
+            fromBuilt: this.built,
+            version: versionPromise
+        });
     }
     getVersionUsing(algorithm) {
         const cached = this.$versionCache.get(algorithm);
-        if (cached)
-            return cached;
+        if (cached && cached.fromBuilt === this.built) {
+            return cached.version;
+        }
         const promise = this.computeVersion(algorithm);
-        this.$versionCache.set(algorithm, promise);
+        this.$versionCache.set(algorithm, {
+            fromBuilt: this.built,
+            version: promise
+        });
         return promise;
     }
     async computeVersion(algorithm) {
@@ -43,7 +50,7 @@ export class ArtifactList extends Artifact {
             itemVersions[_.key] = await _.getVersionUsing(algorithm);
         }));
         // Hash the JSON representation of item versions using configured algorithm
-        return Artifact.hashService.hashObject(itemVersions, algorithm);
+        return await Artifact.hashService.hashObject(itemVersions, algorithm);
     }
     get exists() {
         return Promise.resolve(false);

@@ -12,6 +12,15 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _AID_type, _AID_module, _AID_ref, _ArtifactManager_index, _ArtifactManager_defaultType, _ArtifactFactory_manager, _ArtifactFactory_artifactConstructor, _ArtifactFactory_type, _ArtifactFactory_artifactResolver;
 import md5 from "md5";
 export class Artifact {
+    get built() {
+        return this.$built;
+    }
+    set built(value) {
+        if (this.$built) {
+            throw new Error("Artifact.built can only be set to true once");
+        }
+        this.$built = value;
+    }
     /**
      * Set the global hash service for all Artifact instances.
      * Should be called once during Build initialization.
@@ -20,6 +29,7 @@ export class Artifact {
         Artifact.hashService = service;
     }
     constructor(aid) {
+        this.$built = false;
         this.$identity = '' + aid;
         this.validate();
     }

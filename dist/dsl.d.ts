@@ -246,6 +246,9 @@ declare class RuleBuilder extends EventEmitter {
 declare abstract class Artifact {
     private readonly $identity;
     protected static hashService?: any;
+    private $built;
+    get built(): boolean;
+    set built(value: true);
     /**
      * Set the global hash service for all Artifact instances.
      * Should be called once during Build initialization.
@@ -404,6 +407,7 @@ declare class FileArtifact extends Artifact {
      * Get version using a specific hash algorithm.
      * Used during migration to compute versions with different algorithms.
      * Caches per algorithm to avoid redundant computation.
+     * Cache entries are invalidated when artifact is rebuilt.
      *
      * @param algorithm Algorithm to use
      */

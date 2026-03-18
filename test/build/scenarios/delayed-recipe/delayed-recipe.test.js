@@ -12,6 +12,8 @@ const expect = chai.expect;
 import {ModuleBuilder} from "../../../../js/front/module-builder.js";
 import {Build} from "../../../../js/build.js";
 import {Db} from "../../../../js/db.js";
+import {HashService} from "../../../../js/hash/hash-service.js";
+import {Artifact} from "../../../../js/graph/artifact.js";
 
 const d = new ProjectTesting(path.join(__dirname,"tmp"), {createRootModule: false});
 
@@ -38,6 +40,10 @@ describe("DelayedRecipe", function() {
     it("executes a wrapped recipe after delay", async() => {
 
         const db = new Db(path.join(d.tmpDir.toString(),".data/states.sqlite"));
+        await db.getStmt();
+        await db.getStmt();
+        const hashService = new HashService("md5");
+        Artifact.setHashService(hashService);
 
         await new ModuleBuilder(d.project, ruleBuilder).loadRootModule();
         ruleBuilder.finalize();
@@ -48,14 +54,14 @@ describe("DelayedRecipe", function() {
         /** @type {(JobSet|null)} */
         let jobs = null;
         async function runNewJob() {
-            await (jobs = await new Build(d.project.graph, db, d.artifactManager).getJobSetForArtifact(actual)).run();
+            await (jobs = await new Build(d.project.graph, db, d.artifactManager, hashService).getJobSetForArtifact(actual)).run();
             return jobs;
         }
 
         let t = process.hrtime.bigint();
         await runNewJob();
         expect(Number(process.hrtime.bigint()-t)/1000000).to.not.be.lessThan(300);
-        expect(jobs.job.recipeInvoked).to.be.true;
+        expect(jobs.jobs[0].recipeInvoked).to.be.true;
         expect(await actual.exists).to.be.true;
         expect(await actual.version).to.equal(await expected.version);
     });

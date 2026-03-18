@@ -19,7 +19,7 @@ describe('Db async accessors', () => {
     t.setup();
 
     it('create the DB if it does not exist', async () => {
-        await t.db.db; //trigger async getter
+        await t.db.getDb(); //trigger async getter
         expect(fs.existsSync(t.dbFile)).to.be.true;
     });
 });
@@ -29,33 +29,38 @@ describe('Db', function () {
     t.setup();
 
     it('records dependencies', async function() {
+        await t.db.getStmt();
         const ruleKey='whatever';
         expect(t.db.has('A')).to.be.false;
-        t.db.record('A','B',ruleKey,'C','D');
+        t.db.record('A','B','md5',ruleKey,'C','D','md5');
         expect(t.db.has('A')).to.be.true;
     });
 
     it('persists dependencies', async() => {
+        await t.db.getStmt();
         const ruleKey='whatever';
-        t.db.record('A','B',ruleKey,'C','D');
+        t.db.record('A','B','md5',ruleKey,'C','D','md5');
         await t.closeDb(); await t.openDb();
+        await t.db.getStmt();
         expect(t.db.has('A')).to.be.true;
     });
 
-    it('lists versions', () => {
+    it('lists versions', async () => {
+        await t.db.getStmt();
         const ruleKey='whatever';
-        t.db.record('A','B',ruleKey,'X','Y');
-        t.db.record('A','C',ruleKey,'X','Z');
+        t.db.record('A','B','md5',ruleKey,'X','Y','md5');
+        t.db.record('A','C','md5',ruleKey,'X','Z','md5');
         const answer = t.db.listVersions('A');
         expect(answer).to.be.an('array');
         expect(answer.map(_ => _.version).sort()).to.deep.equal(['B','C']);
     });
 
-    it('lists version sources', () => {
+    it('lists version sources', async () => {
+        await t.db.getStmt();
         const ruleKey='whatever';
-        t.db.record('A','B',ruleKey,'U','V');
-        t.db.record('A','B',ruleKey,'X','Y');
-        t.db.record('A','C',ruleKey,'X','Z');
+        t.db.record('A','B','md5',ruleKey,'U','V','md5');
+        t.db.record('A','B','md5',ruleKey,'X','Y','md5');
+        t.db.record('A','C','md5',ruleKey,'X','Z','md5');
         let answer = t.db.listVersionSources('A','B');
         expect(answer).to.be.an('array');
         expect(answer.sort((l,r) => l.source.localeCompare(r.source)).map(_ => _.version)).to.deep.equal(['V','Y']);
@@ -64,10 +69,11 @@ describe('Db', function () {
         expect(answer.sort((l,r) => l.source.localeCompare(r.source)).map(_ => _.version)).to.deep.equal(['Z']);
     });
 
-    it('retracts versions', () => {
+    it('retracts versions', async () => {
+        await t.db.getStmt();
         const ruleKey='whatever';
-        t.db.record('A','B',ruleKey,'C','D');
-        t.db.record('A','E',ruleKey,'F','G');
+        t.db.record('A','B','md5',ruleKey,'C','D','md5');
+        t.db.record('A','E','md5',ruleKey,'F','G','md5');
         expect(t.db.hasVersion('A','B')).to.be.true;
         t.db.retract('A','B');
         expect(t.db.hasVersion('A','B')).to.be.false;
@@ -75,24 +81,26 @@ describe('Db', function () {
     });
 
     it('retracts targets', async() => {
+        await t.db.getStmt();
         const ruleKey = 'whatever';
-        t.db.record('A','B',ruleKey,'C','D');
-        t.db.record('A','E',ruleKey,'F','G');
-        t.db.record('B','X',ruleKey,'Y','Z');
+        t.db.record('A','B','md5',ruleKey,'C','D','md5');
+        t.db.record('A','E','md5',ruleKey,'F','G','md5');
+        t.db.record('B','X','md5',ruleKey,'Y','Z','md5');
         expect(t.db.has('A')).to.be.true;
         t.db.retractTarget('A');
         expect(t.db.has('A')).to.be.false;
         expect(t.db.has('B')).to.be.true;
     });
 
-    it('retracts rules', () => {
+    it('retracts rules', async () => {
+        await t.db.getStmt();
         const ruleKey1 = 'whatever';
         const ruleKey2 = 'cool';
-        t.db.record('A','B',ruleKey1,'C','D');
-        t.db.record('E','F',ruleKey1,'C','D');
-        t.db.record('A','B',ruleKey1,'G','H');
-        t.db.record('E','F',ruleKey1,'G','G');
-        t.db.record('U','V',ruleKey2,'X','Y');
+        t.db.record('A','B','md5',ruleKey1,'C','D','md5');
+        t.db.record('E','F','md5',ruleKey1,'C','D','md5');
+        t.db.record('A','B','md5',ruleKey1,'G','H','md5');
+        t.db.record('E','F','md5',ruleKey1,'G','G','md5');
+        t.db.record('U','V','md5',ruleKey2,'X','Y','md5');
         expect(t.db.has('A')).to.be.true;
         expect(t.db.has('E')).to.be.true;
         expect(t.db.has('U')).to.be.true;
@@ -102,12 +110,14 @@ describe('Db', function () {
         expect(t.db.has('U')).to.be.true;
     });
 
-    it("does not throw if artifact not found",  () => {
+    it("does not throw if artifact not found", async () => {
+        await t.db.getStmt();
         const result = t.db.getArtifact("foo");
         expect(result).to.be.null;
     });
 
-    it("records artifacts", () => {
+    it("records artifacts", async () => {
+        await t.db.getStmt();
         t.db.recordArtifact("foo","file","foo.c");
         const result = t.db.getArtifact("foo");
         expect(result.key).to.equal("foo");
@@ -115,7 +125,8 @@ describe('Db', function () {
         expect(result.identity).to.equal("foo.c");
     });
 
-    it("does not overwrite recorded artifacts", () => {
+    it("does not overwrite recorded artifacts", async () => {
+        await t.db.getStmt();
         t.db.recordArtifact("foo","file","foo.c");
         t.db.recordArtifact("wrong","file","foo.c");
         const foo = t.db.getArtifact("foo");
@@ -130,7 +141,8 @@ describe('Db', function () {
         expect(whatever.identity).to.equal("foo.c");
     });
 
-    it("considers enough characters from the identity field", () => {
+    it("considers enough characters from the identity field", async () => {
+        await t.db.getStmt();
         const fooName = "a".repeat(1000)+"_foo";
         const barName = "a".repeat(1000)+"_bar";
         t.db.recordArtifact("foo","file",fooName);
@@ -141,10 +153,11 @@ describe('Db', function () {
         expect(bar.identity).to.equal(barName);
     });
 
-    it("prunes unreferenced artifacts", () => {
+    it("prunes unreferenced artifacts", async () => {
+        await t.db.getStmt();
         const ruleKey='whatever';
-        t.db.record("foo","0",ruleKey,"bar","0");
-        t.db.record("foo","0",ruleKey,"baz","1");
+        t.db.record("foo","0",'md5',ruleKey,"bar","0",'md5');
+        t.db.record("foo","0",'md5',ruleKey,"baz","1",'md5');
         t.db.recordArtifact("foo","file","foo.o");
         t.db.recordArtifact("bar","file","bar.c");
         t.db.recordArtifact("baz","file","baz.h");
@@ -156,12 +169,13 @@ describe('Db', function () {
         expect(t.db.getArtifact("foo")).to.be.an('object');
     });
 
-    it("lists rule sources", () => {
+    it("lists rule sources", async () => {
+        await t.db.getStmt();
         const ruleKey = 'whatever';
-        t.db.record("O","0",ruleKey,"FOO","1");
-        t.db.record("O","0",ruleKey,"BAR","2");
-        t.db.record("I","3",ruleKey,"FOO","1");
-        t.db.record("I","3",ruleKey,"BAR","2");
+        t.db.record("O","0",'md5',ruleKey,"FOO","1",'md5');
+        t.db.record("O","0",'md5',ruleKey,"BAR","2",'md5');
+        t.db.record("I","3",'md5',ruleKey,"FOO","1",'md5');
+        t.db.record("I","3",'md5',ruleKey,"BAR","2",'md5');
         t.db.recordArtifact("O","file","module.o");
         t.db.recordArtifact("I","file","module.i");
         t.db.recordArtifact("FOO","file","foo.c");
@@ -175,12 +189,13 @@ describe('Db', function () {
         expect(sources[1].key).to.equal("FOO");
     });
 
-    it("lists rule targets", () => {
+    it("lists rule targets", async () => {
+        await t.db.getStmt();
         const ruleKey = 'whatever';
-        t.db.record("O","0",ruleKey,"FOO","1");
-        t.db.record("O","0",ruleKey,"BAR","2");
-        t.db.record("I","3",ruleKey,"FOO","1");
-        t.db.record("I","3",ruleKey,"BAR","2");
+        t.db.record("O","0",'md5',ruleKey,"FOO","1",'md5');
+        t.db.record("O","0",'md5',ruleKey,"BAR","2",'md5');
+        t.db.record("I","3",'md5',ruleKey,"FOO","1",'md5');
+        t.db.record("I","3",'md5',ruleKey,"BAR","2",'md5');
         t.db.recordArtifact("O","file","module.o");
         t.db.recordArtifact("I","file","module.i");
         t.db.recordArtifact("FOO","file","foo.c");
@@ -194,24 +209,27 @@ describe('Db', function () {
         expect(targets[1].key).to.equal("O");
     });
 
-    it("gets target's producing rule", () => {
+    it("gets target's producing rule", async () => {
+        await t.db.getStmt();
         const ruleKey = 'whatever';
-        t.db.record("T","0",ruleKey,"FOO","1");
+        t.db.record("T","0",'md5',ruleKey,"FOO","1",'md5');
         expect(t.db.getProducingRule("T","0")).to.equal("whatever");
     });
 
-    it("allows different producing rules for different target versions",  () =>{
-        t.db.record("T","0","zeroth","FOO","1");
-        t.db.record("T","0","zeroth","BAR","2");
-        t.db.record("T","1","first","FOO","1");
-        t.db.record("T","1","first","BAR","3");
+    it("allows different producing rules for different target versions", async () =>{
+        await t.db.getStmt();
+        t.db.record("T","0",'md5',"zeroth","FOO","1",'md5');
+        t.db.record("T","0",'md5',"zeroth","BAR","2",'md5');
+        t.db.record("T","1",'md5',"first","FOO","1",'md5');
+        t.db.record("T","1",'md5',"first","BAR","3",'md5');
         expect(t.db.getProducingRule("T","0")).to.equal("zeroth");
         expect(t.db.getProducingRule("T","1")).to.equal("first");
     });
 
-    it("disallows different producing rules for same target version",  () => {
-        t.db.record("T","0","zeroth","FOO","1");
-        expect(() => t.db.record("T","0","first","BAR","2")).to.be.throw(Error);
+    it("disallows different producing rules for same target version", async () => {
+        await t.db.getStmt();
+        t.db.record("T","0",'md5',"zeroth","FOO","1",'md5');
+        expect(() => t.db.record("T","0",'md5',"first","BAR","2",'md5')).to.be.throw(Error);
     });
 
 });

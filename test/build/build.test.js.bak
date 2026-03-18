@@ -113,14 +113,10 @@ function answers(pk, answers)
 
 describe("Build", function () {
 
-    before(() => {
-        simpleSetup();
-    });
-
     t.setup();
 
     it("gets empty recorded version info if artifact doesn't exist", async () => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, build} = simple(zrup);
             (pk.about(target.key,"exists").resolve)(false);
             const versionInfo = await build.getRecordedVersionInfo(target);
@@ -132,7 +128,7 @@ describe("Build", function () {
     });
 
     it("gets empty recorded version if artifact was never built", async () => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, build} = simple(zrup);
             answers(pk,{
                 [target.key]: [true,"142857"]
@@ -146,7 +142,7 @@ describe("Build", function () {
     });
 
     it("gets recorded version after it was explicitly stored", async () => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, rule, build} = simple(zrup);
             answers(pk,{
                 [source.key]: [true,"142857"],
@@ -162,7 +158,7 @@ describe("Build", function () {
     });
 
     it("gets actual version info when all involved artifacts exist", async() => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, source, target, rule, build} = simple(zrup);
             answers(pk,{
                 [source.key]: [true,"142857"],
@@ -174,7 +170,7 @@ describe("Build", function () {
     });
 
     it("gets build job for target", async () => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {target, rule, build} = simple(zrup);
             const jobSet = await build.getJobSetForArtifact(target);
             expect(jobSet).to.be.an('object');
@@ -185,7 +181,7 @@ describe("Build", function () {
     });
 
     it("builds a simple target", async () => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, build} = simple(zrup);
             answers(pk,{
                 [target.key]: [false],
@@ -199,7 +195,7 @@ describe("Build", function () {
     });
 
     it("reports freshly built target as up to date", async () => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, build} = simple(zrup);
             answers(pk,{
                 [target.key]: [false],
@@ -212,7 +208,7 @@ describe("Build", function () {
             expect(job.recipeInvoked).to.be.true;
         });
 
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {target, build} = simple(zrup);
             const jobSet = await build.getJobSetForArtifact(target);
             const isUpToDate = await build.isUpToDate(jobSet.jobs[0]);
@@ -221,7 +217,7 @@ describe("Build", function () {
     });
 
     it("does not rebuild an up-to-date target", async () => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, build} = simple(zrup);
             answers(pk,{
                 [target.key]: [false],
@@ -233,7 +229,7 @@ describe("Build", function () {
             expect(await build.isUpToDate(jobs.jobs[0])).to.be.true;
         });
 
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {target, build} = simple(zrup);
             const jobs = await build.getJobSetForArtifact(target);
             await jobs.run();
@@ -243,7 +239,7 @@ describe("Build", function () {
     });
 
     it("rebuilds target if a dependency changes", async () => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, build} = simple(zrup);
             answers(pk,{
                 [target.key]: [false],
@@ -257,7 +253,7 @@ describe("Build", function () {
             expect(await build.isUpToDate(jobs.jobs[0])).to.be.false;
         });
 
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {target, build} = simple(zrup);
             const jobs = await build.getJobSetForArtifact(target);
             await jobs.run();
@@ -267,7 +263,7 @@ describe("Build", function () {
     });
 
     it("finds target outdated if it doesn't match the build record", async () => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, build} = simple(zrup);
             answers(pk, {
                 [source.key]: [true, "142857"],
@@ -280,7 +276,7 @@ describe("Build", function () {
             });
         });
 
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {target, build} = simple(zrup);
             let jobs = await build.getJobSetForArtifact(target);
             expect(await build.isUpToDate(jobs.jobs[0])).to.be.false;
@@ -288,7 +284,7 @@ describe("Build", function () {
     });
 
     it("always rebuilds a target of an always-rule", async() => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, rule, build} = simple(zrup);
             rule.always = true;
             answers(pk,{
@@ -302,7 +298,7 @@ describe("Build", function () {
             expect(await build.isUpToDate(jobs.jobs[0])).to.be.false;
         });
 
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {target, rule, build} = simple(zrup);
             rule.always = true;
             let jobs = await build.getJobSetForArtifact(target);
@@ -314,7 +310,7 @@ describe("Build", function () {
     })
 
     it("gets actual version info for target with nonexistent source", async() => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, rule, build} = simple(zrup);
             answers(pk,{
                 [target.key]: [false],
@@ -327,7 +323,7 @@ describe("Build", function () {
 
     //Should have tested for this since day one!!!
     it("reports existing target w/o build record as outdated", async() => {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, build} = simple(zrup);
             answers(pk,{
                 [target.key]: [true,"654321"],
@@ -339,7 +335,7 @@ describe("Build", function () {
     });
 
     it("reports nonexistent target from nonexistent source as outdated", async ()=> {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, build} = simple(zrup);
             answers(pk,{
                 [target.key]: [false],
@@ -352,7 +348,7 @@ describe("Build", function () {
     });
 
     it("fails with minimally useful error message if source not found", async()=> {
-        await t.build(async (zrup) => {
+        await t.build(async () => {
             const {pk, target, source, build} = simple(zrup);
             answers(pk,{
                 [target.key]: [false],
@@ -367,59 +363,54 @@ describe("Build", function () {
                 err=e;
             }
             expect(err).to.be.instanceof(BuildError);
-            /**
-             *
-             * @type {BuildError}
-             */
-            const buildErr = err;
-            const why = buildErr.getBuildTraceAsString();
-            expect(why).to.equal("Rule w.nginx defined in module test in file  failed to build\n"+
-                "because No rule to build required file:test+obey/w.nginx.php");
-        });
+        /**
+         *
+         * @type {BuildError}
+         */
+        const buildErr = err;
+        const why = buildErr.getBuildTraceAsString();
+        expect(why).to.equal("Rule w.nginx failed to build\n"+
+            "because No rule to build required file:test+obey/w.nginx.php");
     });
 
     it("records version info along with artifacts", async () => {
-        await t.build(async (zrup) => {
-            // noinspection JSUnusedLocalSymbols
-            let {pk,g,target,source,makeTarget,rule,build} = simple(zrup);
-            answers(pk,{
-                [target.key]: [false,nil],
-                [source.key]: [true,"123456"]
-            });
-            const jobs = await build.getJobSetForArtifact(target);
-            await jobs.run();
-            /** @type {Db~ArtifactRecord|null} */
-            let targetInfo = await build.db.getArtifact(target.key);
-            expect(targetInfo.key).to.equal(target.key);
-            expect(targetInfo.type).to.equal(target.type);
-            expect(targetInfo.identity).to.equal(target.identity);
-            /** @type {Db~ArtifactRecord|null} */
-            let sourceInfo = await build.db.getArtifact(source.key);
-            expect(sourceInfo.key).to.equal(source.key);
-            expect(sourceInfo.type).to.equal(source.type);
-            expect(sourceInfo.identity).to.equal(source.identity);
+        // noinspection JSUnusedLocalSymbols
+        let {pk,g,target,source,makeTarget,rule,build} = simple(zrup);
+        answers(pk,{
+            [target.key]: [false,nil],
+            [source.key]: [true,"123456"]
         });
+        const jobs = await build.getJobSetForArtifact(target);
+        await jobs.run();
+        /** @type {Db~ArtifactRecord|null} */
+        let targetInfo = await build.db.getArtifact(target.key);
+        expect(targetInfo.key).to.equal(target.key);
+        expect(targetInfo.type).to.equal(target.type);
+        expect(targetInfo.identity).to.equal(target.identity);
+        /** @type {Db~ArtifactRecord|null} */
+        let sourceInfo = await build.db.getArtifact(source.key);
+        expect(sourceInfo.key).to.equal(source.key);
+        expect(sourceInfo.type).to.equal(source.type);
+        expect(sourceInfo.identity).to.equal(source.identity);
     });
 
     it("deletes recorded targets before build", async() => {
-        await t.build(async (zrup) => {
-            let {pk,g,target,source,makeTarget,rule,build,manager} = simple(zrup);
-            answers(pk,{
-                [target.key]: [true,"654321"],
-                [source.key]: [true,"123456"]
-            });
-            const noLongerBuilt = manager.get("file:z.nginx");
-            answers(pk,{
-                [noLongerBuilt.key]: [true,"000000"]
-            });
-            expect(await noLongerBuilt.exists).to.be.true;
-            const ruleKey = rule.key;
-            await build.db.record(target.key, "123456", "md5", rule.key, source.key, await source.version, "md5");
-            await build.db.record(noLongerBuilt.key, await noLongerBuilt.version, "md5", rule.key, source.key, await source.version, "md5");
-            await build.recordArtifacts([source,target,noLongerBuilt]);
-            const jobSet = await build.getJobSetForArtifact(target);
-            await jobSet.run();
-            expect(await noLongerBuilt.exists).to.be.false;
+        let {pk,g,target,source,makeTarget,rule,build,manager} = simple(zrup);
+        answers(pk,{
+            [target.key]: [true,"654321"],
+            [source.key]: [true,"123456"]
         });
+        const noLongerBuilt = manager.get("file:z.nginx");
+        answers(pk,{
+            [noLongerBuilt.key]: [true,"000000"]
+        });
+        expect(await noLongerBuilt.exists).to.be.true;
+        const ruleKey = rule.key;
+        await build.db.record(target.key, "123456", "md5", rule.key, source.key, await source.version, "md5");
+        await build.db.record(noLongerBuilt.key, await noLongerBuilt.version, "md5", rule.key, source.key, await source.version, "md5");
+        await build.recordArtifacts([source,target,noLongerBuilt]);
+        const jobSet = await build.getJobSetForArtifact(target);
+        await jobSet.run();
+        expect(await noLongerBuilt.exists).to.be.false;
     });
 });

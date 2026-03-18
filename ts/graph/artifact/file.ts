@@ -12,7 +12,7 @@ import {HashService, type HashAlgorithm} from "../../hash/hash-service.js";
 export class FileArtifact extends Artifact  {
 
     private readonly $resolvedPath : string;
-    private $versionCache : Map<string, Promise<string>> = new Map();
+    private $versionCache : Map<string, {fromBuilt: boolean, version: Promise<string>}> = new Map();
 
     constructor(ref: Artifact.Reference, resolvedPath : string) {
         super(`${ref}`);
@@ -46,23 +46,32 @@ export class FileArtifact extends Artifact  {
             throw new Error("HashService not initialized. Call FileArtifact.setHashService() first.");
         }
         this.$versionCache.clear();
-        this.$versionCache.set(Artifact.hashService.algorithm, versionPromise);
+        this.$versionCache.set(Artifact.hashService.algorithm, {
+            fromBuilt: this.built,
+            version: versionPromise
+        });
     }
 
     /**
      * Get version using a specific hash algorithm.
      * Used during migration to compute versions with different algorithms.
      * Caches per algorithm to avoid redundant computation.
+     * Cache entries are invalidated when artifact is rebuilt.
      *
      * @param algorithm Algorithm to use
      */
     getVersionUsing(algorithm: string): Promise<string>
     {
         const cached = this.$versionCache.get(algorithm);
-        if (cached) return cached;
+        if (cached && cached.fromBuilt === this.built) {
+            return cached.version;
+        }
 
         const promise = this.computeVersion(algorithm);
-        this.$versionCache.set(algorithm, promise);
+        this.$versionCache.set(algorithm, {
+            fromBuilt: this.built,
+            version: promise
+        });
         return promise;
     }
 

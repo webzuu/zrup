@@ -24,7 +24,7 @@ export abstract class Recipe
             };
             // Use object-hash to get normalized string, then hash with specified algorithm
             const normalizedString = hash(specDescriptor, { algorithm: 'passthrough' });
-            return hashService.hashObject(normalizedString, algorithm);
+            return await hashService.hashObject(normalizedString, algorithm);
         })();
     }
 

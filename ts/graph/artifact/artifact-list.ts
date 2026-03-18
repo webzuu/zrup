@@ -6,7 +6,7 @@ import {UnsupportedOperation} from "../../error/unsupported-operation.js";
 export class ArtifactList extends Artifact {
 
     private $items : Artifact[];
-    private $versionCache : Map<string, Promise<string>> = new Map();
+    private $versionCache : Map<string, {fromBuilt: boolean, version: Promise<string>}> = new Map();
 
     constructor(identity: string)
     {
@@ -43,15 +43,23 @@ export class ArtifactList extends Artifact {
             throw new Error("HashService not initialized. Call Artifact.setHashService() first.");
         }
         this.$versionCache.clear();
-        this.$versionCache.set(Artifact.hashService.algorithm, versionPromise);
+        this.$versionCache.set(Artifact.hashService.algorithm, {
+            fromBuilt: this.built,
+            version: versionPromise
+        });
     }
 
     getVersionUsing(algorithm: string): Promise<string> {
         const cached = this.$versionCache.get(algorithm);
-        if (cached) return cached;
+        if (cached && cached.fromBuilt === this.built) {
+            return cached.version;
+        }
 
         const promise = this.computeVersion(algorithm);
-        this.$versionCache.set(algorithm, promise);
+        this.$versionCache.set(algorithm, {
+            fromBuilt: this.built,
+            version: promise
+        });
         return promise;
     }
 
@@ -63,7 +71,7 @@ export class ArtifactList extends Artifact {
             })
         );
         // Hash the JSON representation of item versions using configured algorithm
-        return Artifact.hashService.hashObject(itemVersions, algorithm as any);
+        return await Artifact.hashService.hashObject(itemVersions, algorithm as any);
     }
 
     get exists() {

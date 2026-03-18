@@ -56,11 +56,23 @@ export const DbTesting = class DbTesting
     #dbFile
     /** @type Db */
     #db;
+    #factories;
+
     constructor(tmpDir)
     {
         this.#tmpDir = new TempDir(tmpDir);
         this.#dbFile = path.join(this.#tmpDir.toString(),"__db/state.sqlite");
         this.#db=null;
+        this.#factories = null;
+    }
+
+    setFactories(fn) {
+        this.#factories = fn;
+    }
+
+    async build(callback) {
+        const zrup = initializeZrup(this.#tmpDir.toString(), this.#factories);
+        return await callback(zrup);
     }
 
     async openDb()
@@ -68,6 +80,7 @@ export const DbTesting = class DbTesting
         if (!this.#db) {
             await fsp.mkdir(path.dirname(this.#dbFile), { mode: 0o755, recursive: true });
             this.#db = new Db(this.#dbFile);
+            await this.#db.getStmt();
         }
     }
 
@@ -209,4 +222,13 @@ export class DummyRecipe extends Recipe
 export function wait(time)
 {
     return new Promise((resolve) => { setTimeout(resolve, time); });
+}
+
+export function initializeZrup(tmpDir, factories) {
+    const project = new Project(tmpDir);
+    const artifactManager = new ArtifactManager();
+    if (factories) {
+        factories(artifactManager, project);
+    }
+    return { project, artifactManager };
 }
